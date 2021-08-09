@@ -20,6 +20,7 @@ class TestDagCommandLine(unittest.TestCase):
         args, unknown_args = bilby_pipe.main.parse_args(self.default_args, self.parser)
         self.assertEqual(args.ini, self.default_args[0])
         self.assertEqual(args.accounting, "test.test")
+        self.assertEqual(args.accounting_user, "albert.einstein")
 
     def test_empty_unknown_args(self):
         _, unknown_args = bilby_pipe.main.parse_args(self.default_args, self.parser)

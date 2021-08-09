@@ -10,7 +10,7 @@ from ..utils import CHECKPOINT_EXIT_CODE, ArgumentsString, BilbyPipeError, logge
 
 
 class Node(object):
-    """ Base Node object, handles creation of arguments, executables, etc """
+    """Base Node object, handles creation of arguments, executables, etc"""
 
     # Flag to not run on the OSG - overwritten in child nodes
     run_node_on_osg = False
@@ -131,9 +131,14 @@ class Node(object):
         logger.debug(f"Adding job: {job_name}")
 
     def add_accounting(self):
-        """ Add the accounting-group extra lines """
+        """Add the accounting-group and accounting-group-user extra lines"""
         if self.inputs.accounting:
             self.extra_lines.append(f"accounting_group = {self.inputs.accounting}")
+            # Check for accounting user
+            if self.inputs.accounting_user:
+                self.extra_lines.append(
+                    f"accounting_group_user = {self.inputs.accounting_user}"
+                )
         else:
             raise BilbyPipeError(
                 "No accounting tag provided - this is required for condor submission"
@@ -199,7 +204,7 @@ class Node(object):
 
     @property
     def slurm_walltime(self):
-        """ Default wall-time for base-name """
+        """Default wall-time for base-name"""
         # One hour
         return "1:00:00"
 

@@ -430,6 +430,11 @@ def create_parser(top_level=True):
         type=nonestr,
         help="Accounting group to use (see, https://accounting.ligo.org/user)",
     )
+    submission_parser.add(
+        "--accounting-user",
+        type=nonestr,
+        help="Accounting group user to use (see, https://accounting.ligo.org/user)",
+    )
     submission_parser.add("--label", type=str, default="label", help="Output label")
     submission_parser.add(
         "--local",
