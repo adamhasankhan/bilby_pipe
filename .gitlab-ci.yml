@@ -138,20 +138,6 @@ example-ini-file-gracedb:
     - if [[ ! -f outdir_G298936/results_page/home.html ]] ; then exit 1; else echo "Webpage exists"; fi
 
 
-python-3.6:
-  stage: test
-  image: quay.io/bilbydev/bilby_pipe-test-suite-python36
-  script:
-    - source activate python36
-    - mkdir -p .pip36
-    - pip install --upgrade pip
-    - pip --cache-dir=.pip36 install --upgrade bilby
-    - pip --cache-dir=.pip36 install .
-    - test -z ${CONDA_PREFIX} && pip list installed || conda list
-
-    # run tests
-    - pytest
-
 documentation:
   stage: test
   image: quay.io/bilbydev/bilby_pipe-test-suite-python37
@@ -161,7 +147,7 @@ documentation:
     - pip --cache-dir=.pip37 install .
 
     # Make the documentation
-    - apt-get update
+    - apt-get update --allow-releaseinfo-change
     - apt-get -y install graphviz
     # Sphinx-multiversion needs to be run on the git repo itself
     - cd ../
