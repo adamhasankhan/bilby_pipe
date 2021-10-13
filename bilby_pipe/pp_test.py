@@ -5,6 +5,7 @@ import argparse
 import glob
 import json
 import os
+from datetime import timedelta
 
 import corner
 import numpy as np
@@ -115,8 +116,17 @@ def get_basename(args):
 def make_meta_data_plot(results, basename):
     logger.info("Create meta data plot")
 
-    stimes = [r.sampling_time / 3600 for r in results]
-    nsamples = [len(r.posterior) / 1000 for r in results]
+    TIME_SCALE = 3600
+
+    stimes = []
+    nsamples = []
+    for result in results:
+        if isinstance(result.sampling_time, timedelta):
+            stimes.append(result.sampling_time.total_seconds() / TIME_SCALE)
+        else:
+            stimes.append(result.sampling_time / TIME_SCALE)
+
+        nsamples.append(len(result.posterior) / 1000)
 
     snrs = []
     detectors = list(results[0].meta_data["likelihood"]["interferometers"].keys())
