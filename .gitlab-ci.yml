@@ -10,7 +10,9 @@
 # before the next stage begins
 
 stages:
+  - initial
   - test
+  - docs
   - deploy
 
 cache:
@@ -18,9 +20,22 @@ cache:
     - .pip37
     - .pip36
 
+# ------------------- Initial stage -------------------------------------------
+
+# Test containers scripts are up to date
+containers:
+  stage: initial
+  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python37
+  script:
+    - cd containers
+    - python write_dockerfiles.py
+    # Fail if differences exist. If this fails, you may need to run
+    # write_dockerfiles.py and commit the changes.
+    - git diff --exit-code
+
 precommits-py3.7:
-  stage: test
-  image: quay.io/bilbydev/bilby_pipe-test-suite-python37
+  stage: initial
+  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python37
   script:
     - source activate python37
     - mkdir -p .pip37
@@ -32,9 +47,39 @@ precommits-py3.7:
     # Run precommits (black, flake8, spellcheck, isort, no merge conflicts, etc)
     - pre-commit run --all-files --verbose --show-diff-on-failure
 
+precommits-py3.8:
+  stage: initial
+  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python38
+  script:
+    - source activate python38
+    - mkdir -p .pip38
+    - pip install --upgrade pip
+    - pip --cache-dir=.pip38 install --upgrade bilby
+    - pip --cache-dir=.pip38 install .
+    - pip --cache-dir=.pip38 install pre-commit
+
+    # Run precommits (black, flake8, spellcheck, isort, no merge conflicts, etc)
+    - pre-commit run --all-files --verbose --show-diff-on-failure
+
+precommits-py3.9:
+  stage: initial
+  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python39
+  script:
+    - source activate python39
+    - mkdir -p .pip39
+    - pip install --upgrade pip
+    - pip --cache-dir=.pip39 install --upgrade bilby
+    - pip --cache-dir=.pip39 install .
+    - pip --cache-dir=.pip39 install pre-commit
+
+    # Run precommits (black, flake8, spellcheck, isort, no merge conflicts, etc)
+    - pre-commit run --all-files --verbose --show-diff-on-failure
+
+# ------------------- Test stage -------------------------------------------
+
 python-3.7:
   stage: test
-  image: quay.io/bilbydev/bilby_pipe-test-suite-python37
+  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python37
   script:
     - source activate python37
     - mkdir -p .pip37
@@ -47,18 +92,43 @@ python-3.7:
     - pytest --cov bilby_pipe
     - coverage html
     - coverage-badge -o coverage_badge.svg -f
-
-
-
   artifacts:
     paths:
       - htmlcov/
       - coverage_badge.svg
 
+python-3.8:
+  stage: test
+  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python38
+  script:
+    - source activate python38
+    - mkdir -p .pip38
+    - pip install --upgrade pip
+    - pip --cache-dir=.pip38 install --upgrade bilby
+    - pip --cache-dir=.pip38 install .
+    - test -z ${CONDA_PREFIX} && pip list installed || conda list
+
+    # Run tests
+    - pytest
+
+python-3.9:
+  stage: test
+  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python39
+  script:
+    - source activate python39
+    - mkdir -p .pip39
+    - pip install --upgrade pip
+    - pip --cache-dir=.pip39 install --upgrade bilby
+    - pip --cache-dir=.pip39 install .
+    - test -z ${CONDA_PREFIX} && pip list installed || conda list
+
+    # Run tests
+    - pytest
+
 # Test that the examples build properly
 example-ini-file-builds:
   stage: test
-  image: quay.io/bilbydev/bilby_pipe-test-suite-python37
+  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python37
   script:
     - source activate python37
     - mkdir -p .pip37
@@ -81,7 +151,7 @@ example-ini-file-builds:
 # Test that the examples build properly
 injection-regression-test:
   stage: test
-  image: quay.io/bilbydev/bilby_pipe-test-suite-python37
+  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python37
   script:
     - source activate python37
     - mkdir -p .pip37
@@ -97,7 +167,7 @@ injection-regression-test:
 # Test that the review tests build properly
 review-test-build:
   stage: test
-  image: quay.io/bilbydev/bilby_pipe-test-suite-python37
+  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python37
   script:
     - source activate python37
     - mkdir -p .pip37
@@ -114,20 +184,20 @@ review-test-build:
     - cd ..
     - rm TEST_REVIEW_FILES -r
 
-#example-ini-file-pesummary:
-#  stage: test
-#  image: quay.io/bilbydev/bilby_pipe-test-suite-python37
-#  script:
-#    - source activate python37
-#    - pip install --upgrade bilby pesummary seaborn>=0.11
-#    - pip install .
-#    - cd tests/
-#    - bilby_pipe test_pesummary.ini --local --bilby-test-mode
-#    - exit
+example-ini-file-pesummary:
+  stage: test
+  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python37
+  script:
+    - source activate python37
+    - pip install --upgrade bilby pesummary seaborn>=0.11
+    - pip install .
+    - cd tests/
+    - bilby_pipe test_pesummary.ini --local --bilby-test-mode
+    - exit
 
 example-ini-file-gracedb:
   stage: test
-  image: quay.io/bilbydev/bilby_pipe-test-suite-python37
+  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python37
   only:
     - schedules
   script:
@@ -138,9 +208,11 @@ example-ini-file-gracedb:
     - if [[ ! -f outdir_G298936/results_page/home.html ]] ; then exit 1; else echo "Webpage exists"; fi
 
 
+# ------------------- Docs stage -------------------------------------------
+
 documentation:
-  stage: test
-  image: quay.io/bilbydev/bilby_pipe-test-suite-python37
+  stage: docs
+  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python37
   script:
     - source activate python37
     - mkdir -p .pip37
@@ -171,8 +243,10 @@ documentation:
     paths:
       - docs/_build/
 
+# ------------------- Deploy stage -------------------------------------------
+
 pages:
-  stage: deploy
+  stage: docs
   dependencies:
     - python-3.7
     - documentation
@@ -188,9 +262,51 @@ pages:
   only:
   - master
 
+
+# Build the containers
+build-python37-container:
+  stage: deploy
+  image: docker:19.03.12
+  needs: ["containers"]
+  only:
+    - schedules
+  script:
+    - cd containers
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build --tag v3-bilby_pipe-python37 - < v3-dockerfile-test-suite-python37
+    - docker image tag v3-bilby_pipe-python37 containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python37:latest
+    - docker image push containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python37:latest
+
+build-python38-container:
+  stage: deploy
+  image: docker:19.03.12
+  needs: ["containers"]
+  only:
+    - schedules
+  script:
+    - cd containers
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build --tag v3-bilby_pipe-python38 - < v3-dockerfile-test-suite-python38
+    - docker image tag v3-bilby_pipe-python38 containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python38:latest
+    - docker image push containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python38:latest
+
+build-python39-container:
+  stage: deploy
+  image: docker:19.03.12
+  needs: ["containers"]
+  only:
+    - schedules
+  script:
+    - cd containers
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build --tag v3-bilby_pipe-python39 - < v3-dockerfile-test-suite-python39
+    - docker image tag v3-bilby_pipe-python39 containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python39:latest
+    - docker image push containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python39:latest
+
+
 deploy_release:
   stage: deploy
-  image: quay.io/bilbydev/bilby_pipe-test-suite-python37
+  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python37
   variables:
     TWINE_USERNAME: $PYPI_USERNAME
     TWINE_PASSWORD: $PYPI_PASSWORD
