@@ -210,7 +210,7 @@ example-ini-file-gracedb:
 
 # ------------------- Docs stage -------------------------------------------
 
-documentation:
+docs:
   stage: docs
   image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python37
   script:
@@ -246,10 +246,11 @@ documentation:
 # ------------------- Deploy stage -------------------------------------------
 
 pages:
-  stage: docs
+  stage: deploy
+  needs: ["docs", "python-3.7"]
   dependencies:
     - python-3.7
-    - documentation
+    - docs
   script:
     - mkdir public/
     - mv htmlcov/ public/
