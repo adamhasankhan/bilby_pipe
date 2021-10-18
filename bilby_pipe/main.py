@@ -106,6 +106,7 @@ class MainInput(Input):
         self.injection_numbers = args.injection_numbers
         self.injection_file = args.injection_file
         self.injection_dict = args.injection_dict
+        self.injection_waveform_arguments = args.injection_waveform_arguments
         self.injection_waveform_approximant = args.injection_waveform_approximant
         self.generation_seed = args.generation_seed
         if self.injection:

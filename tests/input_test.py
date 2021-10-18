@@ -307,6 +307,7 @@ class TestInput(unittest.TestCase):
         inputs.catch_waveform_errors = False
         inputs.mode_array = None
         inputs.waveform_arguments_dict = None
+        inputs.injection_waveform_arguments = None
 
         # injection-waveform-approx not provided
         inputs.waveform_approximant = "IMRPhenomPv2"
@@ -353,6 +354,7 @@ class TestInput(unittest.TestCase):
         inputs.mode_array = None
         inputs.waveform_approximant = "IMRPhenomPv2"
         inputs.injection_waveform_approximant = None
+        inputs.injection_waveform_arguments = None
         inputs.waveform_arguments_dict = None
 
         # numerical-relativity-file given
