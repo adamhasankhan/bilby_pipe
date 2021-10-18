@@ -410,6 +410,16 @@ def create_parser(top_level=True):
         "If none is specified, then the `waveform-approximant` will be used"
         "as the `injection-waveform-approximant`.",
     )
+    injection_parser.add(
+        "--injection-waveform-arguments",
+        type=nonestr,
+        default=None,
+        help=(
+            "A dictionary of arbitrary additional waveform-arguments to pass "
+            "to the bilby waveform generator's waveform arguments for the "
+            "injection only"
+        ),
+    )
 
     submission_parser = parser.add_argument_group(
         title="Job submission arguments",

@@ -209,6 +209,7 @@ class DataGenerationInput(Input):
         self.injection_file = args.injection_file
         self.injection_dict = args.injection_dict
         self.gaussian_noise = args.gaussian_noise
+        self.injection_waveform_arguments = args.injection_waveform_arguments
 
         # The following are all mutually exclusive methods to set the data
         if self.gaussian_noise or self.zero_noise:

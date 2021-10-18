@@ -377,6 +377,12 @@ class Input(object):
         if self.injection_waveform_approximant is None:
             self.injection_waveform_approximant = self.waveform_approximant
         waveform_arguments = self.get_default_waveform_arguments()
+
+        if self.injection_waveform_arguments is not None:
+            waveform_arguments.update(
+                convert_string_to_dict(self.injection_waveform_arguments)
+            )
+
         waveform_arguments["waveform_approximant"] = self.injection_waveform_approximant
         waveform_arguments["numerical_relativity_file"] = self.numerical_relativity_file
         return waveform_arguments
