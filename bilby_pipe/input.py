@@ -1151,11 +1151,16 @@ class Input(object):
 
     @property
     def parameter_conversion(self):
-        if self.conversion_function is not None:
-            logger.info(
-                f"Using user-specified conversion_function {self.conversion_function}"
-            )
-            return get_function_from_string_path(self.conversion_function)
+        cf = self.conversion_function
+
+        _lookups = dict(noconvert=None)
+
+        if isinstance(cf, str) and cf.lower() in _lookups:
+            logger.info(f"Using conversion function {cf} from lookups")
+            return _lookups[cf.lower()]
+        elif cf is not None:
+            logger.info(f"Using user-specified conversion_function {cf}")
+            return get_function_from_string_path(cf)
         elif "binary_neutron_star" in self._frequency_domain_source_model:
             logger.info(
                 "Using conversion_function convert_to_lal_binary_neutron_star_parameters"
@@ -1230,8 +1235,16 @@ class Input(object):
 
     @property
     def parameter_generation(self):
-        if self.generation_function is not None:
-            logger.info(f"Using user-specified generation {self.generation_function}")
+
+        gf = self.generation_function
+
+        _lookups = dict(noconvert=None)
+
+        if isinstance(gf, str) and gf.lower() in _lookups:
+            logger.info(f"Using generation function {gf} from lookups")
+            return _lookups[gf.lower()]
+        elif gf is not None:
+            logger.info(f"Using user-specified generation {gf}")
             return get_function_from_string_path(self.generation_function)
         elif "binary_neutron_star" in self._frequency_domain_source_model:
             logger.info("Using generation_function generate_all_bns_parameters")
