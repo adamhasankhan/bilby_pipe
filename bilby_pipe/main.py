@@ -56,6 +56,7 @@ class MainInput(Input):
         self.label = args.label
         self.log_directory = args.log_directory
         self.accounting = args.accounting
+        self.accounting_user = args.accounting_user
         self.sampler = args.sampler
         self.detectors = args.detectors
         self.coherence_test = args.coherence_test

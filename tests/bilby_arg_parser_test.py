@@ -95,6 +95,12 @@ class TestBilbyConfigFileParser(unittest.TestCase):
         args, unknown_args = parse_args([self.test_ini_filename], self.parser)
         self.assertEqual(args.accounting, "test")
 
+    def test_accounting_user(self):
+        lines = ["accounting_user: albert.einstein"]
+        self.write_tempory_ini_file(lines)
+        args, unknown_args = parse_args([self.test_ini_filename], self.parser)
+        self.assertEqual(args.accounting_user, "albert.einstein")
+
     def test_sampler_kwargs_flat(self):
         kwargs_expected = dict(walks=1000)
         lines = ["sampler-kwargs: {walks:1000}"]
