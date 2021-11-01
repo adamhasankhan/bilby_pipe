@@ -975,7 +975,8 @@ def create_parser(top_level=True):
             "the conversion function is bilby.gw.conversion.convert_to_lal_binary_black_hole_parameters. "
             "If the source-model contains binary_neutron_star, "
             "the generation function is bilby.gw.conversion.convert_to_lal_binary_black_hole_parameters. "
-            "If you specify your own function, you may wish to use the I/O of those functions as templates"
+            "If you specify your own function, you may wish to use the I/O of those functions as templates."
+            "If given as 'noconvert' (case insensitive), no conversion is used'"
         ),
     )
     waveform_parser.add(
@@ -990,6 +991,7 @@ def create_parser(top_level=True):
             "If the source-model contains binary_neutron_star, "
             "the generation function is bilby.gw.conversion.generate_all_bns_parameters. "
             "If you specify your own function, you may wish to use the I/O of those functions as templates"
+            "If given as 'noconvert' (case insensitive), no generation is used'"
         ),
     )
 
