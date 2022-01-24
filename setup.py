@@ -103,7 +103,7 @@ setup(
         "dynesty>=1.0.0",
         "pesummary>=0.2.4",
         "jinja2",
-        "astropy<4.3",
+        "astropy",
     ],
     entry_points={
         "console_scripts": [
