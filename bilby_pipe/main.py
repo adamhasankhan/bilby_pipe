@@ -322,7 +322,7 @@ class MainInput(Input):
             logger.info(f"Setting n_simulation={self.n_simulation} to match injections")
 
 
-def write_complete_config_file(parser, args, inputs):
+def write_complete_config_file(parser, args, inputs, input_cls=MainInput):
     args_dict = vars(args).copy()
     for key, val in args_dict.items():
         if key == "label":
@@ -343,7 +343,7 @@ def write_complete_config_file(parser, args, inputs):
 
     # Verify that the written complete config is identical to the source config
     complete_args = parser.parse([inputs.complete_ini_file])
-    complete_inputs = MainInput(complete_args, "")
+    complete_inputs = input_cls(complete_args, "")
     ignore_keys = ["scheduler_module"]
     differences = []
     for key, val in inputs.__dict__.items():
