@@ -1,4 +1,5 @@
 from .analysis_node import AnalysisNode
+from .final_result_node import FinalResultNode
 from .generation_node import GenerationNode
 from .merge_node import MergeNode
 from .pe_summary_node import PESummaryNode

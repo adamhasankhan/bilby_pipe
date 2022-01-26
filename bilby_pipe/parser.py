@@ -768,6 +768,18 @@ def create_parser(top_level=True):
         choices=["json", "hdf5", "pickle"],
         help="Format to save the result file in.",
     )
+    output_parser.add(
+        "--final-result",
+        action=StoreBoolean,
+        default=True,
+        help="If true (default), generate a set of lightweight downsamples final results.",
+    )
+    output_parser.add(
+        "--final-result-nsamples",
+        default=20000,
+        type=int,
+        help="Maximum number of samples to keep in the final results",
+    )
 
     prior_parser = parser.add_argument_group(
         title="Prior arguments", description="Specify the prior settings."

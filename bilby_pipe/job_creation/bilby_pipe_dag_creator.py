@@ -6,6 +6,7 @@ from ..utils import BilbyPipeError, convert_string_to_tuple, logger
 from .dag import Dag
 from .nodes import (
     AnalysisNode,
+    FinalResultNode,
     GenerationNode,
     MergeNode,
     PESummaryNode,
@@ -105,6 +106,8 @@ def generate_dag(inputs):
 
     plot_nodes_list = []
     for merged_node in merged_node_list:
+        if inputs.final_result:
+            FinalResultNode(inputs, merged_node, dag=dag)
         if inputs.create_plots:
             plot_nodes_list.append(PlotNode(inputs, merged_node, dag=dag))
         if inputs.single_postprocessing_executable:
