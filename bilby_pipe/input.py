@@ -4,6 +4,7 @@ Module containing the main input class
 """
 import glob
 import inspect
+import itertools
 import json
 import os
 from importlib import import_module
@@ -491,9 +492,16 @@ class Input(object):
             i is not None
             and not isinstance(i, float)
             and utils.check_if_represents_int(i)
+            or ":" in str(i)
             for i in injection_numbers
         ):
-            self._injection_numbers = [int(i) for i in injection_numbers]
+            list_of_lists = []
+            for i in injection_numbers:
+                if utils.check_if_represents_int(i):
+                    list_of_lists.append([int(i)])
+                else:
+                    list_of_lists.append(utils.convert_string_slice_syntax(i))
+            self._injection_numbers = list(set(itertools.chain(*list_of_lists)))
         else:
             raise BilbyPipeError(f"Invalid injection numbers {injection_numbers}")
 

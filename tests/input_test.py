@@ -365,12 +365,24 @@ class TestInput(unittest.TestCase):
 
     def test_injection_number(self):
         inputs = bilby_pipe.main.Input()
+
         inputs.injection_numbers = [0]
         self.assertEqual(inputs.injection_numbers, [0])
+
         inputs.injection_numbers = ["0"]
         self.assertEqual(inputs.injection_numbers, [0])
+
+        inputs.injection_numbers = ["1", "2"]
+        self.assertEqual(inputs.injection_numbers, [1, 2])
+
         with self.assertRaises(BilbyPipeError):
             inputs.injection_numbers = ["abba"]
+
+        inputs.injection_numbers = ["1:3"]
+        self.assertEqual(inputs.injection_numbers, [1, 2])
+
+        inputs.injection_numbers = [0, "1", "1:3", "4:6"]
+        self.assertEqual(inputs.injection_numbers, [0, 1, 2, 4, 5])
 
     def test_bilby_roq_frequency_domain_source_model(self):
         inputs = bilby_pipe.main.Input()

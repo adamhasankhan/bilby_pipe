@@ -222,6 +222,12 @@ class TestUtils(unittest.TestCase):
         with self.assertRaises(bilby_pipe.utils.BilbyPipeError):
             d["a"] = 1
 
+    def test_convert_string_slice_syntax(self):
+        conv = bilby_pipe.utils.convert_string_slice_syntax
+        self.assertEqual(conv("1"), [1])
+        self.assertEqual(conv("1:3"), [1, 2])
+        self.assertEqual(conv("0:5"), [0, 1, 2, 3, 4])
+
 
 if __name__ == "__main__":
     unittest.main()

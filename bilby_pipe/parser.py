@@ -399,7 +399,9 @@ def create_parser(top_level=True):
         default=None,
         help=(
             "Specific injections rows to use from the injection_file, e.g. "
-            "`injection_numbers=[0,3] selects the zeroth and third row"
+            "`injection_numbers=[0,3] selects the zeroth and third row. Can be "
+            "a list of slice-syntax values, e.g, [0, 2:4] will produce [0, 2, 3]. "
+            "Repeated entries will be ignored."
         ),
     )
     injection_parser.add(
