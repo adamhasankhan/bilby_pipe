@@ -1320,14 +1320,21 @@ class Input(object):
 
     @sampler_kwargs.setter
     def sampler_kwargs(self, sampler_kwargs):
+
+        # Set up the default choices
+        if self.sampler == "dynesty":
+            self._sampler_kwargs = SAMPLER_SETTINGS["Default"]
+        else:
+            self._sampler_kwargs = dict()
+
         if sampler_kwargs is not None:
             if sampler_kwargs.lower() == "default":
-                self._sampler_kwargs = SAMPLER_SETTINGS["Default"]
+                self._sampler_kwargs.update(SAMPLER_SETTINGS["Default"])
             elif sampler_kwargs.lower() == "fasttest":
-                self._sampler_kwargs = SAMPLER_SETTINGS["FastTest"]
+                self._sampler_kwargs.update(SAMPLER_SETTINGS["FastTest"])
             else:
-                self._sampler_kwargs = convert_string_to_dict(
-                    sampler_kwargs, "sampler-kwargs"
+                self._sampler_kwargs.update(
+                    convert_string_to_dict(sampler_kwargs, "sampler-kwargs")
                 )
         else:
             self._sampler_kwargs = dict()
