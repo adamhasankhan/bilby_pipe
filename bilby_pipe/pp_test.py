@@ -11,7 +11,7 @@ import corner
 import numpy as np
 import tqdm
 
-from bilby.core.result import ResultList, make_pp_plot, read_in_result
+from bilby.core.result import ResultList, ResultListError, make_pp_plot, read_in_result
 
 from .utils import logger
 
@@ -73,9 +73,11 @@ def get_results_filenames(args):
 
 
 def check_consistency(results):
-    results.check_consistent_sampler()
-    results.check_consistent_parameters()
-    results.check_consistent_priors()
+    for check in ["sampler", "parameters", "priors"]:
+        try:
+            getattr(results, f"check_consistent_{check}")()
+        except ResultListError as emsg:
+            logger.warning(f"Results have inconsistent {check}: {emsg}")
 
 
 def read_in_result_list(args, results_filenames):
