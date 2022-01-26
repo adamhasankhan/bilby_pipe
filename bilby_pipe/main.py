@@ -88,6 +88,8 @@ class MainInput(Input):
         self.prior_file = args.prior_file
         self.prior_dict = args.prior_dict
         self.default_prior = args.default_prior
+        self.minimum_frequency = args.minimum_frequency
+        self.enforce_signal_duration = args.enforce_signal_duration
 
         self.run_local = args.local
         self.local_generation = args.local_generation

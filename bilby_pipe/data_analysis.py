@@ -92,6 +92,7 @@ class DataAnalysisInput(Input):
         self.reference_frame = args.reference_frame
         self.time_reference = args.time_reference
         self.extra_likelihood_kwargs = args.extra_likelihood_kwargs
+        self.enforce_signal_duration = args.enforce_signal_duration
 
         # ROQ
         self.roq_folder = args.roq_folder

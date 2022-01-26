@@ -882,6 +882,14 @@ class Input(object):
         """ Read in and compose the prior at run-time """
         if getattr(self, "_priors", None) is None:
             self._priors = self._get_priors()
+            error = self.enforce_signal_duration
+            if error:
+                self._priors.validate_prior(
+                    duration=self.duration,
+                    minimum_frequency=self.minimum_frequency,
+                    error=True,
+                    warning=False,
+                )
         return self._priors
 
     @priors.setter

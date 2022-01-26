@@ -143,6 +143,7 @@ class DataGenerationInput(Input):
         self.generation_function = args.generation_function
         self.likelihood_type = args.likelihood_type
         self.extra_likelihood_kwargs = args.extra_likelihood_kwargs
+        self.enforce_signal_duration = args.enforce_signal_duration
 
         # PSD
         self.psd_maximum_duration = args.psd_maximum_duration
@@ -457,7 +458,9 @@ class DataGenerationInput(Input):
         )
 
         self.interferometers.inject_signal(
-            waveform_generator=waveform_generator, parameters=self.injection_parameters
+            waveform_generator=waveform_generator,
+            parameters=self.injection_parameters,
+            raise_error=self.enforce_signal_duration,
         )
 
     def inject_signal_into_time_domain_data(self, data, ifo):
