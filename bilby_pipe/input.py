@@ -155,6 +155,13 @@ class Input(object):
         return path
 
     @property
+    def final_result_directory(self):
+        """ The path to the directory where final result output will be stored """
+        path = os.path.join(self._outdir, "final_result")
+        utils.check_directory_exists_and_if_not_mkdir(path)
+        return path
+
+    @property
     def webdir(self):
         utils.check_directory_exists_and_if_not_mkdir(self._webdir)
         return self._webdir

@@ -65,6 +65,8 @@ class MainInput(Input):
         self.osg = args.osg
         self.analysis_executable = args.analysis_executable
         self.result_format = args.result_format
+        self.final_result = args.final_result
+        self.final_result_nsamples = args.final_result_nsamples
 
         self.webdir = args.webdir
         self.email = args.email
