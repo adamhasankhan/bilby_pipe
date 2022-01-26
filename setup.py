@@ -92,7 +92,7 @@ setup(
         "pycondor>=0.5",
         "configargparse",
         "ligo-gracedb",
-        "bilby[gw]>=1.1.2",
+        "bilby[gw]>=1.1.5",
         "scipy>=1.2.0",
         "gwpy",
         "gwosc",
