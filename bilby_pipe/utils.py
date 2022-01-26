@@ -789,5 +789,12 @@ def get_function_from_string_path(python_path):
         )
 
 
+def convert_string_slice_syntax(string):
+    if ":" in string:
+        return list(range(*(int(i) if i else None for i in string.strip().split(":"))))
+    else:
+        return [int(string.strip())]
+
+
 setup_logger()
 logger = logging.getLogger("bilby_pipe")
