@@ -813,6 +813,15 @@ def create_parser(top_level=True):
             "this to work"
         ),
     )
+    prior_parser.add(
+        "--enforce-signal-duration",
+        action=StoreBoolean,
+        default=True,
+        help=(
+            "Whether to require that all signals fit within the segment duration. "
+            "The signal duration is calculated using a post-Newtonian approximation."
+        ),
+    )
 
     postprocessing_parser = parser.add_argument_group(
         title="Post processing arguments",

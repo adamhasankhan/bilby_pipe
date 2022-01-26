@@ -475,6 +475,7 @@ class TestInput(unittest.TestCase):
         inputs.trigger_time = 0
         inputs.deltaT = 2
         inputs.time_reference = "geocent"
+        inputs.enforce_signal_duration = False
         self.assertTrue(isinstance(inputs.priors["chi_1"], bilby.gw.prior.AlignedSpin))
 
     def test_injection_numbers_unset(self):

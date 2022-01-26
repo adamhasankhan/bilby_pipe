@@ -23,6 +23,7 @@ import pandas as pd
 import bilby
 
 from .input import Input
+from .parser import StoreBoolean
 from .utils import (
     BilbyPipeError,
     check_directory_exists_and_if_not_mkdir,
@@ -125,6 +126,15 @@ def create_parser():
             "--gps-file"
         ),
     )
+    parser.add_argument(
+        "--minimum-frequency",
+        type=float,
+        default=None,
+        help=(
+            "The minimum frequency, this is needed when "
+            "enforce-signal-duration is true."
+        ),
+    )
     parser.add(
         "-s",
         "--generation-seed",
@@ -138,6 +148,15 @@ def create_parser():
         type=str,
         help="The name of the prior set to base the prior on. Can be one of"
         "[PriorDict, BBHPriorDict, BNSPriorDict, CalibrationPriorDict]",
+    )
+    parser.add(
+        "--enforce-signal-duration",
+        action=StoreBoolean,
+        default=False,
+        help=(
+            "Whether to require that all signals fit within the segment duration. "
+            "The signal duration is calculated using a post-Newtonian approximation."
+        ),
     )
     return parser
 
@@ -157,6 +176,8 @@ class InjectionCreator(Input):
         deltaT=0.2,
         duration=4,
         post_trigger_duration=2,
+        enforce_signal_duration=False,
+        minimum_frequency=None,
     ):
         self.prior_file = prior_file
         self.prior_dict = prior_dict
@@ -171,6 +192,9 @@ class InjectionCreator(Input):
         self.generation_seed = generation_seed
         self.time_reference = "geocent"
         self.reference_frame = "sky"
+        self.detectors = list()
+        self.minimum_frequency = minimum_frequency
+        self.enforce_signal_duration = enforce_signal_duration
 
     def check_prior(self):
         """Ensures at least prior/prior_dict set"""
@@ -277,6 +301,7 @@ def create_injection_file(
     generation_seed=None,
     extension="dat",
     default_prior="BBHPriorDict",
+    enforce_signal_duration=False,
 ):
     """Makes injection file using arguments from the namespace args parameter"""
     injection_creator = InjectionCreator(
@@ -290,6 +315,7 @@ def create_injection_file(
         duration=duration,
         post_trigger_duration=post_trigger_duration,
         generation_seed=generation_seed,
+        enforce_signal_duration=enforce_signal_duration,
     )
     injection_creator.generate_injection_file(filename, extension)
 
@@ -309,4 +335,5 @@ def main():
         duration=args.duration,
         post_trigger_duration=args.post_trigger_duration,
         generation_seed=args.generation_seed,
+        enforce_signal_duration=args.enforce_signal_duration,
     )
