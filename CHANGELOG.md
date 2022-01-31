@@ -1,5 +1,17 @@
 # All notable changes will be documented in this file
 
+
+## v1.0.5: 2022-01-31
+### Changes
+- Enable PP tests to handle real-data injections (!429)
+- Update dependencies (!428, !431)
+- Enable setting a range of injection values (!425)
+- Use print rather than tqdm by default (!423)
+- Bug fixed (https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=all&milestone_title=1.0.5)
+
+### Added
+- Add noconversion option (!420)
+
 ## v1.0.4: 2021-05-14
 ### Changes
 - Allow different result file formats (!395)
