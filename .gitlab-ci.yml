@@ -33,6 +33,20 @@ containers:
     # write_dockerfiles.py and commit the changes.
     - git diff --exit-code
 
+lookup-tables:
+  stage: initial
+  image: containers.ligo.org/lscsoft/bilby/v2-bilby-python39
+  script:
+    - cd bilby_pipe/data_files
+    - python generate_distance_lookups.py #HACK
+    # Fail if differences exist. If this fails, you may need to run
+    # write_dockerfiles.py and commit the changes.
+    - git diff --exit-code
+  only:
+    - schedules
+    - tags
+
+
 precommits-py3.7:
   stage: initial
   image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python37
@@ -308,6 +322,7 @@ build-python39-container:
 deploy_release:
   stage: deploy
   image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python37
+  needs: ["lookup-tables"]
   variables:
     TWINE_USERNAME: $PYPI_USERNAME
     TWINE_PASSWORD: $PYPI_PASSWORD
@@ -317,4 +332,4 @@ deploy_release:
   script:
     - twine upload dist/*
   only:
-  - tags
+    - tags

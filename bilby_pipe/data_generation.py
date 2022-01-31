@@ -92,6 +92,7 @@ class DataGenerationInput(Input):
         # Prior arguments
         self.reference_frame = args.reference_frame
         self.time_reference = args.time_reference
+        self.phase_marginalization = args.phase_marginalization
         self.prior_file = args.prior_file
         self.prior_dict = args.prior_dict
         self.deltaT = args.deltaT

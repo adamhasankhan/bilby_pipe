@@ -411,10 +411,12 @@ class TestInput(unittest.TestCase):
 
     def test_default_prior_files_lookups(self):
         inputs = bilby_pipe.main.Input()
-        for prior in inputs.default_prior_files:
-            self.assertTrue(
-                os.path.isfile(inputs.get_distance_file_lookup_table(prior))
-            )
+        for phase_marginalization in [True, False]:
+            inputs.phase_marginalization = phase_marginalization
+            for prior in inputs.default_prior_files:
+                self.assertTrue(
+                    os.path.isfile(inputs.get_distance_file_lookup_table(prior))
+                )
 
     def test_prior_file_set_None(self):
         inputs = bilby_pipe.main.Input()
@@ -439,6 +441,7 @@ class TestInput(unittest.TestCase):
     def test_prior_file_set_from_default(self):
         inputs = bilby_pipe.main.Input()
         filename = inputs.default_prior_files["4s"]
+        inputs.phase_marginalization = False
         inputs.prior_file = "4s"
         self.assertEqual(inputs.prior_file, filename)
 

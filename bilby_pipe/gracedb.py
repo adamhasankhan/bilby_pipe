@@ -343,7 +343,7 @@ def create_config_file(
         distance_marginalization_lookup_table = os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
             "data_files",
-            f"{duration}s_distance_marginalization_lookup.npz",
+            f"{duration}s_distance_marginalization_lookup_phase.npz",
         )
 
         if sampler_kwargs == "FastTest":

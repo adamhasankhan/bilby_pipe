@@ -52,21 +52,27 @@ for ii, filename in enumerate(filenames):
     )
 
     print(f"Generating lookup table for prior-file {filename}")
-    dest = f"{os.path.splitext(filename)[0]}_distance_marginalization_lookup.npz"
-    priors = bilby.gw.prior.BBHPriorDict(filename)
 
     if "plot" in sys.argv:
+        priors = bilby.gw.prior.BBHPriorDict(filename)
         plot_SNRs(snr_axes[ii], filename, priors, waveform_generator)
 
-    bilby.gw.likelihood.GravitationalWaveTransient(
-        ifos,
-        waveform_generator,
-        distance_marginalization=True,
-        time_marginalization=False,
-        phase_marginalization=True,
-        priors=priors,
-        distance_marginalization_lookup_table=dest,
-    )
+    for phase_marginalization in [False, True]:
+        priors = bilby.gw.prior.BBHPriorDict(filename)
+        if phase_marginalization:
+            ext = "_distance_marginalization_lookup_phase.npz"
+        else:
+            ext = "_distance_marginalization_lookup.npz"
+        dest = os.path.splitext(filename)[0] + ext
+        bilby.gw.likelihood.GravitationalWaveTransient(
+            ifos,
+            waveform_generator,
+            distance_marginalization=True,
+            time_marginalization=False,
+            phase_marginalization=False,
+            priors=priors,
+            distance_marginalization_lookup_table=dest,
+        )
 
 
 if "plot" in sys.argv:

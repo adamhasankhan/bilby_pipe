@@ -85,6 +85,7 @@ class MainInput(Input):
         self.reference_frame = args.reference_frame
         self.likelihood_type = args.likelihood_type
         self.duration = args.duration
+        self.phase_marginalization = args.phase_marginalization
         self.prior_file = args.prior_file
         self.prior_dict = args.prior_dict
         self.default_prior = args.default_prior
