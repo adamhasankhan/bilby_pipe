@@ -101,7 +101,7 @@ setup(
         "tqdm",
         "corner",
         "dynesty>=1.0.0",
-        "pesummary>=0.2.4",
+        "pesummary>=0.13.0",
         "jinja2",
         "astropy",
     ],
