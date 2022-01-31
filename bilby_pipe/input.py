@@ -751,7 +751,10 @@ class Input(object):
 
     def get_distance_file_lookup_table(self, prior_file_str):
         direc = os.path.dirname(self.default_prior_files[prior_file_str])
-        fname = f"{prior_file_str}_distance_marginalization_lookup.npz"
+        if self.phase_marginalization:
+            fname = f"{prior_file_str}_distance_marginalization_lookup_phase.npz"
+        else:
+            fname = f"{prior_file_str}_distance_marginalization_lookup.npz"
         return os.path.join(direc, fname)
 
     @property
