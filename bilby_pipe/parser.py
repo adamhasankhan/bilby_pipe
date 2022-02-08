@@ -502,12 +502,6 @@ def create_parser(top_level=True):
         ),
     )
     submission_parser.add(
-        "--singularity-image",
-        type=nonestr,
-        default=None,
-        help="Singularity image to use",
-    )
-    submission_parser.add(
         "--scheduler",
         type=str,
         default="condor",

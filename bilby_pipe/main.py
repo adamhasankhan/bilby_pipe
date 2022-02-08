@@ -49,7 +49,6 @@ class MainInput(Input):
         self.condor_job_priority = args.condor_job_priority
         self.online_pe = args.online_pe
         self.create_plots = args.create_plots
-        self.singularity_image = args.singularity_image
         self.create_summary = args.create_summary
 
         self.outdir = args.outdir
