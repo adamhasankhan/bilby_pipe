@@ -42,7 +42,7 @@ class DataAnalysisInput(Input):
     """
 
     def __init__(self, args, unknown_args, test=False):
-        logger.info(f"Command line arguments: {args}")
+        super().__init__(args, unknown_args)
 
         # Generic initialisation
         self.meta_data = dict()

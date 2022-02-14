@@ -39,8 +39,7 @@ class MainInput(Input):
     """ An object to hold all the inputs to bilby_pipe"""
 
     def __init__(self, args, unknown_args):
-        logger.debug("Creating new Input object")
-        logger.debug(f"Command line arguments: {args}")
+        super().__init__(args, unknown_args, print_msg=False)
 
         self.known_args = args
         self.unknown_args = unknown_args
