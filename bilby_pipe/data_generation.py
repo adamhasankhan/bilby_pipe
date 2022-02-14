@@ -63,9 +63,7 @@ class DataGenerationInput(Input):
     """
 
     def __init__(self, args, unknown_args, create_data=True):
-
-        logger.info(f"Command line arguments: {args}")
-        logger.info(f"Unknown command line arguments: {unknown_args}")
+        super().__init__(args, unknown_args)
 
         # Generic initialisation
         self.meta_data = dict(

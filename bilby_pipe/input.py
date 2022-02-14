@@ -7,6 +7,7 @@ import inspect
 import itertools
 import json
 import os
+import subprocess
 from importlib import import_module
 
 import numpy as np
@@ -33,6 +34,15 @@ from .utils import (
 
 class Input(object):
     """ Superclass of input handlers """
+
+    def __init__(self, args, unknown_args, print_msg=True):
+        if print_msg:
+            logger.info(f"Command line arguments: {args}")
+            logger.info(f"Unknown command line arguments: {unknown_args}")
+        self.known_args = args
+        self.unknown_args = unknown_args
+
+        self.conda_env = getattr(self.known_args, "conda_env", None)
 
     @property
     def complete_ini_file(self):
@@ -1403,3 +1413,44 @@ class Input(object):
             )
         pp = pretty_print_dictionary(prior)
         logger.info(f"Input prior = {pp}")
+
+    @property
+    def conda_env(self):
+        return self._conda_env
+
+    @conda_env.setter
+    def conda_env(self, conda_env):
+        if conda_env is None:
+            self._conda_env = None
+            self._conda_path = None
+        elif os.path.isdir(conda_env):
+            # conda_env is a path
+            self._conda_path = conda_env
+            self._conda_env = conda_env.rstrip("/").split("/")
+        elif (
+            _conda_path := self._determine_conda_path_from_env(conda_env)
+        ) is not None:
+            self._conda_env = conda_env
+            self._conda_path = _conda_path
+        else:
+            raise BilbyPipeError(
+                f"conda_env={conda_env} not recognised as an environment"
+            )
+
+    @staticmethod
+    def _determine_conda_path_from_env(conda_env):
+        run_out = subprocess.run(["conda", "env", "list"], capture_output=True)
+        elist = run_out.stdout.decode().split("\n")
+        for line in elist:
+            line_split = line.split()
+            if (len(line_split) > 0) and (conda_env == line_split[0]):
+                _conda_path = line_split[-1]
+                if line_split[1] != "*":
+                    logger.warning(
+                        get_colored_string(
+                            "You are running bilby_pipe from a different environment"
+                            " than the run-time environment. This is not recommended"
+                            " and could cause unexpected behaviour"
+                        )
+                    )
+                return _conda_path

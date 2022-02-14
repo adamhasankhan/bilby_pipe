@@ -502,6 +502,12 @@ def create_parser(top_level=True):
         ),
     )
     submission_parser.add(
+        "--conda-env",
+        type=nonestr,
+        default=None,
+        help="Either a conda environment name of a absolute path to the conda env folder.",
+    )
+    submission_parser.add(
         "--scheduler",
         type=str,
         default="condor",
