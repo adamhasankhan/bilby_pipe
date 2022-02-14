@@ -87,15 +87,27 @@ def create_parser():
             "prior_file or --gps-file is given."
         ),
     )
-    parser.add_arg(
+
+    time_parser = parser.add_mutually_exclusive_group()
+    time_parser.add_arg(
         "-g",
         "--gps-file",
         type=str,
         default=None,
         help=(
-            "A list of gps start times to use for setting a geocent_time prior"
-            ". Note, the trigger time is obtained from "
-            " start_time + duration - post_trigger_duration."
+            "File containing segment GPS start times. This can be a multi-"
+            "column file if (a) it is comma-separated and (b) the zeroth "
+            "column contains the gps-times to use"
+        ),
+    )
+    time_parser.add_arg(
+        "--gps-tuple",
+        type=str,
+        default=None,
+        help=(
+            "Tuple of the (start, step, number) of GPS start times. For"
+            " example, (10, 1, 3) produces the gps start times [10, 11, 12]."
+            " If given, gps-file is ignored."
         ),
     )
     parser.add(
@@ -170,9 +182,9 @@ class InjectionCreator(Input):
         prior_dict,
         default_prior,
         trigger_time,
+        gpstimes,
         n_injection,
         generation_seed,
-        gps_file,
         deltaT=0.2,
         duration=4,
         post_trigger_duration=2,
@@ -184,8 +196,8 @@ class InjectionCreator(Input):
         self.check_prior()
         self.default_prior = default_prior
         self.trigger_time = trigger_time
+        self.gpstimes = gpstimes
         self.deltaT = deltaT
-        self.gps_file = gps_file
         self.duration = duration
         self.post_trigger_duration = post_trigger_duration
         self.n_injection = n_injection
@@ -195,6 +207,11 @@ class InjectionCreator(Input):
         self.detectors = list()
         self.minimum_frequency = minimum_frequency
         self.enforce_signal_duration = enforce_signal_duration
+
+        if self.gpstimes is not None and self.trigger_time not in [0, None]:
+            raise BilbyPipeCreateInjectionsError(
+                "Cannot parse both gpstimes and trigger_time"
+            )
 
     def check_prior(self):
         """Ensures at least prior/prior_dict set"""
@@ -208,12 +225,11 @@ class InjectionCreator(Input):
 
     @n_injection.setter
     def n_injection(self, n_injection):
-        if self.gps_file is not None:
-            logger.info(f"Generation injection using gps_file {self.gps_file}")
+        if self.gpstimes is not None:
             gps_n_injection = len(self.gpstimes)
             if n_injection is not None:
                 logger.warning(
-                    f"n-injection={gps_n_injection} given with gps_file,"
+                    f"n-injection={gps_n_injection} given but gps_file/gps_tuple is also given,"
                     f" ignoring n-injection={n_injection}"
                 )
             n_injection = gps_n_injection
@@ -227,7 +243,7 @@ class InjectionCreator(Input):
     def get_injection_dataframe(self):
         """Samples parameters from the prior into a dataframe"""
         inj_df = pd.DataFrame.from_dict(self.priors.sample(self.n_injection))
-        if self.gps_file is not None:
+        if self.gpstimes is not None:
             geocent_times = []
             for start_time in self.gpstimes:
                 geocent_time = get_geocent_time_with_uncertainty(
@@ -295,7 +311,7 @@ def create_injection_file(
     prior_dict=None,
     trigger_time=None,
     deltaT=0.2,
-    gps_file=None,
+    gpstimes=None,
     duration=4,
     post_trigger_duration=2,
     generation_seed=None,
@@ -311,7 +327,7 @@ def create_injection_file(
         default_prior=default_prior,
         trigger_time=trigger_time,
         deltaT=deltaT,
-        gps_file=gps_file,
+        gpstimes=gpstimes,
         duration=duration,
         post_trigger_duration=post_trigger_duration,
         generation_seed=generation_seed,
@@ -324,6 +340,13 @@ def main():
     """Driver to create an injection file"""
     args, unknown_args = parse_args(sys.argv[1:], create_parser())
 
+    if args.gps_tuple is not None:
+        gpstimes = Input.parse_gps_tuple(args.gps_tuple)
+    elif args.gps_file is not None:
+        gpstimes = Input.read_gps_file(args.gps_file)
+    else:
+        gpstimes = None
+
     create_injection_file(
         args.filename,
         prior_file=args.prior_file,
@@ -331,7 +354,7 @@ def main():
         n_injection=args.n_injection,
         trigger_time=args.trigger_time,
         deltaT=args.deltaT,
-        gps_file=args.gps_file,
+        gpstimes=gpstimes,
         duration=args.duration,
         post_trigger_duration=args.post_trigger_duration,
         generation_seed=args.generation_seed,

@@ -179,16 +179,6 @@ class MainInput(Input):
         return os.getcwd()
 
     @property
-    def gps_file(self):
-        return self._gps_file
-
-    @gps_file.setter
-    def gps_file(self, gps_file):
-        self._gps_file = gps_file
-        if self.gps_file is not None:
-            self._parse_gps_file()
-
-    @property
     def n_simulation(self):
         return self._n_simulation
 
@@ -283,18 +273,23 @@ class MainInput(Input):
             self.injection_file = default_injection_file_name
         else:
             logger.info("No injection file found, generating one now")
-            if self.gps_file is not None:
+
+            if self.gps_file is not None or self.gps_tuple is not None:
                 if self.n_simulation > 0 and self.n_simulation != len(self.gpstimes):
                     raise BilbyPipeError(
-                        "gps_file option and n_simulation options not yet implemented"
+                        "gps_file/gps_tuple option and n_simulation are not matched"
                     )
-                n_injection = len(self.gpstimes)
+                gpstimes = self.gpstimes
+                n_injection = len(gpstimes)
             else:
+                gpstimes = None
                 n_injection = self.n_simulation
+
             if self.trigger_time is None:
                 trigger_time_injections = 0
             else:
                 trigger_time_injections = self.trigger_time
+
             create_injection_file(
                 filename=default_injection_file_name,
                 prior_file=self.prior_file,
@@ -302,7 +297,7 @@ class MainInput(Input):
                 n_injection=n_injection,
                 trigger_time=trigger_time_injections,
                 deltaT=self.deltaT,
-                gps_file=self.gps_file,
+                gpstimes=gpstimes,
                 duration=self.duration,
                 post_trigger_duration=self.post_trigger_duration,
                 generation_seed=self.generation_seed,
