@@ -22,6 +22,7 @@ from .utils import (
     BilbyPipeInternalError,
     convert_string_to_dict,
     convert_string_to_list,
+    convert_string_to_tuple,
     get_colored_string,
     get_function_from_string_path,
     get_time_prior,
@@ -181,33 +182,50 @@ class Input(object):
 
     @gps_file.setter
     def gps_file(self, gps_file):
-        """Set the gps_file
-
-        At setting, will check the file exists, read the contents, identify
-        which element to generate data for, and create the interferometers.
-        """
+        """Set and parse the gps_file """
         if gps_file is None:
             self._gps_file = None
             return
         elif os.path.isfile(gps_file):
             self._gps_file = os.path.relpath(gps_file)
         else:
-            raise FileNotFoundError(f"Input file gps_file={gps_file} not understood")
+            raise FileNotFoundError(f"Input file gps_file={gps_file} does not exist")
 
         self._parse_gps_file()
 
     def _parse_gps_file(self):
-        gpstimes = self.read_gps_file()
+        gpstimes = self.read_gps_file(self.gps_file)
         n = len(gpstimes)
         logger.info(f"{n} start times found in gps_file={self.gps_file}")
         self.gpstimes = gpstimes
 
-    def read_gps_file(self):
-        gpstimes = np.loadtxt(self.gps_file, ndmin=2, delimiter=",")
+    @staticmethod
+    def read_gps_file(gps_file):
+        gpstimes = np.loadtxt(gps_file, ndmin=2, delimiter=",")
         if gpstimes.ndim > 1:
-            logger.info(f"Reading column 0 from gps_file={self.gps_file}")
+            logger.info(f"Reading column 0 from gps_file={gps_file}")
             gpstimes = gpstimes[:, 0]
         return gpstimes
+
+    @property
+    def gps_tuple(self):
+        return self._gps_tuple
+
+    @gps_tuple.setter
+    def gps_tuple(self, gps_tuple):
+        """Set and parse the gps_tuple """
+        if gps_tuple is None:
+            self._gps_tuple = None
+            return
+        else:
+            self._gps_tuple = gps_tuple
+            self.gpstimes = self.parse_gps_tuple(gps_tuple)
+
+    @staticmethod
+    def parse_gps_tuple(gps_tuple):
+        start, dt, N = convert_string_to_tuple(gps_tuple)
+        start_times = np.linspace(start, start + (N - 1) * dt, N)
+        return start_times
 
     @property
     def timeslide_file(self):

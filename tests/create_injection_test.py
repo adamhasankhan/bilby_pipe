@@ -109,20 +109,20 @@ class TestCreateInjections(unittest.TestCase):
         df = Input.read_json_injection_file(actual_filename)
         self.assertEqual(len(df), n_injection)
 
-    def test_create_injection_file_with_gps_file(self):
+    def test_create_injection_file_with_gpstimes(self):
         filename = f"{self.outdir}/injections"
         prior_file = self.example_prior_file
         n_injection = 2
+        gps_vals = np.loadtxt("tests/gps_file.txt")
         bilby_pipe.create_injections.create_injection_file(
             filename,
             n_injection,
             prior_file=prior_file,
             generation_seed=None,
             extension="json",
-            gps_file="tests/gps_file.txt",
+            gpstimes=gps_vals,
         )
         filename += ".json"
-        gps_vals = np.loadtxt("tests/gps_file.txt")
 
         df = Input.read_json_injection_file(filename)
         self.assertEqual(len(df), n_injection)

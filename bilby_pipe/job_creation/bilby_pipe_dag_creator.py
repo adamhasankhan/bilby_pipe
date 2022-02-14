@@ -1,8 +1,6 @@
 import copy
 
-import numpy as np
-
-from ..utils import BilbyPipeError, convert_string_to_tuple, logger
+from ..utils import BilbyPipeError, logger
 from .dag import Dag
 from .nodes import (
     AnalysisNode,
@@ -27,11 +25,7 @@ def get_trigger_time_list(inputs):
         trigger_times = [inputs.trigger_time] * inputs.n_simulation
     elif inputs.trigger_time is not None:
         trigger_times = [inputs.trigger_time]
-    elif inputs.gps_tuple is not None:
-        start, dt, N = convert_string_to_tuple(inputs.gps_tuple)
-        start_times = np.linspace(start, start + (N - 1) * dt, N)
-        trigger_times = start_times + inputs.duration - inputs.post_trigger_duration
-    elif inputs.gps_file is not None:
+    elif getattr(inputs, "gpstimes", None) is not None:
         start_times = inputs.gpstimes
         trigger_times = start_times + inputs.duration - inputs.post_trigger_duration
     else:
