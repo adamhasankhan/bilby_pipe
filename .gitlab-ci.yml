@@ -12,14 +12,24 @@ stages:
 cache:
   paths:
     - .pip38
-    - .pip36
+    - .pip39
+
+.parallel: &parallel
+  parallel:
+    matrix:
+      - PY_VERSION: [38, 39]
+
+variables:
+  PRIMARY_VERSION: 38
+  IMAGE_ROOT: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python
+  PRIMARY_IMAGE: $IMAGE_ROOT$PRIMARY_VERSION
 
 # ------------------- Initial stage -------------------------------------------
 
 # Test containers scripts are up to date
 containers:
   stage: initial
-  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python38
+  image: $PRIMARY_IMAGE
   script:
     - cd containers
     - python write_dockerfiles.py
@@ -40,74 +50,58 @@ containers:
 #     - schedules
 #     - tags
 
-
-precommits-py3.8:
+precommits:
+  <<: *parallel
   stage: initial
-  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python38
+  image: $IMAGE_ROOT$PY_VERSION
   script:
-    - source activate python38
-    - mkdir -p .pip38
+    - source activate python$PY_VERSION
+    - mkdir -p .pip$PY_VERSION
     - pip install --upgrade pip
-    - pip --cache-dir=.pip38 install --upgrade bilby
-    - pip --cache-dir=.pip38 install .
-    - pip --cache-dir=.pip38 install pre-commit
-
-    # Run precommits (black, flake8, spellcheck, isort, no merge conflicts, etc)
-    - pre-commit run --all-files --verbose --show-diff-on-failure
-
-precommits-py3.9:
-  stage: initial
-  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python39
-  script:
-    - source activate python39
-    - mkdir -p .pip39
-    - pip install --upgrade pip
-    - pip --cache-dir=.pip39 install --upgrade bilby
-    - pip --cache-dir=.pip39 install .
-    - pip --cache-dir=.pip39 install pre-commit
+    - pip --cache-dir=.pip$PY_VERSION install --upgrade bilby
+    - pip --cache-dir=.pip$PY_VERSION install .
+    - pip --cache-dir=.pip$PY_VERSION install pre-commit
 
     # Run precommits (black, flake8, spellcheck, isort, no merge conflicts, etc)
     - pre-commit run --all-files --verbose --show-diff-on-failure
 
 # ------------------- Test stage -------------------------------------------
 
-python-3.8:
+unit-tests:
+  <<: *parallel
   stage: test
-  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python38
+  image: $IMAGE_ROOT$PY_VERSION
   script:
-    - source activate python38
-    - mkdir -p .pip38
+    - source activate python$PY_VERSION
+    - mkdir -p .pip$PY_VERSION
     - pip install --upgrade pip
-    - pip --cache-dir=.pip38 install --upgrade bilby
-    - pip --cache-dir=.pip38 install .
+    - pip --cache-dir=.pip$PY_VERSION install --upgrade bilby
+    - pip --cache-dir=.pip$PY_VERSION install .
     - test -z ${CONDA_PREFIX} && pip list installed || conda list
 
     # Run tests
-    - pytest
-
-python-3.9:
-  stage: test
-  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python39
-  script:
-    - source activate python39
-    - mkdir -p .pip39
-    - pip install --upgrade pip
-    - pip --cache-dir=.pip39 install --upgrade bilby
-    - pip --cache-dir=.pip39 install .
-    - test -z ${CONDA_PREFIX} && pip list installed || conda list
-
-    # Run tests
-    - pytest
+    - pytest --cov=bilby_pipe --durations 10
+  after_script:
+    - coverage html
+    - mv htmlcov htmlcov_$PY_VERSION
+    - coverage xml
+  artifacts:
+    reports:
+      cobertura: coverage.xml
+    paths:
+      - htmlcov_$PY_VERSION/
+      - coverage.xml
+    expire_in: 30 days
 
 # Test that the examples build properly
 example-ini-file-builds:
   stage: test
-  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python38
+  image: $PRIMARY_IMAGE
   script:
-    - source activate python38
-    - mkdir -p .pip38
-    - pip --cache-dir=.pip38 install --upgrade bilby
-    - pip --cache-dir=.pip38 install .
+    - source activate python$PRIMARY_VERSION
+    - mkdir -p .pip$PRIMARY_VERSION
+    - pip --cache-dir=.pip$PRIMARY_VERSION install --upgrade bilby
+    - pip --cache-dir=.pip$PRIMARY_VERSION install .
     - cd examples/event
     - bilby_pipe GW150914.ini
     - cd outdir_GW150914/
@@ -125,12 +119,12 @@ example-ini-file-builds:
 # Test that the examples build properly
 injection-regression-test:
   stage: test
-  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python38
+  image: $PRIMARY_IMAGE
   script:
-    - source activate python38
-    - mkdir -p .pip38
-    - pip --cache-dir=.pip38 install --upgrade bilby
-    - pip --cache-dir=.pip38 install .
+    - source activate python$PRIMARY_VERSION
+    - mkdir -p .pip$PRIMARY_VERSION
+    - pip --cache-dir=.pip$PRIMARY_VERSION install --upgrade bilby
+    - pip --cache-dir=.pip$PRIMARY_VERSION install .
     - cd tests_ini_files/
     - bilby_pipe test_gaussian_noise_simulation_and_injection.ini --local --bilby-test-mode
     - bilby_pipe test_gaussian_noise_simulation.ini --local --bilby-test-mode
@@ -141,12 +135,12 @@ injection-regression-test:
 # Test that the review tests build properly
 review-test-build:
   stage: test
-  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python38
+  image: $PRIMARY_IMAGE
   script:
-    - source activate python38
-    - mkdir -p .pip38
-    - pip --cache-dir=.pip38 install --upgrade bilby
-    - pip --cache-dir=.pip38 install .
+    - source activate python$PRIMARY_VERSION
+    - mkdir -p .pip$PRIMARY_VERSION
+    - pip --cache-dir=.pip$PRIMARY_VERSION install --upgrade bilby
+    - pip --cache-dir=.pip$PRIMARY_VERSION install .
     - mkdir TEST_REVIEW_FILES
     - cd TEST_REVIEW_FILES
 
@@ -160,9 +154,9 @@ review-test-build:
 
 example-ini-file-pesummary:
   stage: test
-  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python38
+  image: $PRIMARY_IMAGE
   script:
-    - source activate python38
+    - source activate python$PRIMARY_VERSION
     - pip install --upgrade bilby pesummary seaborn>=0.11
     - pip install .
     - cd tests/
@@ -171,11 +165,11 @@ example-ini-file-pesummary:
 
 example-ini-file-gracedb:
   stage: test
-  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python38
+  image: $PRIMARY_IMAGE
   only:
     - schedules
   script:
-    - source activate python38
+    - source activate python$PRIMARY_VERSION
     - pip install --upgrade bilby pesummary
     - pip install .
     - bilby_pipe_gracedb --json examples/gracedb/G298936.json --local --bilby-test-mode --output full-submit --sampler-kwargs FastTest --n-parallel 1
@@ -186,20 +180,16 @@ example-ini-file-gracedb:
 
 docs:
   stage: docs
-  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python38
+  image: $PRIMARY_IMAGE
+  needs: ["precommits"]
   script:
-    - source activate python38
-    - mkdir -p .pip38
-    - pip --cache-dir=.pip38 install .
+    - source activate python$PRIMARY_VERSION
+    - mkdir -p .pip$PRIMARY_VERSION
+    - pip --cache-dir=.pip$PRIMARY_VERSION install .
 
     # Make the documentation
     - apt-get update --allow-releaseinfo-change
     - apt-get -y install graphviz
-    # Sphinx-multiversion needs to be run on the git repo itself
-    - cd ../
-    - rm bilby_pipe/ -r
-    - git clone https://git.ligo.org/lscsoft/bilby_pipe.git
-    - cd bilby_pipe/
     # Installation and clean up
     - cd docs
     - pip install -r requirements.txt
@@ -208,7 +198,9 @@ docs:
     - bilby_pipe_gracedb --json ../examples/gracedb/G298936.json --output ini --outdir .
     # Sphinx-multiversion needs to be run from the top-level
     - cd ..
-    - git fetch origin master
+    # Sphinx-multiversion needs to be run on the git repo itself
+    # not the detached HEAD used in the pipeline
+    - git checkout $CI_COMMIT_REF_NAME
     - git status
     - git branch
     - sphinx-multiversion docs/ docs/_build/
@@ -221,13 +213,10 @@ docs:
 
 pages:
   stage: deploy
-  needs: ["docs", "python-3.8"]
-  dependencies:
-    - python-3.8
-    - docs
+  needs: ["unit-tests", "docs"]
   script:
     - mkdir public/
-    - mv htmlcov/ public/
+    - mv htmlcov_$PRIMARY_VERSION/ public/
     - mv /builds/lscsoft/bilby_pipe/coverage_badge.svg public/
     - mv docs/_build/* public/
   artifacts:
@@ -239,7 +228,8 @@ pages:
 
 
 # Build the containers
-build-python38-container:
+build-container:
+  <<: *parallel
   stage: deploy
   image: docker:19.03.12
   needs: ["containers"]
@@ -248,40 +238,13 @@ build-python38-container:
   script:
     - cd containers
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build --tag v3-bilby_pipe-python38 - < v3-dockerfile-test-suite-python38
-    - docker image tag v3-bilby_pipe-python38 containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python38:latest
-    - docker image push containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python38:latest
-
-build-python38-container:
-  stage: deploy
-  image: docker:19.03.12
-  needs: ["containers"]
-  only:
-    - schedules
-  script:
-    - cd containers
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build --tag v3-bilby_pipe-python38 - < v3-dockerfile-test-suite-python38
-    - docker image tag v3-bilby_pipe-python38 containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python38:latest
-    - docker image push containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python38:latest
-
-build-python39-container:
-  stage: deploy
-  image: docker:19.03.12
-  needs: ["containers"]
-  only:
-    - schedules
-  script:
-    - cd containers
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build --tag v3-bilby_pipe-python39 - < v3-dockerfile-test-suite-python39
-    - docker image tag v3-bilby_pipe-python39 containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python39:latest
-    - docker image push containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python39:latest
-
+    - docker build --tag v3-bilby_pipe-python$PY_VERSION - < v3-dockerfile-test-suite-python$PY_VERSION
+    - docker image tag v3-bilby_pipe-python$PY_VERSION $IMAGE_ROOT$PY_VERSION:latest
+    - docker image push $IMAGE_ROOT$PY_VERSION:latest
 
 deploy_release:
   stage: deploy
-  image: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python38
+  image: $PRIMARY_IMAGE
   # needs: ["lookup-tables"]
   variables:
     TWINE_USERNAME: $PYPI_USERNAME
