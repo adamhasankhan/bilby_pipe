@@ -14,7 +14,7 @@ A package for automating transient gravitational wave parameter estimation
 
 .. |pipeline status| image:: https://git.ligo.org/lscsoft/bilby_pipe/badges/master/pipeline.svg
    :target: https://git.ligo.org/lscsoft/bilby_pipe/commits/master
-.. |coverage report| image:: https://lscsoft.docs.ligo.org/bilby_pipe/coverage_badge.svg
+.. |coverage report| image:: https://git.ligo.org/lscsoft/bilby_pipe/badges/master/coverage.svg
    :target: https://lscsoft.docs.ligo.org/bilby_pipe/htmlcov/
 .. |version| image:: https://img.shields.io/pypi/pyversions/bilby-pipe.svg
    :target: https://pypi.org/project/bilby_pipe/

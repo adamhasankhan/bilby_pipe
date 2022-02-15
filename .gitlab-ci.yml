@@ -217,14 +217,13 @@ pages:
   script:
     - mkdir public/
     - mv htmlcov_$PRIMARY_VERSION/ public/
-    - mv /builds/lscsoft/bilby_pipe/coverage_badge.svg public/
     - mv docs/_build/* public/
   artifacts:
     paths:
       - public
     expire_in: 30 days
   only:
-  - master
+    - master
 
 
 # Build the containers
