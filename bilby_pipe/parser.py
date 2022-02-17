@@ -580,6 +580,15 @@ def create_parser(top_level=True):
         help="If true, format condor submission for running on OSG, default is False",
     )
     submission_parser.add(
+        "--desired-sites",
+        type=nonestr,
+        help=(
+            "A comma-separated list of desired sites, wrapped in quoates."
+            " e.g., desired-sites='site1,site2'. This can be used on the OSG"
+            " to specify specific run nodes."
+        ),
+    )
+    submission_parser.add(
         "--analysis-executable",
         default=None,
         type=nonestr,

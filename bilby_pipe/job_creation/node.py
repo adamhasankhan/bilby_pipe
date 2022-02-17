@@ -106,6 +106,10 @@ class Node(object):
                 ]
                 self.extra_lines.extend(osg_local_node_lines)
 
+        if self.inputs.desired_sites is not None:
+            self.extra_lines.extend([f'+DESIRED_Sites = "{self.inputs.desired_sites}"'])
+            self.requirements.append("IS_GLIDEIN=?=True")
+
         self.job = pycondor.Job(
             name=job_name,
             executable=self.executable,
