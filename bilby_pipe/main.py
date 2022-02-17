@@ -61,6 +61,7 @@ class MainInput(Input):
         self.n_parallel = args.n_parallel
         self.transfer_files = args.transfer_files
         self.osg = args.osg
+        self.desired_sites = args.desired_sites
         self.analysis_executable = args.analysis_executable
         self.result_format = args.result_format
         self.final_result = args.final_result
