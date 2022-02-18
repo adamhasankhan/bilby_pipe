@@ -83,7 +83,7 @@ def create_parser(top_level=True):
     calibration_parser.add(
         "--spline-calibration-nodes",
         type=int,
-        default=5,
+        default=10,
         help=("Number of calibration nodes"),
     )
 
@@ -775,7 +775,7 @@ def create_parser(top_level=True):
     output_parser.add(
         "--result-format",
         type=str,
-        default="json",
+        default="hdf5",
         choices=["json", "hdf5", "pickle"],
         help="Format to save the result file in.",
     )
@@ -823,17 +823,6 @@ def create_parser(top_level=True):
             "A dictionary of priors (alternative to prior-file). Multiline "
             "dictionaries are supported, but each line must contain a single"
             "parameter specification and finish with a comma."
-        ),
-    )
-    prior_parser.add(
-        "--convert-to-flat-in-component-mass",
-        action=StoreBoolean,
-        default=False,
-        help=(
-            "Convert a flat-in chirp mass and mass-ratio prior file to flat "
-            "in component mass during the post-processing. Note, the prior "
-            "must be uniform in Mc and q with constraints in m1 and m2 for "
-            "this to work"
         ),
     )
     prior_parser.add(
@@ -929,7 +918,7 @@ def create_parser(top_level=True):
     )
     waveform_parser.add(
         "--catch-waveform-errors",
-        default=False,
+        default=True,
         action=StoreBoolean,
         help="Turns on waveform error catching",
     )
