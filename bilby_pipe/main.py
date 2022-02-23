@@ -333,6 +333,7 @@ def write_complete_config_file(parser, args, inputs, input_cls=MainInput):
             if isinstance(val[0], str):
                 setattr(args, key, f"[{', '.join(val)}]")
     args.sampler_kwargs = str(inputs.sampler_kwargs)
+    args.submit = False
     parser.write_to_file(
         filename=inputs.complete_ini_file,
         args=args,
@@ -343,7 +344,7 @@ def write_complete_config_file(parser, args, inputs, input_cls=MainInput):
     # Verify that the written complete config is identical to the source config
     complete_args = parser.parse([inputs.complete_ini_file])
     complete_inputs = input_cls(complete_args, "")
-    ignore_keys = ["scheduler_module"]
+    ignore_keys = ["scheduler_module", "submit"]
     differences = []
     for key, val in inputs.__dict__.items():
         if key in ignore_keys:
