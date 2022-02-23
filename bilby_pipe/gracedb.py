@@ -296,7 +296,6 @@ def create_config_file(
     channel_dict,
     sampler_kwargs,
     webdir,
-    convert_to_flat_in_component_mass=False,
     roq=True,
     search_type="cbc",
     online=False,
@@ -319,8 +318,6 @@ def create_config_file(
         Directory to store summary pages
     roq: bool
         If True, use the default ROQ settings if required
-    convert_to_flat_in_component_mass: bool
-        If True, will convert to a flat in component mass prior after running
     search_type: str
         What kind of search identified the trigger, options are "cbc" and "burst"
     online: bool
@@ -385,7 +382,6 @@ def create_config_file(
             phase_marginalization=True,
             distance_marginalization_lookup_table=distance_marginalization_lookup_table,
             roq_scale_factor=scale_factor,
-            convert_to_flat_in_component_mass=convert_to_flat_in_component_mass,
             create_plots=True,
             calibration_model=calibration_model,
             spline_calibration_envelope_dict=calib_dict,
@@ -723,10 +719,8 @@ def main(args=None, unknown_args=None):
 
     if candidate["pipeline"].lower() in CBC_PIPELINES:
         search_type = "cbc"
-        convert_to_flat_in_component_mass = args.convert_to_flat_in_component_mass
     elif candidate["pipeline"].lower() in BURST_PIPELINES:
         search_type = "burst"
-        convert_to_flat_in_component_mass = False
     else:
         raise BilbyPipeError(
             f"Candidate pipeline {candidate['pipeline']} not recognised."
@@ -739,7 +733,6 @@ def main(args=None, unknown_args=None):
         channel_dict=channel_dict,
         sampler_kwargs=sampler_kwargs,
         webdir=webdir,
-        convert_to_flat_in_component_mass=convert_to_flat_in_component_mass,
         search_type=search_type,
         online=args.online_pe,
     )

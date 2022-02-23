@@ -17,7 +17,7 @@ class AnalysisNode(Node):
 
         data_label = generation_node.job_name
         base_name = data_label.replace("generation", "analysis")
-        self.base_job_name = f"{base_name}_{''.join(detectors)}_{sampler}"
+        self.base_job_name = f"{base_name}_{''.join(detectors)}"
         if parallel_idx != "":
             self.job_name = f"{self.base_job_name}_{parallel_idx}"
         else:
