@@ -55,7 +55,8 @@ class TestDataGenerationPlotting(unittest.TestCase):
             "TEST",
             "--label",
             "TEST",
-            "--create-plots",
+            "--plot-spectrogram",
+            "--plot-data",
         ]
         parser = create_generation_parser()
 

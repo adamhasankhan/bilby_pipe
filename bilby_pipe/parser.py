@@ -690,10 +690,25 @@ def create_parser(top_level=True):
     output_parser = parser.add_argument_group(
         title="Output arguments", description="What kind of output/summary to generate."
     )
-    output_parser.add(
-        "--create-plots",
+    output_parser.add_argument(
+        "--plot-trace",
         action="store_true",
-        help="Create diagnostic and posterior plots",
+        help="Create traceplots during the run",
+    )
+    output_parser.add_argument(
+        "--plot-data",
+        action="store_true",
+        help="Create plot of the frequency domain data",
+    )
+    output_parser.add_argument(
+        "--plot-injection",
+        action="store_true",
+        help="Create time-domain plot of the injection",
+    )
+    output_parser.add_argument(
+        "--plot-spectrogram",
+        action="store_true",
+        help="Create spectrogram plot",
     )
     output_parser.add_argument(
         "--plot-calibration",

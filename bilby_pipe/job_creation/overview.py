@@ -195,7 +195,7 @@ N/A
 </object>
 </div>
 
-{% if inputs.create_plots %}
+{% if inputs.plot_data %}
 <button class="accordion"> <b>Data plots</b> </button>
 <div class="panel">
 <table style="width:100%">
@@ -219,7 +219,7 @@ N/A
 <div class="container">
 <h2> Parallel Analysis: {{ parallel_node.label }} </h2>
 
-{% if inputs.create_plots %}
+{% if inputs.plot_trace %}
 <button class="accordion"> <b>Trace plots</b> </button>
 <div class="panel">
    <td><img src="{{ result_directory }}/{{ parallel_node.label }}_checkpoint_trace.png" width=100%></td>

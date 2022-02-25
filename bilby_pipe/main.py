@@ -47,7 +47,6 @@ class MainInput(Input):
         self.submit = args.submit
         self.condor_job_priority = args.condor_job_priority
         self.online_pe = args.online_pe
-        self.create_plots = args.create_plots
         self.create_summary = args.create_summary
 
         self.outdir = args.outdir
@@ -124,17 +123,30 @@ class MainInput(Input):
         self.mpi_samplers = ["pymultinest"]
         self.use_mpi = (self.sampler in self.mpi_samplers) and (self.request_cpus > 1)
 
-        if self.create_plots:
-            for plot_attr in [
-                "calibration",
-                "corner",
-                "marginal",
-                "skymap",
-                "waveform",
-                "format",
-            ]:
-                attr = f"plot_{plot_attr}"
-                setattr(self, attr, getattr(args, attr))
+        # Set plotting options when need the plot node
+        self.plot_node_needed = False
+        for plot_attr in [
+            "calibration",
+            "corner",
+            "marginal",
+            "skymap",
+            "waveform",
+        ]:
+            attr = f"plot_{plot_attr}"
+            setattr(self, attr, getattr(args, attr))
+            if getattr(self, attr):
+                self.plot_node_needed = True
+
+        # Set all other plotting options
+        for plot_attr in [
+            "trace",
+            "data",
+            "injection",
+            "spectrogram",
+            "format",
+        ]:
+            attr = f"plot_{plot_attr}"
+            setattr(self, attr, getattr(args, attr))
 
         self.postprocessing_executable = args.postprocessing_executable
         self.postprocessing_arguments = args.postprocessing_arguments
