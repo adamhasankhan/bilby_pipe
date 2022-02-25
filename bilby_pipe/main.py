@@ -13,6 +13,7 @@ $ bilby_pipe config.ini --submit
 
 will build and submit the job.
 """
+import importlib
 import json
 import os
 
@@ -63,6 +64,7 @@ class MainInput(Input):
         self.osg = args.osg
         self.desired_sites = args.desired_sites
         self.analysis_executable = args.analysis_executable
+        self.analysis_executable_parser = args.analysis_executable_parser
         self.result_format = args.result_format
         self.final_result = args.final_result
         self.final_result_nsamples = args.final_result_nsamples
@@ -385,6 +387,13 @@ def main():
     """ Top-level interface for bilby_pipe """
     parser = create_parser(top_level=True)
     args, unknown_args = parse_args(get_command_line_arguments(), parser)
+
+    if args.analysis_executable_parser is not None:
+        # Alternative parser requested, reload args
+        module = ".".join(args.analysis_executable_parser.split(".")[:-1])
+        function = args.analysis_executable_parser.split(".")[-1]
+        parser = getattr(importlib.import_module(module), function)()
+        args, unknown_args = parse_args(get_command_line_arguments(), parser)
 
     # Check and sort outdir
     args.outdir = args.outdir.replace("'", "").replace('"', "")

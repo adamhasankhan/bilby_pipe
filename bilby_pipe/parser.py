@@ -598,6 +598,17 @@ def create_parser(top_level=True):
             " outdir.)"
         ),
     )
+    submission_parser.add(
+        "--analysis-executable-parser",
+        default=None,
+        type=nonestr,
+        help=(
+            "Python path to the analysis executable parser, used in conjunction"
+            " with analysis-executable. Note, if this is not provided any"
+            " new arguments to analysis-executable will raise a warning, but"
+            " they will be passed to the executable directly."
+        ),
+    )
 
     likelihood_parser = parser.add_argument_group(
         title="Likelihood arguments",
