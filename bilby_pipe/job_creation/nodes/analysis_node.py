@@ -26,7 +26,9 @@ class AnalysisNode(Node):
 
         if self.inputs.use_mpi:
             self.setup_arguments(
-                parallel_program=self._get_executable_path("bilby_pipe_analysis")
+                parallel_program=self._get_executable_path(
+                    self.inputs.analysis_executable
+                )
             )
 
         else:
@@ -61,10 +63,10 @@ class AnalysisNode(Node):
 
     @property
     def executable(self):
-        if self.inputs.analysis_executable:
-            return self._get_executable_path(self.inputs.analysis_executable)
-        elif self.inputs.use_mpi:
+        if self.inputs.use_mpi:
             return self._get_executable_path("mpiexec")
+        elif self.inputs.analysis_executable:
+            return self._get_executable_path(self.inputs.analysis_executable)
         else:
             return self._get_executable_path("bilby_pipe_analysis")
 
