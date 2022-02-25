@@ -180,7 +180,9 @@ class DataGenerationInput(Input):
         self.jitter_time = args.jitter_time
 
         # Plotting
-        self.create_plots = args.create_plots
+        self.plot_data = args.plot_data
+        self.plot_spectrogram = args.plot_spectrogram
+        self.plot_injection = args.plot_injection
 
         if create_data:
             self.create_data(args)
@@ -508,7 +510,7 @@ class DataGenerationInput(Input):
             waveform_arguments=waveform_arguments,
         )
 
-        if self.create_plots:
+        if self.plot_injection:
             outdir = self.data_directory
             label = self.label
         else:
@@ -530,7 +532,7 @@ class DataGenerationInput(Input):
         )
         ifo.meta_data = meta_data
 
-        if self.create_plots:
+        if self.plot_spectrogram:
             # Plots of before and after injection saved
             plot_kwargs = dict(
                 det=ifo.name,
@@ -604,8 +606,10 @@ class DataGenerationInput(Input):
                 data = self.inject_signal_into_time_domain_data(data, ifo)
             ifo.strain_data.set_from_gwpy_timeseries(data)
 
-            if self.create_plots:
-                self.__plot_ifo_data(det, strain_data=data, psd_strain_data=psd_data)
+            if self.plot_spectrogram:
+                self.__plot_ifo_spectrogram(
+                    det, strain_data=data, psd_strain_data=psd_data
+                )
 
             ifo_list.append(ifo)
 
@@ -640,7 +644,7 @@ class DataGenerationInput(Input):
         )
         return psd
 
-    def __plot_ifo_data(self, det, strain_data, psd_strain_data=None):
+    def __plot_ifo_spectrogram(self, det, strain_data, psd_strain_data=None):
         """Method to plot an IFO's data.
 
         Parameters
@@ -1086,7 +1090,7 @@ class DataGenerationInput(Input):
 
         self._interferometers = interferometers
         self.data_set = True
-        if self.create_plots:
+        if self.plot_data:
             interferometers.plot_data(outdir=self.data_directory, label=self.label)
 
     def save_data_dump(self):

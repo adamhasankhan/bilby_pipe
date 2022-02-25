@@ -102,7 +102,7 @@ def generate_dag(inputs):
     for merged_node in merged_node_list:
         if inputs.final_result:
             FinalResultNode(inputs, merged_node, dag=dag)
-        if inputs.create_plots:
+        if inputs.plot_node_needed:
             plot_nodes_list.append(PlotNode(inputs, merged_node, dag=dag))
         if inputs.single_postprocessing_executable:
             PostProcessSingleResultsNode(inputs, merged_node, dag=dag)

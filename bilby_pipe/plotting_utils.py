@@ -2,6 +2,7 @@
 import os
 from typing import Optional
 
+import matplotlib.pyplot as plt
 from gwpy.signal import filter_design
 from gwpy.timeseries import TimeSeries
 
@@ -83,7 +84,7 @@ def strain_spectogram_plot(
         "V1": "gwpy:virgo",
         "K1": "gwpy:kagra",
     }
-    plot, axes = matplotlib.pyplot.subplots(nrows=2, sharex=True, figsize=(8, 6))
+    plot, axes = plt.subplots(nrows=2, sharex=True, figsize=(8, 6))
     tax, qax = axes  # timeseries axis, q-transform spectogram axis
     tax.plot(filt_data, color=det_color[det])  # note: len(filt_data) < len(data)
     tax.set_xlabel("")

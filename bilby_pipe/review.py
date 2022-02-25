@@ -197,7 +197,6 @@ def get_default_setup(args, review_name):
         duration=args.duration,
         sampler=args.sampler,
         sampler_kwargs=get_sampler_kwargs(args),
-        create_plots=None,
         n_parallel=args.n_parallel,
         sampling_frequency=4 * MAXIMUM_FREQUENCY_LOOKUPS[args.prior],
         maximum_frequency=MAXIMUM_FREQUENCY_LOOKUPS[args.prior],
@@ -234,7 +233,8 @@ def fiducial_bbh(args):
         A filename of the ini file generated
     """
     config_dict, rundir, filename = get_default_setup(args, "fiducial_bbh")
-    config_dict["create_plots"] = True
+    config_dict["plot_trace"] = True
+    config_dict["plot_data"] = True
     config_dict["create_summary"] = True
     config_dict["gaussian-noise"] = True
     config_dict["injection"] = True
@@ -260,7 +260,8 @@ def fiducial_bns(args):
         A filename of the ini file generated
     """
     config_dict, rundir, filename = get_default_setup(args, "fiducial_bns")
-    config_dict["create_plots"] = True
+    config_dict["plot_trace"] = True
+    config_dict["plot_data"] = True
     config_dict["create_summary"] = True
     config_dict["gaussian-noise"] = True
     config_dict["injection"] = True
@@ -291,7 +292,6 @@ def pp_test(args):
 
     config_dict, rundir, filename = get_default_setup(args, "pp_test")
 
-    config_dict["create_plots"] = False
     config_dict["injection"] = True
     config_dict["gaussian-noise"] = True
     config_dict["n-simulation"] = 100

@@ -92,7 +92,7 @@ class TestTimeslide(unittest.TestCase):
                 "data-dict={'H1':tests/DATA/strain.hdf5, 'L1':tests/DATA/strain.hdf5}",
                 "psd-dict={'H1':tests/DATA/psd.txt, 'L1':tests/DATA/psd.txt}",
                 "psd-duration=4",
-                "create-plots=True",
+                "plot-spectrogram=True",
             ],
         )
         parser = create_generation_parser()
