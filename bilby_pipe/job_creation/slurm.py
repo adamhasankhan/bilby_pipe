@@ -85,8 +85,8 @@ class SubmitSLURM(object):
                 job_slurm_args = slurm_args
                 job_slurm_args += " --nodes=1"
                 job_slurm_args += f" --ntasks-per-node={node.request_cpus}"
-                job_slurm_args += " --mem={}G".format(
-                    int(float(node.request_memory.split(" ")[0]))
+                job_slurm_args += (
+                    f" --mem={int(float(node.request_memory.rstrip('GB')))}G"
                 )
                 job_slurm_args += f" --time={node.slurm_walltime}"
                 job_slurm_args += f" --job-name={node.name}"

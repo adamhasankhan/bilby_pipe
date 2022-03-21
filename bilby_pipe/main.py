@@ -118,6 +118,7 @@ class MainInput(Input):
         if self.injection:
             self.check_injection()
 
+        self.request_disk = args.request_disk
         self.request_memory = args.request_memory
         self.request_memory_generation = args.request_memory_generation
         self.request_cpus = args.request_cpus
@@ -206,13 +207,25 @@ class MainInput(Input):
             raise BilbyPipeError(f"Input n_simulation={n_simulation} not understood")
 
     @property
+    def request_disk(self):
+        return self._request_disk
+
+    @request_disk.setter
+    def request_disk(self, request_disk):
+        self._request_disk = f"{request_disk}GB"
+        self._request_disk_in_GB = float(request_disk)
+        logger.info(f"Setting analysis request_disk={self._request_disk}")
+        self._request_disk = f"{request_disk}GB"
+
+    @property
     def request_memory(self):
         return self._request_memory
 
     @request_memory.setter
     def request_memory(self, request_memory):
-        logger.info(f"Setting analysis request_memory={request_memory}GB")
-        self._request_memory = f"{request_memory} GB"
+        self._request_memory = f"{request_memory}GB"
+        self._request_memory_in_GB = request_memory
+        logger.info(f"Setting analysis request_memory={self._request_memory}")
 
     @property
     def request_memory_generation(self):
@@ -226,7 +239,7 @@ class MainInput(Input):
                 self.duration, roq=roq
             )
         logger.info(f"Setting request_memory_generation={request_memory_generation}GB")
-        self._request_memory_generation = f"{request_memory_generation} GB"
+        self._request_memory_generation = f"{request_memory_generation}GB"
 
     @property
     def request_cpus(self):
