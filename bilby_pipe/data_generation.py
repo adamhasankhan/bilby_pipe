@@ -552,18 +552,6 @@ class DataGenerationInput(Input):
 
         return signal_and_data
 
-    @property
-    def psd_dict(self):
-        return self._psd_dict
-
-    @psd_dict.setter
-    def psd_dict(self, psd_dict):
-        if psd_dict is not None:
-            self._psd_dict = convert_string_to_dict(psd_dict, "psd-dict")
-        else:
-            logger.debug("psd-dict set to None")
-            self._psd_dict = None
-
     def _set_psd_from_file(self, ifo):
         psd_file = self.psd_dict[ifo.name]
         logger.info(f"Setting {ifo.name} PSD from file {psd_file}")

@@ -86,6 +86,10 @@ class TestDataGenerationInput(unittest.TestCase):
         self.assertEqual(128, self.inputs.duration)
         self.assertEqual(2048, self.inputs.psd_duration)
 
+    def test_psd_dict(self):
+        self.inputs.psd_dict = "{H1:tests/DATA/psd.txt, L1:tests/DATA/psd.txt}"
+        self.assertEqual(self.inputs.psd_dict["H1"], "tests/DATA/psd.txt")
+
     def test_set_reference_frequency(self):
         args_list = self.default_args_list + ["--reference-frequency", "10"]
         inputs = DataGenerationInput(

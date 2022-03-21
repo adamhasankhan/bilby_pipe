@@ -158,6 +158,8 @@ class MainInput(Input):
 
         self.summarypages_arguments = args.summarypages_arguments
 
+        self.psd_dict = args.psd_dict
+
         self.check_source_model(args)
 
         self.extra_lines = []

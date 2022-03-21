@@ -1463,3 +1463,29 @@ class Input(object):
                         )
                     )
                 return _conda_path
+
+    @property
+    def psd_dict(self):
+        return self._psd_dict
+
+    @psd_dict.setter
+    def psd_dict(self, psd_dict):
+        if psd_dict is not None:
+            self._psd_dict = convert_string_to_dict(psd_dict, "psd-dict")
+            self._validate_psd_dict()
+        else:
+            logger.debug("psd-dict set to None")
+            self._psd_dict = None
+
+    def _validate_psd_dict(self):
+        # Check all detectors are listed
+        for det in self.detectors:
+            if det not in self.psd_dict:
+                raise BilbyPipeError(f"Detector {det} not listed in the psd-dict")
+
+        # Check all PSD files exist
+        for det, psd_file in self.psd_dict.items():
+            if not os.path.exists(psd_file):
+                raise BilbyPipeError(
+                    f"PSD file {psd_file} for detector {det} does not exist"
+                )
