@@ -479,10 +479,16 @@ def create_parser(top_level=True):
         ),
     )
     submission_parser.add(
+        "--request-disk",
+        type=float,
+        default="1",
+        help="Disk allocation request in GB. Default is 1GB.",
+    )
+    submission_parser.add(
         "--request-memory",
         type=float,
         default=4.0,
-        help="Memory allocation request (GB), defaults is 4GB",
+        help="Memory allocation request (GB). Default is 4GB",
     )
     submission_parser.add(
         "--request-memory-generation",

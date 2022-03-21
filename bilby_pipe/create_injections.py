@@ -204,7 +204,7 @@ class InjectionCreator(Input):
         self.generation_seed = generation_seed
         self.time_reference = "geocent"
         self.reference_frame = "sky"
-        self.detectors = list()
+        self.detectors = self.known_detectors
         self.minimum_frequency = minimum_frequency
         self.enforce_signal_duration = enforce_signal_duration
 

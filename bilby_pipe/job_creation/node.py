@@ -18,7 +18,7 @@ class Node(object):
     def __init__(self, inputs):
         self.inputs = inputs
         self._universe = "vanilla"
-        self.request_disk = None
+        self.request_disk = self.inputs.request_disk
         self.online_pe = self.inputs.online_pe
         self.getenv = True
         self.notification = inputs.notification
