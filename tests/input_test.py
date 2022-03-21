@@ -1,6 +1,6 @@
 import os
 import unittest
-from shutil import copyfile
+from shutil import copyfile, rmtree
 
 import pandas as pd
 
@@ -16,9 +16,11 @@ class TestInput(unittest.TestCase):
             "tests/lalinference_test_injection_standard.json"
         )
         self.test_injection_file_dat = "tests/lalinference_test_injection_standard.dat"
+        self.test_outdir = "test_outdir"
 
     def tearDown(self):
-        pass
+        if os.path.exists(self.test_outdir):
+            rmtree(self.test_outdir)
 
     def test_idx(self):
         inputs = bilby_pipe.main.Input(None, None)
@@ -173,9 +175,9 @@ class TestInput(unittest.TestCase):
 
     def test_default_webdir(self):
         inputs = bilby_pipe.main.Input(None, None)
-        inputs.outdir = "results"
+        inputs.outdir = self.test_outdir
         inputs.webdir = None
-        self.assertEqual(inputs.webdir, "results/results_page")
+        self.assertEqual(inputs.webdir, f"{self.test_outdir}/results_page")
 
     def test_default_start_time(self):
         inputs = bilby_pipe.main.Input(None, None)
@@ -411,6 +413,7 @@ class TestInput(unittest.TestCase):
 
     def test_default_prior_files_lookups(self):
         inputs = bilby_pipe.main.Input(None, None)
+        inputs.outdir = self.test_outdir
         for phase_marginalization in [True, False]:
             inputs.phase_marginalization = phase_marginalization
             for prior in inputs.default_prior_files:
@@ -440,6 +443,7 @@ class TestInput(unittest.TestCase):
 
     def test_prior_file_set_from_default(self):
         inputs = bilby_pipe.main.Input(None, None)
+        inputs.outdir = self.test_outdir
         filename = inputs.default_prior_files["4s"]
         inputs.phase_marginalization = False
         inputs.prior_file = "4s"

@@ -7,6 +7,7 @@ import inspect
 import itertools
 import json
 import os
+import shutil
 import subprocess
 from importlib import import_module
 
@@ -778,6 +779,14 @@ class Input(object):
         return {os.path.basename(ff).rstrip(".prior"): ff for ff in filenames}
 
     def get_distance_file_lookup_table(self, prior_file_str):
+        lookup_file_source = self.get_source_distance_file_lookup_table(prior_file_str)
+        fname = os.path.basename(lookup_file_source)
+        lookup_file_dest = os.path.join(self.outdir, "." + fname)
+        if os.path.isfile(lookup_file_source):
+            shutil.copyfile(lookup_file_source, lookup_file_dest)
+        return lookup_file_dest
+
+    def get_source_distance_file_lookup_table(self, prior_file_str):
         direc = os.path.dirname(self.default_prior_files[prior_file_str])
         if self.phase_marginalization:
             fname = f"{prior_file_str}_distance_marginalization_lookup_phase.npz"
