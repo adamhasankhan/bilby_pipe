@@ -116,7 +116,7 @@ def create_parser():
         default=0.2,
         help=(
             "The symmetric width (in s) around the trigger time to"
-            " search over the coalesence time. Ignored if a geocent_time prior"
+            " search over the coalescence time. Ignored if a geocent_time prior"
             " exists in the prior_file"
         ),
     )
@@ -174,7 +174,7 @@ def create_parser():
 
 
 class InjectionCreator(Input):
-    """ An object to hold inputs to create_injection for consistency"""
+    """An object to hold inputs to create_injection for consistency"""
 
     def __init__(
         self,

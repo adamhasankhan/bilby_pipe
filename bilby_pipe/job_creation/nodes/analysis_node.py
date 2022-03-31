@@ -84,6 +84,6 @@ class AnalysisNode(Node):
 
     @property
     def slurm_walltime(self):
-        """ Default wall-time for base-name """
+        """Default wall-time for base-name"""
         # Seven days
         return self.inputs.scheduler_analysis_time

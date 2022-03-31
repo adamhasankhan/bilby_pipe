@@ -186,7 +186,7 @@ class DataAnalysisInput(Input):
 
     @property
     def result_class(self):
-        """ The bilby result class to store results in """
+        """The bilby result class to store results in"""
         try:
             return bilby.gw.result.CompactBinaryCoalescenceResult
         except AttributeError:
@@ -246,12 +246,12 @@ class DataAnalysisInput(Input):
 
 
 def create_analysis_parser():
-    """ Data analysis parser creation """
+    """Data analysis parser creation"""
     return create_parser(top_level=False)
 
 
 def main():
-    """ Data analysis main logic """
+    """Data analysis main logic"""
     args, unknown_args = parse_args(sys.argv[1:], create_analysis_parser())
     log_version_information()
     analysis = DataAnalysisInput(args, unknown_args)

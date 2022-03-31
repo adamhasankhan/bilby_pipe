@@ -100,7 +100,7 @@ The "Data Analysis" jobs uses the `bilby_pipe_analysis
 analysed.
 
 For the case of running on GraceDB events, `bilby_pipe` has an additional step
-to the typical workflow `bilby_pipe_gracedb <gracedb.txt>`_ exceutable. For
+to the typical workflow `bilby_pipe_gracedb <gracedb.txt>`_ executable. For
 this case the user can calls :code:`bilby_pipe_gracedb` along with either the
 GraceDB ID of the event or a json file containing information on the GraceDB
 event. For examples on using `bilby_pipe_gracedb` please see the section

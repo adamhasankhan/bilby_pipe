@@ -171,7 +171,7 @@ def plot_waveform():
 
 
 def main():
-    """ Top-level interface for bilby_pipe """
+    """Top-level interface for bilby_pipe"""
 
     args, result, data_dump = _parse_and_load()
 

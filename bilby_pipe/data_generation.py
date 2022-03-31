@@ -279,7 +279,7 @@ class DataGenerationInput(Input):
 
     @property
     def psd_length(self):
-        """ Integer number of durations to use for generating the PSD """
+        """Integer number of durations to use for generating the PSD"""
         return self._psd_length
 
     @psd_length.setter
@@ -320,7 +320,7 @@ class DataGenerationInput(Input):
 
     @property
     def psd_start_time(self):
-        """ The PSD start time relative to segment start time """
+        """The PSD start time relative to segment start time"""
         if self._psd_start_time is not None:
             return self._psd_start_time
         elif self.trigger_time is not None:
@@ -382,7 +382,7 @@ class DataGenerationInput(Input):
             self._channel_dict = None
 
     def get_channel_type(self, det):
-        """ Help method to read the channel_dict and print useful messages """
+        """Help method to read the channel_dict and print useful messages"""
         if self.channel_dict is None:
             raise BilbyPipeError("No channel-dict argument provided")
         if det in self.channel_dict:
@@ -405,7 +405,7 @@ class DataGenerationInput(Input):
         self._sampling_frequency = sampling_frequency
 
     def _set_interferometers_from_gaussian_noise(self):
-        """ Method to generate the interferometers data from Gaussian noise """
+        """Method to generate the interferometers data from Gaussian noise"""
 
         ifos = bilby.gw.detector.InterferometerList(self.detectors)
 
@@ -432,7 +432,7 @@ class DataGenerationInput(Input):
         self.interferometers = ifos
 
     def _set_interferometers_from_injection_in_gaussian_noise(self):
-        """ Method to generate the interferometers data from an injection in Gaussian noise """
+        """Method to generate the interferometers data from an injection in Gaussian noise"""
 
         self.injection_parameters = self.injection_df.iloc[self.idx].to_dict()
         logger.info("Injecting waveform with ")
@@ -1043,7 +1043,7 @@ class DataGenerationInput(Input):
 
     @property
     def interferometers(self):
-        """ A bilby.gw.detector.InterferometerList """
+        """A bilby.gw.detector.InterferometerList"""
         try:
             return self._interferometers
         except AttributeError:
@@ -1082,7 +1082,7 @@ class DataGenerationInput(Input):
             interferometers.plot_data(outdir=self.data_directory, label=self.label)
 
     def save_data_dump(self):
-        """ Method to dump the saved data to disk for later analysis """
+        """Method to dump the saved data to disk for later analysis"""
         likelihood = self.likelihood
         if self.distance_marginalization:
             likelihood_lookup_table = dict(
@@ -1156,12 +1156,12 @@ class DataGenerationInput(Input):
 
 
 def create_generation_parser():
-    """ Data generation parser creation """
+    """Data generation parser creation"""
     return create_parser(top_level=False)
 
 
 def main():
-    """ Data generation main logic """
+    """Data generation main logic"""
     args, unknown_args = parse_args(sys.argv[1:], create_generation_parser())
     log_version_information()
     data = DataGenerationInput(args, unknown_args)

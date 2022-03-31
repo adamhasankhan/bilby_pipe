@@ -31,9 +31,9 @@ source_suffix = [".rst", ".txt"]
 master_doc = "index"
 
 # General information about the project.
-project = u"bilby_pipe"
-copyright = u"2020, Greg Ashton"
-author = u"Gregory Ashton"
+project = "bilby_pipe"
+copyright = "2020, Greg Ashton"
+author = "Gregory Ashton"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

@@ -840,7 +840,7 @@ def create_parser(top_level=True):
         default=0.2,
         help=(
             "The symmetric width (in s) around the trigger time to"
-            " search over the coalesence time"
+            " search over the coalescence time"
         ),
     )
     prior_parser_main = prior_parser.add_mutually_exclusive_group()

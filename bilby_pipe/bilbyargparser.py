@@ -190,7 +190,7 @@ class BilbyArgParser(configargparse.ArgParser):
                 print("", file=ff)
 
     def write_comment_if_needed(self, hyphen_dest, ff):
-        """ Determine if the line is associated with a comment """
+        """Determine if the line is associated with a comment"""
         if hyphen_dest in self.numbers:
             i = 1
             while True:

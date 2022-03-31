@@ -8,7 +8,7 @@ from . import slurm
 
 
 class Dag(object):
-    """ Base Dag object, handles the creation of the DAG structure """
+    """Base Dag object, handles the creation of the DAG structure"""
 
     def __init__(self, inputs):
         self.inputs = inputs
@@ -39,7 +39,7 @@ class Dag(object):
         self.write_bash_script()
 
     def build_pycondor_dag(self):
-        """ Build the pycondor dag, optionally submit them if requested """
+        """Build the pycondor dag, optionally submit them if requested"""
         submitted = False
         if self.inputs.submit:
             try:
@@ -73,7 +73,7 @@ class Dag(object):
                 pass
 
     def build_slurm_submit(self):
-        """ Build slurm submission scripts """
+        """Build slurm submission scripts"""
 
         _slurm = slurm.SubmitSLURM(self)
         if self.inputs.local_generation:
@@ -81,7 +81,7 @@ class Dag(object):
         _slurm.write_master_slurm()
 
     def write_bash_script(self):
-        """ Write the dag to a bash script for command line running """
+        """Write the dag to a bash script for command line running"""
         with open(self.bash_file, "w") as ff:
             ff.write("#!/usr/bin/env bash\n\n")
             for node in self.pycondor_dag.nodes:

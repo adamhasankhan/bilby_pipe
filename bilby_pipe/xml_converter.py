@@ -48,7 +48,7 @@ def xml_to_dataframe(prior_file, reference_frequency, convert_negative_ra=False)
         injection_values["phase"].append(float(row["coa_phase"]))
         injection_values["geocent_time"].append(
             float(row["geocent_end_time"])
-            + float(row["geocent_end_time_ns"]) * (10 ** -9)
+            + float(row["geocent_end_time_ns"]) * (10**-9)
         )
         if convert_negative_ra and float(row["longitude"]) < 0:
             injection_values["ra"].append(float(row["longitude"]) + 2 * pi)

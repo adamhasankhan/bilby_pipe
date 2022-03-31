@@ -34,7 +34,7 @@ from .utils import (
 
 
 class Input(object):
-    """ Superclass of input handlers """
+    """Superclass of input handlers"""
 
     def __init__(self, args, unknown_args, print_msg=True):
         if print_msg:
@@ -51,7 +51,7 @@ class Input(object):
 
     @property
     def idx(self):
-        """ The level A job index """
+        """The level A job index"""
         return self._idx
 
     @idx.setter
@@ -66,7 +66,7 @@ class Input(object):
 
     @property
     def detectors(self):
-        """ A list of the detectors to include, e.g., ['H1', 'L1'] """
+        """A list of the detectors to include, e.g., ['H1', 'L1']"""
         return self._detectors
 
     @detectors.setter
@@ -86,12 +86,12 @@ class Input(object):
 
     @staticmethod
     def _split_string_by_space(string):
-        """ Converts "H1 L1" to ["H1", "L1"] """
+        """Converts "H1 L1" to ["H1", "L1"]"""
         return string.split(" ")
 
     @staticmethod
     def _convert_string_to_list(string):
-        """ Converts various strings to a list """
+        """Converts various strings to a list"""
         string = string.replace(",", " ")
         string = string.replace("[", "")
         string = string.replace("]", "")
@@ -102,7 +102,7 @@ class Input(object):
 
     @property
     def outdir(self):
-        """ The path to the directory where output will be stored """
+        """The path to the directory where output will be stored"""
         utils.check_directory_exists_and_if_not_mkdir(self._outdir)
         return self._outdir
 
@@ -114,14 +114,14 @@ class Input(object):
 
     @property
     def submit_directory(self):
-        """ The path to the directory where submit output will be stored """
+        """The path to the directory where submit output will be stored"""
         path = os.path.join(self._outdir, "submit")
         utils.check_directory_exists_and_if_not_mkdir(path)
         return path
 
     @property
     def log_directory(self):
-        """ The top-level directory for the log directories """
+        """The top-level directory for the log directories"""
         utils.check_directory_exists_and_if_not_mkdir(self._log_directory)
         return self._log_directory
 
@@ -134,42 +134,42 @@ class Input(object):
 
     @property
     def data_generation_log_directory(self):
-        """ The path to the directory where generation logs will be stored """
+        """The path to the directory where generation logs will be stored"""
         path = os.path.join(self.log_directory, "log_data_generation")
         utils.check_directory_exists_and_if_not_mkdir(path)
         return path
 
     @property
     def data_analysis_log_directory(self):
-        """ The path to the directory where analysis logs will be stored """
+        """The path to the directory where analysis logs will be stored"""
         path = os.path.join(self.log_directory, "log_data_analysis")
         utils.check_directory_exists_and_if_not_mkdir(path)
         return path
 
     @property
     def summary_log_directory(self):
-        """ The path to the directory where pesummary logs will be stored """
+        """The path to the directory where pesummary logs will be stored"""
         path = os.path.join(self.log_directory, "log_results_page")
         utils.check_directory_exists_and_if_not_mkdir(path)
         return path
 
     @property
     def data_directory(self):
-        """ The path to the directory where data output will be stored """
+        """The path to the directory where data output will be stored"""
         path = os.path.join(self._outdir, "data")
         utils.check_directory_exists_and_if_not_mkdir(path)
         return path
 
     @property
     def result_directory(self):
-        """ The path to the directory where result output will be stored """
+        """The path to the directory where result output will be stored"""
         path = os.path.join(self._outdir, "result")
         utils.check_directory_exists_and_if_not_mkdir(path)
         return path
 
     @property
     def final_result_directory(self):
-        """ The path to the directory where final result output will be stored """
+        """The path to the directory where final result output will be stored"""
         path = os.path.join(self._outdir, "final_result")
         utils.check_directory_exists_and_if_not_mkdir(path)
         return path
@@ -188,12 +188,12 @@ class Input(object):
 
     @property
     def gps_file(self):
-        """ The gps file containing the list of gps times """
+        """The gps file containing the list of gps times"""
         return self._gps_file
 
     @gps_file.setter
     def gps_file(self, gps_file):
-        """Set and parse the gps_file """
+        """Set and parse the gps_file"""
         if gps_file is None:
             self._gps_file = None
             return
@@ -224,7 +224,7 @@ class Input(object):
 
     @gps_tuple.setter
     def gps_tuple(self, gps_tuple):
-        """Set and parse the gps_tuple """
+        """Set and parse the gps_tuple"""
         if gps_tuple is None:
             self._gps_tuple = None
             return
@@ -437,7 +437,7 @@ class Input(object):
 
     @property
     def frequency_domain_source_model(self):
-        """ String of which frequency domain source model to use """
+        """String of which frequency domain source model to use"""
         return self._frequency_domain_source_model
 
     @frequency_domain_source_model.setter
@@ -771,7 +771,7 @@ class Input(object):
 
     @staticmethod
     def get_default_prior_files():
-        """ Returns a dictionary of the default priors """
+        """Returns a dictionary of the default priors"""
         prior_files_glob = os.path.join(
             os.path.dirname(os.path.realpath(__file__)), "data_files/*prior"
         )
@@ -919,7 +919,7 @@ class Input(object):
 
     @property
     def priors(self):
-        """ Read in and compose the prior at run-time """
+        """Read in and compose the prior at run-time"""
         if getattr(self, "_priors", None) is None:
             self._priors = self._get_priors()
             error = self.enforce_signal_duration
@@ -1361,7 +1361,7 @@ class Input(object):
 
     @sampler.setter
     def sampler(self, sampler):
-        """ Setter for the sampler """
+        """Setter for the sampler"""
 
         if not isinstance(sampler, str):
             raise BilbyPipeError("Sampler must be a single string")
@@ -1398,7 +1398,7 @@ class Input(object):
         self.update_sampler_kwargs_conditional_on_request_cpus()
 
     def update_sampler_kwargs_conditional_on_request_cpus(self):
-        """ If the user adds request-cpu >1, update kwargs based on the sampler """
+        """If the user adds request-cpu >1, update kwargs based on the sampler"""
 
         # Keys are samplers, values are the dictionary inputs to update
         parallelisation_dict = dict(

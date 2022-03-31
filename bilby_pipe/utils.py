@@ -47,7 +47,7 @@ class BilbyPipeInternalError(Exception):
 
 
 class ArgumentsString(object):
-    """ A convenience object to aid in the creation of argument strings """
+    """A convenience object to aid in the creation of argument strings"""
 
     def __init__(self):
         self.argument_list = []
@@ -69,7 +69,7 @@ class ArgumentsString(object):
         self.argument_list += unknown_args
 
     def add_command_line_arguments(self):
-        """ Adds command line arguments given in addition to the ini file """
+        """Adds command line arguments given in addition to the ini file"""
         command_line_args_list = get_command_line_arguments()
         # Remove the first positional ini-file argument
         command_line_args_list = command_line_args_list[1:]
@@ -229,7 +229,7 @@ SAMPLER_SETTINGS = {
 
 
 def get_command_line_arguments():
-    """ Helper function to return the list of command line arguments """
+    """Helper function to return the list of command line arguments"""
     return sys.argv[1:]
 
 
@@ -552,7 +552,7 @@ def write_config_file(config_dict, filename, comment=None, remove_none=False):
 
 
 def test_connection():
-    """ A generic test to see if the network is reachable """
+    """A generic test to see if the network is reachable"""
     try:
         urllib.request.urlopen("https://google.com", timeout=1.0)
     except urllib.error.URLError:
@@ -591,7 +591,7 @@ def next_power_of_2(x):
 
 
 def request_memory_generation_lookup(duration, roq=False):
-    """ Function to determine memory required at the data generation step """
+    """Function to determine memory required at the data generation step"""
     if roq:
         return int(max([8, min([60, duration])]))
     else:

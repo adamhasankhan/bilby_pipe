@@ -216,7 +216,7 @@ def calibration_dict_lookup(trigger_time, detectors):
 
 
 def read_candidate(candidate):
-    """ Read a gracedb candidate json dictionary """
+    """Read a gracedb candidate json dictionary"""
     if "extra_attributes" not in candidate:
         raise BilbyPipeError(
             "Cannot parse event dictionary, not 'extra_attributes' present."

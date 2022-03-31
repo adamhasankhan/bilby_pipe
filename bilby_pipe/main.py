@@ -37,7 +37,7 @@ from .utils import (
 
 
 class MainInput(Input):
-    """ An object to hold all the inputs to bilby_pipe"""
+    """An object to hold all the inputs to bilby_pipe"""
 
     def __init__(self, args, unknown_args):
         super().__init__(args, unknown_args, print_msg=False)
@@ -264,7 +264,7 @@ class MainInput(Input):
 
     @staticmethod
     def check_source_model(args):
-        """ Check the source model consistency with the approximant """
+        """Check the source model consistency with the approximant"""
         if "tidal" in args.waveform_approximant.lower():
             if "neutron_star" not in args.frequency_domain_source_model.lower():
                 msg = [
@@ -406,12 +406,12 @@ def write_complete_config_file(parser, args, inputs, input_cls=MainInput):
 
 
 def perform_runtime_checks(inputs, args):
-    """ Perform a set of run-time checks """
+    """Perform a set of run-time checks"""
     inputs.sampler = args.sampler
 
 
 def main():
-    """ Top-level interface for bilby_pipe """
+    """Top-level interface for bilby_pipe"""
     parser = create_parser(top_level=True)
     args, unknown_args = parse_args(get_command_line_arguments(), parser)
 
