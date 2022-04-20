@@ -566,8 +566,11 @@ def create_parser(top_level=True):
         action=StoreBoolean,
         default=True,
         help=(
-            "If true, use HTCondor file transfer mechanism, default is True"
-            "for non-condor schedulers, this option is ignored"
+            "If true (default), use the HTCondor file transfer mechanism"
+            " For non-condor schedulers, this option is ignored."
+            " Note: the log files are automatically synced, but to sync the "
+            " results during the run (e.g. to inspect progress), use the "
+            " executable bilby_pipe_htcondor_sync"
         ),
     )
     submission_parser.add(
