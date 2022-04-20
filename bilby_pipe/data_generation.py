@@ -13,7 +13,7 @@ from bilby.gw.detector import PowerSpectralDensity
 from bilby_pipe.input import Input
 from bilby_pipe.main import parse_args
 from bilby_pipe.parser import create_parser
-from bilby_pipe.plotting_utils import strain_spectogram_plot
+from bilby_pipe.plotting_utils import plot_whitened_data, strain_spectrogram_plot
 from bilby_pipe.utils import (
     BilbyPipeError,
     DataDump,
@@ -543,10 +543,10 @@ class DataGenerationInput(Input):
                 label=self.label,
             )
 
-            strain_spectogram_plot(
+            strain_spectrogram_plot(
                 data=data, extra_label="before_injection", **plot_kwargs
             )
-            strain_spectogram_plot(
+            strain_spectrogram_plot(
                 data=signal_and_data, extra_label="with_injection", **plot_kwargs
             )
 
@@ -672,7 +672,7 @@ class DataGenerationInput(Input):
 
         # plot PSD
         if plot_psd:
-            strain_spectogram_plot(
+            strain_spectrogram_plot(
                 data=psd_strain_data,
                 extra_label=f"D{int(psd_time[1] - psd_time[0])}",
                 **plot_kwargs,
@@ -680,7 +680,7 @@ class DataGenerationInput(Input):
 
         # plot psd_strain_data+strain_data  and zoom into strain_data segment
         data_with_psd = psd_strain_data.append(strain_data, inplace=False)
-        strain_spectogram_plot(
+        strain_spectrogram_plot(
             data=data_with_psd, extra_label=f"D{int(time[1] - time[0])}", **plot_kwargs
         )
 
@@ -1080,6 +1080,11 @@ class DataGenerationInput(Input):
         self.data_set = True
         if self.plot_data:
             interferometers.plot_data(outdir=self.data_directory, label=self.label)
+            plot_whitened_data(
+                interferometers=interferometers,
+                data_directory=self.data_directory,
+                label=self.label,
+            )
 
     def save_data_dump(self):
         """Method to dump the saved data to disk for later analysis"""
