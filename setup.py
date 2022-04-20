@@ -122,6 +122,8 @@ setup(
             "bilby_pipe_plot_waveform=bilby_pipe.plot:plot_waveform",
             "bilby_pipe_gracedb=bilby_pipe.gracedb:main",
             "bilby_pipe_write_default_ini=bilby_pipe.parser:main",
+            "bilby_pipe_process_mcmc=bilby_pipe.process_bilby_mcmc:main",
+            "bilby_pipe_htcondor_sync=bilby_pipe.htcondor_sync:main",
             "bilby_pipe_to_ligo_skymap_samples=bilby_pipe.ligo_skymap:main",
         ]
     },
