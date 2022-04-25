@@ -219,11 +219,12 @@ SAMPLER_SETTINGS = {
         "print_method": "interval-60",
     },
     "FastTest": {
-        "nlive": 500,
-        "walks": 50,
-        "dlogz": 2,
+        "nlive": 50,
+        "walks": 100,
+        "dlogz": 1,
         "check_point_plot": True,
-        "n_check_point": 1000,
+        "check_point_delta_t": 1800,
+        "print_method": "interval-10",
     },
 }
 

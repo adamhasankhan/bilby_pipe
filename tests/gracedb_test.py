@@ -3,6 +3,7 @@ import os
 import shutil
 import unittest
 
+from bilby.gw.prior import BBHPriorDict
 from bilby_pipe import gracedb
 from bilby_pipe.utils import BilbyPipeError
 
@@ -132,14 +133,6 @@ class TestGraceDB(unittest.TestCase):
                 webdir,
             )
 
-    # def test_determine_prior_file_from_parameters(self):
-    #     from bilby_pipe.input import Input
-
-    #     # simple check that a prior is returned for the input range
-    #     for chirp_mass in np.linspace(0.1, 100, 100):
-    #         prior = gracedb.determine_prior_file_from_parameters(chirp_mass)
-    #         self.assertTrue(prior in Input.get_default_prior_files())
-
     def test_parse_args(self):
         example_json_data = f"examples/gracedb/{self.example_gracedb_uid}.json"
         parser = gracedb.create_parser()
@@ -150,6 +143,42 @@ class TestGraceDB(unittest.TestCase):
         self.assertEqual(args.outdir, None)
         self.assertEqual(args.gracedb_url, "https://gracedb.ligo.org/api/")
 
+    def test_create_prior_file_high_mass(self):
+        gracedb.generate_prior_from_template(
+            duration=4,
+            roq_params=dict(
+                chirpmassmin=15,
+                chirpmassmax=45,
+                compmin=10,
+            ),
+            scale_factor=1,
+            outdir=self.outdir,
+            template=None,
+            chirp_mass=30,
+        )
+        priors = BBHPriorDict(f"{self.outdir}/online.prior")
+        self.assertEqual(priors["chirp_mass"].minimum, 15)
+        self.assertEqual(priors["chirp_mass"].maximum, 45)
+        self.assertEqual(priors["mass_1"].minimum, 10)
+
+    def test_create_prior_file_low_mass(self):
+        gracedb.generate_prior_from_template(
+            duration=128,
+            roq_params=dict(
+                chirpmassmin=1,
+                chirpmassmax=2,
+                compmin=1,
+            ),
+            scale_factor=1,
+            outdir=self.outdir,
+            template=None,
+            chirp_mass=1.2,
+        )
+        priors = BBHPriorDict(f"{self.outdir}/online.prior")
+        self.assertEqual(priors["chirp_mass"].minimum, 1.2 - 0.01)
+        self.assertEqual(priors["chirp_mass"].maximum, 1.2 + 0.01)
+        self.assertEqual(priors["mass_1"].minimum, 1)
+
     def test_main(self):
         gracedb_uid = "G298936"
         example_json_data = f"examples/gracedb/{gracedb_uid}.json"
@@ -157,8 +186,9 @@ class TestGraceDB(unittest.TestCase):
         args = parser.parse_args(["--json", example_json_data])
         gracedb.main(args)
         files = glob.glob(self.example_gracedb_uid_outdir + "/submit/*")
+        print(files)
         # Check this creates jobs
-        self.assertEqual(len(files), 11)
+        self.assertEqual(len(files), 10)
 
 
 if __name__ == "__main__":
