@@ -1,5 +1,18 @@
 # All notable changes will be documented in this file
 
+## v1.0.6: 2022-04-25
+
+See MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.0.6)
+
+### Changes
+- Updates for O3 replay (!448)
+- Improve plotting (!449, !438)
+- Minor bug fixes
+
+### Added
+- Command line tool to online-process bilby_mcmc runs (!402)
+- Option to specify job sides on IGWN network (!437)
+- Option to specify alternative parser (!442)
 
 ## v1.0.5: 2022-01-31
 ### Changes
