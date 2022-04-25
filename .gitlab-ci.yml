@@ -172,7 +172,7 @@ example-ini-file-gracedb:
     - source activate python$PRIMARY_VERSION
     - pip install --upgrade bilby pesummary
     - pip install .
-    - bilby_pipe_gracedb --json examples/gracedb/G298936.json --local --bilby-test-mode --output full-submit --sampler-kwargs FastTest --n-parallel 1
+    - bilby_pipe_gracedb --json examples/gracedb/G298936.json --local --bilby-test-mode --output full-submit --settings examples/gracedb/settings.json --n-parallel 1
     - if [[ ! -f outdir_G298936/results_page/home.html ]] ; then exit 1; else echo "Webpage exists"; fi
 
 
@@ -195,7 +195,7 @@ docs:
     - pip install -r requirements.txt
     - make clean
     - bilby_pipe_write_default_ini default.ini
-    - bilby_pipe_gracedb --json ../examples/gracedb/G298936.json --output ini --outdir .
+    - bilby_pipe_gracedb --json ../examples/gracedb/G298936.json --output ini --settings ../examples/gracedb/settings.json --outdir .
     # Sphinx-multiversion needs to be run from the top-level
     - cd ..
     # Sphinx-multiversion needs to be run on the git repo itself

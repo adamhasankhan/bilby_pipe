@@ -90,9 +90,10 @@ class Node(object):
         if self.inputs.email is not None:
             self.extra_lines.append(f"notify_user = {self.inputs.email}")
 
-        if self.online_pe:
-            self.extra_lines.append("+Online_CBC_PE_Daily = True")
-            self.requirements.append("((TARGET.Online_CBC_PE_Daily =?= True))")
+        # FIXME: add these back in if necessary/possible
+        # if self.online_pe:
+        #     self.extra_lines.append("+Online_CBC_PE_Daily = True")
+        #     self.requirements.append("((TARGET.Online_CBC_PE_Daily =?= True))")
 
         if self.universe != "local" and self.inputs.osg:
             if self.run_node_on_osg:
