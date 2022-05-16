@@ -10,9 +10,14 @@ from setuptools import setup
 # check that python version is 3.6 or above
 python_version = sys.version_info
 print("Running Python version %s.%s.%s" % python_version[:3])
-if python_version < (3, 8):
-    sys.exit("Python < 3.8 is not supported, aborting setup")
-print("Confirmed Python version 3.8.0 or above")
+minimum_py_major = 3
+minimum_py_minor = 8
+if python_version < (minimum_py_major, minimum_py_minor):
+    sys.exit(
+        f"Python < {minimum_py_major}.{minimum_py_minor} "
+        "is not supported, aborting setup"
+    )
+print(f"Confirmed Python version {minimum_py_major}.minimum_py_minor.0 or above")
 
 
 def write_version_file(version):
@@ -105,6 +110,7 @@ setup(
         "jinja2",
         "astropy",
     ],
+    python_requires=f">={minimum_py_major}.{minimum_py_minor}",
     entry_points={
         "console_scripts": [
             "bilby_pipe=bilby_pipe.main:main",
