@@ -36,7 +36,7 @@ Installing bilby_pipe from release
 Install bilby_pipe for development
 ----------------------------------
 
-:code:`bilby_pipe` is developed and tested for Python 3.6, and 3.7. In the
+:code:`bilby_pipe` is developed and tested for Python 3.8, and 3.9. In the
 following, we demonstrate how to install a development version of
 :code:`bilby_pipe` on a LIGO Data Grid (LDG) cluster.
 
@@ -85,7 +85,7 @@ Python installation
 
       .. code-block:: console
 
-         $ conda create -n bilby python=3.7
+         $ conda create -n bilby python=3.9
          $ conda activate bilby
 
    .. tab:: virtualenv
@@ -94,19 +94,19 @@ Python installation
 
       .. code-block:: console
 
-         $ virtualenv --python=/usr/bin/python3.6 $HOME/virtualenvs/bilby_pipe
+         $ virtualenv --python=/usr/bin/python3.9 $HOME/virtualenvs/bilby_pipe
          $ source virtualenvs/bilby_pipe/bin/activate
 
 
    .. tab:: CVMFS
 
-      To source a :code:`Python 3.7` installation on the LDG using CVMFS, run the
+      To source a :code:`Python 3.9` installation on the LDG using CVMFS, run the
       commands
 
       .. code-block:: console
 
          $ source /cvmfs/oasis.opensciencegrid.org/ligo/sw/conda/etc/profile.d/conda.sh
-         $ conda activate igwn-py37
+         $ conda activate igwn-py39
 
      Documentation for this conda setup can be found here: https://computing.docs.ligo.org/conda/
 
