@@ -207,7 +207,7 @@ class MainInput(Input):
             self._n_simulation = 0
         else:
             raise BilbyPipeError(f"Input n_simulation={n_simulation} not understood")
-    
+
     @property
     def analysis_executable(self):
         return self._analysis_executable
