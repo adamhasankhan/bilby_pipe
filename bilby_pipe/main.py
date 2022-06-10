@@ -207,6 +207,17 @@ class MainInput(Input):
             self._n_simulation = 0
         else:
             raise BilbyPipeError(f"Input n_simulation={n_simulation} not understood")
+    
+    @property
+    def analysis_executable(self):
+        return self._analysis_executable
+
+    @analysis_executable.setter
+    def analysis_executable(self, analysis_executable):
+        if analysis_executable:
+            self._analysis_executable = analysis_executable
+        else:
+            self._analysis_executable = "bilby_pipe_analysis"
 
     @property
     def request_disk(self):
