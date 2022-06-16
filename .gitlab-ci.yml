@@ -87,7 +87,9 @@ unit-tests:
     - coverage xml
   artifacts:
     reports:
-      cobertura: coverage.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
     paths:
       - htmlcov_$PY_VERSION/
       - coverage.xml
