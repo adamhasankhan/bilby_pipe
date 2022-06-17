@@ -797,5 +797,13 @@ def convert_string_slice_syntax(string):
         return [int(string.strip())]
 
 
+def check_if_psd_is_from_built_in(psd_file):
+    """Check if the psd_file can be found in the bilby built-in directory"""
+    psd_file_built_in = os.path.join(
+        os.path.dirname(bilby.gw.detector.psd.__file__), "noise_curves", psd_file
+    )
+    return os.path.isfile(psd_file_built_in)
+
+
 setup_logger()
 logger = logging.getLogger("bilby_pipe")
