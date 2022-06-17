@@ -190,8 +190,7 @@ docs:
     - pip --cache-dir=.pip$PRIMARY_VERSION install .
 
     # Make the documentation
-    - apt-get update --allow-releaseinfo-change
-    - apt-get -y install graphviz
+    - conda install python-graphviz -y
     # Installation and clean up
     - cd docs
     - pip install -r requirements.txt

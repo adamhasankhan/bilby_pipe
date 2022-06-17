@@ -22,6 +22,7 @@ from .utils import (
     SAMPLER_SETTINGS,
     BilbyPipeError,
     BilbyPipeInternalError,
+    check_if_psd_is_from_built_in,
     convert_string_to_dict,
     convert_string_to_list,
     convert_string_to_tuple,
@@ -1485,7 +1486,11 @@ class Input(object):
 
         # Check all PSD files exist
         for det, psd_file in self.psd_dict.items():
-            if not os.path.exists(psd_file):
+            if os.path.exists(psd_file):
+                return
+            elif check_if_psd_is_from_built_in(psd_file):
+                return
+            else:
                 raise BilbyPipeError(
                     f"PSD file {psd_file} for detector {det} does not exist"
                 )
