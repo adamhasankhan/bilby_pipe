@@ -1206,8 +1206,10 @@ class Input(object):
     def roq_likelihood_kwargs(self):
         if hasattr(self, "likelihood_roq_params"):
             params = self.likelihood_roq_params
-        else:
+        elif self.roq_folder is not None:
             params = np.genfromtxt(self.roq_folder + "/params.dat", names=True)
+        else:
+            params = None
 
         if hasattr(self, "likelihood_roq_weights"):
             weights = self.likelihood_roq_weights
@@ -1250,18 +1252,21 @@ class Input(object):
         waveform_arguments = self.get_default_waveform_arguments()
 
         if "ROQ" in self.likelihood_type:
-            logger.info(
-                "Using {} likelihood with roq-folder={}".format(
-                    self.likelihood_type, self.roq_folder
+            if self.roq_folder is not None:
+                logger.info(
+                    "Using {} likelihood with roq-folder={}".format(
+                        self.likelihood_type, self.roq_folder
+                    )
                 )
-            )
-            freq_nodes_linear = np.load(self.roq_folder + "/fnodes_linear.npy")
-            freq_nodes_quadratic = np.load(self.roq_folder + "/fnodes_quadratic.npy")
-            freq_nodes_linear *= self.roq_scale_factor
-            freq_nodes_quadratic *= self.roq_scale_factor
+                freq_nodes_linear = np.load(self.roq_folder + "/fnodes_linear.npy")
+                freq_nodes_quadratic = np.load(
+                    self.roq_folder + "/fnodes_quadratic.npy"
+                )
+                freq_nodes_linear *= self.roq_scale_factor
+                freq_nodes_quadratic *= self.roq_scale_factor
 
-            waveform_arguments["frequency_nodes_linear"] = freq_nodes_linear
-            waveform_arguments["frequency_nodes_quadratic"] = freq_nodes_quadratic
+                waveform_arguments["frequency_nodes_linear"] = freq_nodes_linear
+                waveform_arguments["frequency_nodes_quadratic"] = freq_nodes_quadratic
 
             waveform_generator = self.waveform_generator_class(
                 frequency_domain_source_model=self.bilby_roq_frequency_domain_source_model,

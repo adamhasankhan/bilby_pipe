@@ -155,7 +155,10 @@ class DataGenerationInput(Input):
 
         # ROQ
         self.roq_folder = args.roq_folder
+        self.roq_linear_matrix = args.roq_linear_matrix
+        self.roq_quadratic_matrix = args.roq_quadratic_matrix
         self.roq_weights = args.roq_weights
+        self.roq_weight_format = args.roq_weight_format
         self.roq_scale_factor = args.roq_scale_factor
 
         # Calibration
@@ -1111,25 +1114,49 @@ class DataGenerationInput(Input):
         data_dump.to_pickle()
 
     def save_roq_weights(self):
-        logger.info(
-            "Using ROQ likelihood with roq-folder={} and roq-scale-factor={}".format(
-                self.roq_folder, self.roq_scale_factor
-            )
-        )
-
-        params = np.genfromtxt(self.roq_folder + "/params.dat", names=True)
-
-        freq_nodes_linear = np.load(self.roq_folder + "/fnodes_linear.npy")
-        freq_nodes_quadratic = np.load(self.roq_folder + "/fnodes_quadratic.npy")
-        freq_nodes_linear *= self.roq_scale_factor
-        freq_nodes_quadratic *= self.roq_scale_factor
-
-        basis_matrix_linear = np.load(self.roq_folder + "/B_linear.npy").T
-        basis_matrix_quadratic = np.load(self.roq_folder + "/B_quadratic.npy").T
-
         waveform_arguments = self.get_default_waveform_arguments()
-        waveform_arguments["frequency_nodes_linear"] = freq_nodes_linear
-        waveform_arguments["frequency_nodes_quadratic"] = freq_nodes_quadratic
+
+        if self.roq_folder is not None:
+            logger.info(
+                f"Using ROQ likelihood with roq-folder={self.roq_folder} and "
+                f"roq-scale-factor={self.roq_scale_factor}"
+            )
+            params = np.genfromtxt(self.roq_folder + "/params.dat", names=True)
+
+            freq_nodes_linear = np.load(self.roq_folder + "/fnodes_linear.npy")
+            freq_nodes_quadratic = np.load(self.roq_folder + "/fnodes_quadratic.npy")
+            freq_nodes_linear *= self.roq_scale_factor
+            freq_nodes_quadratic *= self.roq_scale_factor
+
+            basis_matrix_linear = np.load(self.roq_folder + "/B_linear.npy").T
+            basis_matrix_quadratic = np.load(self.roq_folder + "/B_quadratic.npy").T
+
+            waveform_arguments["frequency_nodes_linear"] = freq_nodes_linear
+            waveform_arguments["frequency_nodes_quadratic"] = freq_nodes_quadratic
+
+            if self.roq_weight_format is None:
+                weight_format = "npz"
+            else:
+                weight_format = self.roq_weight_format
+        elif (
+            self.roq_linear_matrix is not None and self.roq_quadratic_matrix is not None
+        ):
+            logger.info(
+                f"Using ROQ likelihood with linear-matrix={self.roq_linear_matrix}, "
+                f"quadratic-matrix={self.roq_quadratic_matrix}, and roq-scale-factor={self.roq_scale_factor}"
+            )
+            params = None
+            basis_matrix_linear = self.roq_linear_matrix
+            basis_matrix_quadratic = self.roq_quadratic_matrix
+            if self.roq_weight_format is None:
+                weight_format = "hdf5"
+            else:
+                weight_format = self.roq_weight_format
+        else:
+            raise AttributeError(
+                "For the use of ROQ likelihood, roq folder or both linear and "
+                "quadratic matrices are required."
+            )
 
         waveform_generator = self.waveform_generator_class(
             sampling_frequency=self.interferometers.sampling_frequency,
@@ -1155,9 +1182,11 @@ class DataGenerationInput(Input):
 
         del basis_matrix_linear, basis_matrix_quadratic
 
-        weight_file = os.path.join(self.data_directory, self.label + "_roq_weights.npz")
+        weight_file = os.path.join(
+            self.data_directory, f"{self.label}_roq_weights.{weight_format}"
+        )
         self.meta_data["weight_file"] = weight_file
-        likelihood.save_weights(weight_file)
+        likelihood.save_weights(weight_file, format=weight_format)
 
 
 def create_generation_parser():

@@ -673,8 +673,10 @@ def create_parser(top_level=True):
             "The likelihood. Can be one of [GravitationalWaveTransient, "
             "ROQGravitationalWaveTransient, zero] or python path to a bilby "
             "likelihood class available in the users installation. "
-            "The --roq-folder is required if the ROQ likelihood used."
-            "The --roq-folder is required if the ROQ likelihood used."
+            "The --roq-folder or both --linear-matrix and --quadratic-matrix "
+            "are required if the ROQ likelihood used. If both the options are "
+            "specified, ROQ data are taken from roq-folder, and linear-matrix "
+            "and quadratic-matrix are ignored."
             "If `zero` is given, a testing ZeroLikelihood is used which always"
             "return zero."
         ),
@@ -683,12 +685,35 @@ def create_parser(top_level=True):
         "--roq-folder", type=nonestr, default=None, help="The data for ROQ"
     )
     likelihood_parser.add(
+        "--roq-linear-matrix",
+        type=nonestr,
+        default=None,
+        help="Path to ROQ basis for linear inner products. This option is ignored if roq-folder is not None.",
+    )
+    likelihood_parser.add(
+        "--roq-quadratic-matrix",
+        type=nonestr,
+        default=None,
+        help="Path to ROQ basis for quadratic inner products. This option is ignored if roq-folder is not None.",
+    )
+    likelihood_parser.add(
         "--roq-weights",
         type=nonestr,
         default=None,
         help=(
             "If given, the ROQ weights to use (rather than building them). "
             "This must be given along with the roq-folder for checking"
+        ),
+    )
+    likelihood_parser.add(
+        "--roq-weight-format",
+        type=nonestr,
+        default=None,
+        help=(
+            "File format of roq weights. This should be npz, hdf5, or json. "
+            "If not specified, it is set to npz if basis file is specified "
+            "through roq-folder, and hdf5 if through roq-linear-matrix and "
+            "roq-quadratic-matrix"
         ),
     )
     likelihood_parser.add(
