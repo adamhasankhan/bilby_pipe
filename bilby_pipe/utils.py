@@ -13,7 +13,6 @@ import sys
 import urllib
 import urllib.request
 from importlib import import_module
-from pathlib import Path
 
 import bilby
 
@@ -381,13 +380,9 @@ def log_version_information():
 
 
 def get_version_information():
-    version_file = Path(__file__).parent / ".version"
-    try:
-        with open(version_file, "r") as f:
-            return f.readline().rstrip()
-    except FileNotFoundError:
-        print("No version information file '.version' found")
-        return ""
+    from bilby_pipe import _version
+
+    return _version.get_versions()["version"]
 
 
 def convert_string_to_tuple(string, key=None, n=None):
