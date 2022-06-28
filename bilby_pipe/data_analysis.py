@@ -115,20 +115,23 @@ class DataAnalysisInput(Input):
 
     @property
     def sampling_seed(self):
-        return self._samplng_seed
+        return self._sampling_seed
 
     @sampling_seed.setter
     def sampling_seed(self, sampling_seed):
         if sampling_seed is None:
             sampling_seed = np.random.randint(1, 1e6)
-        self._samplng_seed = sampling_seed
+        self._sampling_seed = sampling_seed
         np.random.seed(sampling_seed)
         logger.info(f"Sampling seed set to {sampling_seed}")
 
-        if self.sampler == "cpnest":
-            self.sampler_kwargs["seed"] = self.sampler_kwargs.get(
-                "seed", self._samplng_seed
-            )
+        if not any(
+            [
+                k in self.sampler_kwargs
+                for k in bilby.core.sampler.Sampler.sampling_seed_equiv_kwargs
+            ]
+        ):
+            self.sampler_kwargs["sampling_seed"] = self._sampling_seed
 
     @property
     def interferometers(self):
