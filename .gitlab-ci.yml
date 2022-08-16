@@ -17,10 +17,10 @@ cache:
 .parallel: &parallel
   parallel:
     matrix:
-      - PY_VERSION: [38, 39]
+      - PY_VERSION: [38, 39, 310]
 
 variables:
-  PRIMARY_VERSION: 38
+  PRIMARY_VERSION: 39
   IMAGE_ROOT: containers.ligo.org/lscsoft/bilby_pipe/v3-bilby_pipe-python
   PRIMARY_IMAGE: $IMAGE_ROOT$PRIMARY_VERSION
 
@@ -234,7 +234,7 @@ build-container:
   image: docker:19.03.12
   needs: ["containers"]
   only:
-    - schedules
+  - schedules
   script:
     - cd containers
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
