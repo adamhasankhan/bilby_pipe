@@ -1123,16 +1123,9 @@ class Input(object):
 
         elif self.likelihood_type == "ROQGravitationalWaveTransient":
             Likelihood = bilby.gw.likelihood.ROQGravitationalWaveTransient
-
-            if self.time_marginalization:
-                logger.warning(
-                    "Time marginalization not implemented for "
-                    "ROQGravitationalWaveTransient: option ignored"
-                )
-
-            likelihood_kwargs.pop("time_marginalization", None)
-            likelihood_kwargs.pop("jitter_time", None)
-            likelihood_kwargs.update(self.roq_likelihood_kwargs)
+            likelihood_kwargs.update(
+                self.roq_likelihood_kwargs, jitter_time=self.jitter_time
+            )
         elif "." in self.likelihood_type:
             split_path = self.likelihood_type.split(".")
             module = ".".join(split_path[:-1])
@@ -1140,8 +1133,6 @@ class Input(object):
             Likelihood = getattr(import_module(module), likelihood_class)
             likelihood_kwargs.update(self.extra_likelihood_kwargs)
             if "roq" in self.likelihood_type.lower():
-                likelihood_kwargs.pop("time_marginalization", None)
-                likelihood_kwargs.pop("jitter_time", None)
                 likelihood_kwargs.update(self.roq_likelihood_kwargs)
         else:
             raise ValueError("Unknown Likelihood class {}")
