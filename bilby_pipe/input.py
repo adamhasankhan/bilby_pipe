@@ -955,12 +955,15 @@ class Input(object):
         """
         if self.default_prior in self.combined_default_prior_dicts.keys():
             prior_class = self.combined_default_prior_dicts[self.default_prior]
-            if self.prior_dict is not None:
-                priors = prior_class(dictionary=self.prior_dict)
-            else:
-                priors = prior_class(filename=self.prior_file)
+        elif "." in self.default_prior:
+            prior_class = get_function_from_string_path(self.default_prior)
         else:
             raise ValueError("Unable to set prior: default_prior unavailable")
+
+        if self.prior_dict is not None:
+            priors = prior_class(dictionary=self.prior_dict)
+        else:
+            priors = prior_class(filename=self.prior_file)
 
         priors = self._update_default_prior_to_sky_frame_parameters(priors)
 
