@@ -859,8 +859,11 @@ def create_parser(top_level=True):
         "--default-prior",
         default="BBHPriorDict",
         type=str,
-        help="The name of the prior set to base the prior on. Can be one of"
-        "[PriorDict, BBHPriorDict, BNSPriorDict, CalibrationPriorDict]",
+        help=(
+            "The name of the prior set to base the prior on. Can be one of"
+            "[PriorDict, BBHPriorDict, BNSPriorDict, CalibrationPriorDict]"
+            "or a python path to a bilby prior class available in the user's installation."
+        ),
     )
     prior_parser.add(
         "--deltaT",

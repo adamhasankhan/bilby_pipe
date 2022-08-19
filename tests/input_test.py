@@ -647,6 +647,18 @@ class TestInput(unittest.TestCase):
         inputs.psd_dict = "{H1:aLIGO_ZERO_DET_high_P_psd.txt}"
         inputs._validate_psd_dict()
 
+    def test_custom_default_prior(self):
+        inputs = bilby_pipe.main.Input(None, None)
+        val = dict(lambda_1=bilby.core.prior.Uniform(0, 1000, "lambda_1"))
+        inputs.default_prior = "bilby.gw.prior.BNSPriorDict"
+        inputs.prior_dict = val
+        inputs.time_reference = "geocent"
+        inputs.trigger_time = 0
+        inputs.deltaT = 2
+        p1 = inputs._get_priors()
+        p2 = bilby.gw.prior.BNSPriorDict(val)
+        self.assertEqual(p1["lambda_1"], p2["lambda_1"])
+
 
 if __name__ == "__main__":
     unittest.main()
