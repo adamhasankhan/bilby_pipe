@@ -39,7 +39,10 @@ setup(
     name="bilby_pipe",
     description="Automating the running of bilby for gravitational wave signals",
     long_description=long_description,
-    url="https://lscsoft.docs.ligo.org/bilby_pipe/index.html",
+    url="https://git.ligo.org/lscsoft/bilby_pipe",
+    project_urls={
+        "Documentation": "https://lscsoft.docs.ligo.org/bilby_pipe/master/index.html",
+    },
     author="Gregory Ashton, Isobel Romero-Shaw, Colm Talbot, Charlie Hoy, Shanika Galaudage",
     author_email="gregory.ashton@ligo.org",
     license="MIT",
