@@ -59,7 +59,7 @@ def get_cluster_id(logfile):
         logger.info("No cluster ID found in log file")
 
 
-def rsync_via_ssh(cluster_id, outdir):
+def rsync_via_ssh(cluster_id, outdir, verbose=False):
     """Attempt to rsync the local (submit) directory to current running worker nodes
 
     This method applies when the job is actively executing on a remote worker
@@ -73,6 +73,8 @@ def rsync_via_ssh(cluster_id, outdir):
         The HTCondor clusterId
     outdir: str
         The top-level outdir of the bilby_pipe job
+    verbose: bool
+        If true, print explicit error messages
 
     Returns
     -------
@@ -85,15 +87,16 @@ def rsync_via_ssh(cluster_id, outdir):
     cmd = ["rsync", "-v", "-r", "-e", '"condor_ssh_to_job"', target, sync_path]
     logger.info("Running " + " ".join(cmd))
     out = subprocess.run(cmd, capture_output=True)
+    if verbose:
+        logger.info(f"stdout: {out.stdout.decode('utf-8')}")
+        logger.info(f"stderr: {out.stderr.decode('utf-8')}")
     if out.returncode == 0:
-        logger.info(f"Synced job {cluster_id}: {out.stdout.decode('utf-8')}")
         return True
     else:
-        logger.info(f"Unable to sync job {cluster_id}: {out.stderr.decode('utf-8')}")
         return False
 
 
-def rsync_via_spool(cluster_id, outdir):
+def rsync_via_spool(cluster_id, outdir, verbose=False):
     """Attempt to rsync the local (submit) directory to the spool
 
     This method applies when the job is not actively executing on a remote
@@ -127,9 +130,16 @@ def rsync_via_spool(cluster_id, outdir):
     # Definition of the spool location credit to James Clark
     src = f"{spool_dir}/{subdir}/{procid}/cluster{cluster_id}.proc{procid}.subproc0/{outdir}/"
     if os.path.isdir(src):
-        subprocess.call(["rsync", "-rv", src, outdir])
+        cmd = ["rsync", "-r", src, outdir]
+        logger.info("Running " + " ".join(cmd))
+        out = subprocess.run(cmd, capture_output=True)
+        if verbose:
+            logger.info(f"stdout: {out.stdout.decode('utf-8')}")
+            logger.info(f"stderr: {out.stderr.decode('utf-8')}")
         return True
     else:
+        if verbose:
+            logger.info(f"Spool directory {src} does not exist")
         return False
 
 
@@ -139,18 +149,26 @@ methods = [rsync_via_ssh, rsync_via_spool]
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("outdir", help="The bilby_pipe directory to sync")
+    parser.add_argument(
+        "--verbose", action="store_true", help="Print explicit error messages"
+    )
     args = parser.parse_args()
     args.outdir = args.outdir.rstrip("/")
     cluster_id_list = get_cluster_id_list(args.outdir)
     for cluster_id in cluster_id_list:
         if cluster_id is not None:
+            logger.info(f"Trying to sync job {cluster_id}")
             success = False
             for method in methods:
-                success = method(cluster_id, args.outdir)
+                logger.info(f"Trying to sync using method {method.__name__}")
+                success = method(cluster_id, args.outdir, args.verbose)
                 if success:
+                    logger.info(f"Successfully synced using method {method.__name__}")
                     break
+                else:
+                    logger.info(f"Failed to sync using method {method.__name__}")
             if success is False:
-                logger.warning("Failed to obtain data")
+                logger.warning(f"All sync methods failed for job {cluster_id}")
 
 
 if __name__ == "__main__":
