@@ -820,10 +820,10 @@ class DataGenerationInput(Input):
         # Create data quality flag
         channel_num = 1
         quality_flag = (
-391+            f"{det}:ITF_SCIENCE:{channel_num}"
-392+            if det == "V1"
-393+            else f"{det}:DMT-SCIENCE:{channel_num}"
-394+        )
+            f"{det}:ITF_SCIENCE:{channel_num}"
+            if det == "V1"
+            else f"{det}:DMT-SCIENCE:{channel_num}"
+        )
         logger.info(f"Checking data quality {quality_flag} {start_time}-{end_time}")
         try:
             flag = gwpy.segments.DataQualityFlag.query(
