@@ -106,11 +106,11 @@ class Node(object):
                 osg_local_node_lines = [
                     "+flock_local = True",
                     '+DESIRED_Sites = "nogrid"',
-                    "+should_transfer_files = NO",
+                    "should_transfer_files = NO",
                 ]
                 self.extra_lines.extend(osg_local_node_lines)
 
-        if self.inputs.desired_sites is not None:
+        if self.run_node_on_osg and self.inputs.desired_sites is not None:
             self.extra_lines.extend([f'+DESIRED_Sites = "{self.inputs.desired_sites}"'])
             self.requirements.append("IS_GLIDEIN=?=True")
 
@@ -155,8 +155,7 @@ class Node(object):
     @staticmethod
     def _checkpoint_submit_lines():
         return [
-            f"+SuccessCheckpointExitCode = {CHECKPOINT_EXIT_CODE}",
-            "+WantFTOnCheckpoint = True",
+            f"checkpoint_exit_code = {CHECKPOINT_EXIT_CODE}",
         ]
 
     @staticmethod
