@@ -177,7 +177,7 @@ class TestBilbyConfigFileParser(unittest.TestCase):
                     name="redshift",
                     minimum=1,
                     maximum=10,
-                    latex_label=r"$\rm{log}_{10}(M_{Lz}/\rm M_\odot))$",
+                    latex_label=r"$\rm{log}_{10}(M_{Lz}/\rm M_\odot)$",
                 ),
             )
         )
@@ -186,7 +186,7 @@ class TestBilbyConfigFileParser(unittest.TestCase):
             "b: 1,",
             "  c: 2,",
             r"redshift: bilby.gw.prior.UniformSourceFrame(name='redshift',"
-            + r"minimum=1, maximum=10, latex_label='$\rm{log}_{10}(M_{Lz}/\rm M_\odot))$'",
+            + r"minimum=1, maximum=10, latex_label='$\rm{log}_{10}(M_{Lz}/\rm M_\odot)$')",
             "}",
         ]
         self.write_tempory_ini_file(lines)
@@ -205,7 +205,7 @@ class TestBilbyConfigFileParser(unittest.TestCase):
                     name="redshift",
                     minimum=1,
                     maximum=10,
-                    latex_label=r"$\rm{log}_{10}(M_{Lz}/\rm M_\odot))$",
+                    latex_label=r"$\rm{log}_{10}(M_{Lz}/\rm M_\odot)$",
                 ),
             )
         )
@@ -214,7 +214,7 @@ class TestBilbyConfigFileParser(unittest.TestCase):
             "b: 1,",
             "  c: 2,",
             r"redshift: bilby.gw.prior.UniformSourceFrame(name='redshift',"
-            + r"minimum=1, maximum=10, latex_label='$\rm{log}_{10}(M_{Lz}/\rm M_\odot))$',",
+            + r"minimum=1, maximum=10, latex_label='$\rm{log}_{10}(M_{Lz}/\rm M_\odot)$'),",
             "}",
         ]
         self.write_tempory_ini_file(lines)
@@ -233,7 +233,7 @@ class TestBilbyConfigFileParser(unittest.TestCase):
                     name="redshift",
                     minimum=1,
                     maximum=10,
-                    latex_label=r"$\rm{log}_{10}(M_{Lz}/\rm M_\odot))$",
+                    latex_label=r"$\rm{log}_{10}(M_{Lz}/\rm M_\odot)$",
                 ),
             )
         )
@@ -242,7 +242,7 @@ class TestBilbyConfigFileParser(unittest.TestCase):
             "b: 1,",
             "  c: 2,",
             r"redshift: bilby.gw.prior.UniformSourceFrame(name='redshift',"
-            + r"minimum=1, maximum=10, latex_label='$\rm{log}_{10}(M_{Lz}/\rm M_\odot))$'}",
+            + r"minimum=1, maximum=10, latex_label='$\rm{log}_{10}(M_{Lz}/\rm M_\odot)$')}",
         ]
         self.write_tempory_ini_file(lines)
         args, unknown_args = parse_args([self.test_ini_filename], self.parser)
@@ -260,7 +260,7 @@ class TestBilbyConfigFileParser(unittest.TestCase):
                     name="redshift",
                     minimum=1,
                     maximum=10,
-                    latex_label=r"$\rm{log}_{10}(M_{Lz}/\rm M_\odot))$",
+                    latex_label=r"$\rm{log}_{10}(M_{Lz}/\rm M_\odot)$",
                 ),
             )
         )
@@ -268,7 +268,7 @@ class TestBilbyConfigFileParser(unittest.TestCase):
             "prior-dict: {a: Uniform(name='a', minimum=0, maximum=1),",
             "b: 1,",
             r"redshift: bilby.gw.prior.UniformSourceFrame(name='redshift',"
-            + r"minimum=1, maximum=10, latex_label='$\rm{log}_{10}(M_{Lz}/\rm M_\odot))$',"
+            + r"minimum=1, maximum=10, latex_label='$\rm{log}_{10}(M_{Lz}/\rm M_\odot)$'),"
             "  c: 2}",
         ]
         self.write_tempory_ini_file(lines)

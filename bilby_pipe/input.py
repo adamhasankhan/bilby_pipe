@@ -955,12 +955,15 @@ class Input(object):
         """
         if self.default_prior in self.combined_default_prior_dicts.keys():
             prior_class = self.combined_default_prior_dicts[self.default_prior]
-            if self.prior_dict is not None:
-                priors = prior_class(dictionary=self.prior_dict)
-            else:
-                priors = prior_class(filename=self.prior_file)
+        elif "." in self.default_prior:
+            prior_class = get_function_from_string_path(self.default_prior)
         else:
             raise ValueError("Unable to set prior: default_prior unavailable")
+
+        if self.prior_dict is not None:
+            priors = prior_class(dictionary=self.prior_dict)
+        else:
+            priors = prior_class(filename=self.prior_file)
 
         priors = self._update_default_prior_to_sky_frame_parameters(priors)
 
@@ -1123,16 +1126,9 @@ class Input(object):
 
         elif self.likelihood_type == "ROQGravitationalWaveTransient":
             Likelihood = bilby.gw.likelihood.ROQGravitationalWaveTransient
-
-            if self.time_marginalization:
-                logger.warning(
-                    "Time marginalization not implemented for "
-                    "ROQGravitationalWaveTransient: option ignored"
-                )
-
-            likelihood_kwargs.pop("time_marginalization", None)
-            likelihood_kwargs.pop("jitter_time", None)
-            likelihood_kwargs.update(self.roq_likelihood_kwargs)
+            likelihood_kwargs.update(
+                self.roq_likelihood_kwargs, jitter_time=self.jitter_time
+            )
         elif "." in self.likelihood_type:
             split_path = self.likelihood_type.split(".")
             module = ".".join(split_path[:-1])
@@ -1140,8 +1136,6 @@ class Input(object):
             Likelihood = getattr(import_module(module), likelihood_class)
             likelihood_kwargs.update(self.extra_likelihood_kwargs)
             if "roq" in self.likelihood_type.lower():
-                likelihood_kwargs.pop("time_marginalization", None)
-                likelihood_kwargs.pop("jitter_time", None)
                 likelihood_kwargs.update(self.roq_likelihood_kwargs)
         else:
             raise ValueError("Unknown Likelihood class {}")

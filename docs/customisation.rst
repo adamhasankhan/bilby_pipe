@@ -2,7 +2,7 @@
 Customising data analysis
 =========================
 
-It is possible to specify alternative likelihoods, prior dictionaries, and source models through the ini file.
+It is possible to specify alternative likelihoods, default priors, source models, and suchlike through the ini file.
 Each of these are done by passing a full :code:`python` path, for example, to use a :code:`WaveformGenerator` class
 and source model from some external package the following should be included in the ini file.
 
@@ -20,3 +20,15 @@ In this case additional keyword arguments can be passed through the ini file, as
 
     likelihood-type = my_package.submodule.CustomLikelihood
     extra-likelihood-kwargs = {new_argument: value, other_argument: other_value}
+
+Specifically, the following options allow one to pass a :code:`python` path:
+
+.. code-block:: text
+
+    analysis-executable-parser
+    conversion-function
+    default-prior
+    frequency-domain-source-model
+    generation-function
+    likelihood-type
+    waveform-generator-class

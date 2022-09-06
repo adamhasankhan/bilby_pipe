@@ -49,7 +49,7 @@ setup(
     packages=[MAIN, JOB_CREATION, NODES],
     install_requires=[
         "future",
-        "pycondor>=0.5",
+        "pycondor>=0.6",
         "configargparse",
         "ligo-gracedb",
         "bilby[gw]>=1.1.5",
@@ -64,6 +64,7 @@ setup(
         "pesummary>=0.13.0",
         "jinja2",
         "astropy",
+        "python-ligo-lw>=1.8.0",
     ],
     python_requires=f">={minimum_py_major}.{minimum_py_minor}",
     entry_points={
