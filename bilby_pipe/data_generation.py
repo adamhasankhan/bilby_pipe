@@ -797,7 +797,7 @@ class DataGenerationInput(Input):
 
         Check passes if the IFO has quality data during the time period provided.
 
-        Note: we are using the DMT-SCIENCE channel to check the quality.
+        Note: we are using the ITF_SCIENCE channel to check the quality for V1, and DMT-SCIENCE for other detectors.
         https://labcit.ligo.caltech.edu/~jzweizig/talks/LSC-2009-06-03/DMT-DQ_Stat-2009-06-03.pdf
 
         This method is slow as it queries GWpy.
@@ -819,7 +819,11 @@ class DataGenerationInput(Input):
         """
         # Create data quality flag
         channel_num = 1
-        quality_flag = f"{det}:DMT-SCIENCE:{channel_num}"
+        quality_flag = (
+            f"{det}:ITF_SCIENCE:{channel_num}"
+            if det == "V1"
+            else f"{det}:DMT-SCIENCE:{channel_num}"
+        )
         logger.info(f"Checking data quality {quality_flag} {start_time}-{end_time}")
         try:
             flag = gwpy.segments.DataQualityFlag.query(
