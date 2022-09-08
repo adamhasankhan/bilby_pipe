@@ -65,6 +65,7 @@ setup(
         "corner",
         "dynesty>=1.0.0",
         "pesummary>=0.13.0",
+        "seaborn<0.12",
         "jinja2",
         "astropy",
         "python-ligo-lw>=1.8.0",
