@@ -210,9 +210,10 @@ MAXIMUM_FREQUENCY_LOOKUPS = {
 }
 
 SAMPLER_SETTINGS = {
-    "Default": {
+    "DynestyDefault": {
         "nlive": 1000,
         "walks": 100,
+        "nact": "50",
         "check_point_plot": True,
         "check_point_delta_t": 1800,
         "print_method": "interval-60",
@@ -224,6 +225,19 @@ SAMPLER_SETTINGS = {
         "check_point_plot": True,
         "check_point_delta_t": 1800,
         "print_method": "interval-10",
+    },
+    "BilbyMCMCDefault": {
+        "nsamples": 1000,
+        "thin_by_nact": 0.2,
+        "ntemps": 8,
+        "Tmax_from_SNR": 20,
+        "adapt": True,
+        "proposal_cycle": "gwA",
+        "L1steps": 100,
+        "L2steps": 3,
+        "check_point_plot": True,
+        "check_point_delta_t": 1800,
+        "print_update": 60,
     },
 }
 

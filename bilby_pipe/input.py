@@ -1379,13 +1379,17 @@ class Input(object):
 
         # Set up the default choices
         if self.sampler == "dynesty":
-            self._sampler_kwargs = SAMPLER_SETTINGS["Default"]
+            self._sampler_kwargs = SAMPLER_SETTINGS["DynestyDefault"]
+        elif self.sampler == "bilby_mcmc":
+            self._sampler_kwargs = SAMPLER_SETTINGS["BilbyMCMCDefault"]
         else:
             self._sampler_kwargs = dict()
 
         if sampler_kwargs is not None:
-            if sampler_kwargs.lower() == "default":
-                self._sampler_kwargs.update(SAMPLER_SETTINGS["Default"])
+            if sampler_kwargs.lower() in ["default", "dynestydefault"]:
+                self._sampler_kwargs.update(SAMPLER_SETTINGS["DynestyDefault"])
+            elif sampler_kwargs.lower() == "bilbymcmcdefault":
+                self._sampler_kwargs.update(SAMPLER_SETTINGS["BilbyMCMCDefault"])
             elif sampler_kwargs.lower() == "fasttest":
                 self._sampler_kwargs.update(SAMPLER_SETTINGS["FastTest"])
             else:

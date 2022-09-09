@@ -481,14 +481,14 @@ def create_parser(top_level=True):
     submission_parser.add(
         "--request-disk",
         type=float,
-        default="1",
-        help="Disk allocation request in GB. Default is 1GB.",
+        default=5,
+        help="Disk allocation request in GB. Default is 5GB.",
     )
     submission_parser.add(
         "--request-memory",
         type=float,
-        default=4.0,
-        help="Memory allocation request (GB). Default is 4GB",
+        default=8.0,
+        help="Memory allocation request (GB). Default is 8GB",
     )
     submission_parser.add(
         "--request-memory-generation",
@@ -952,10 +952,10 @@ def create_parser(top_level=True):
     sampler_parser.add(
         "--sampler-kwargs",
         type=str,
-        default="Default",
+        default="DynestyDefault",
         help=(
             "Dictionary of sampler-kwargs to pass in, e.g., {nlive: 1000} OR "
-            "pass pre-defined set of sampler-kwargs {Default, FastTest}"
+            "pass pre-defined set of sampler-kwargs {DynestyDefault, BilbyMCMCDefault, FastTest}"
         ),
     )
 
