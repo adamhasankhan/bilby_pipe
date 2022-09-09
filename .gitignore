@@ -13,3 +13,4 @@ MANIFEST
 *.version
 *.ipynb_checkpoints
 outdir/*
+bilby_pipe/_version.py

@@ -5,9 +5,7 @@ import sys
 
 from setuptools import setup
 
-import versioneer
-
-# check that python version is 3.6 or above
+# check that python version is 3.8 or above
 python_version = sys.version_info
 print("Running Python version %s.%s.%s" % python_version[:3])
 minimum_py_major = 3
@@ -46,8 +44,6 @@ setup(
     author="Gregory Ashton, Isobel Romero-Shaw, Colm Talbot, Charlie Hoy, Shanika Galaudage",
     author_email="gregory.ashton@ligo.org",
     license="MIT",
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
     package_data={"bilby_pipe": ["data_files/*"]},
     packages=[MAIN, JOB_CREATION, NODES],
     install_requires=[
@@ -55,7 +51,7 @@ setup(
         "pycondor>=0.6",
         "configargparse",
         "ligo-gracedb",
-        "bilby[gw]>=1.1.5",
+        "bilby[gw]>=1.2.1",
         "scipy>=1.2.0",
         "gwpy",
         "gwosc",
