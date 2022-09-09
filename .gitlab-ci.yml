@@ -250,7 +250,7 @@ deploy_release:
     TWINE_USERNAME: $PYPI_USERNAME
     TWINE_PASSWORD: $PYPI_PASSWORD
   before_script:
-    - pip install twine
+    - pip install twine setuptools_scm
     - python setup.py sdist
   script:
     - twine upload dist/*

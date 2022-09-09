@@ -373,16 +373,16 @@ def get_outdir_name(outdir, fail_on_match=False, base_increment="A"):
 
 def log_version_information():
     import bilby
+    import bilby_pipe
 
-    version = get_version_information()
-    logger.info(f"Running bilby_pipe version: {version}")
-    logger.info(f"Running bilby: {bilby.__version__}")
+    logger.info(f"Running bilby_pipe version: {bilby_pipe.__version__}")
+    logger.info(f"Running bilby version: {bilby.__version__}")
 
 
 def get_version_information():
-    from bilby_pipe import _version
+    from bilby_pipe import __version__
 
-    return _version.get_versions()["version"]
+    return __version__
 
 
 def convert_string_to_tuple(string, key=None, n=None):

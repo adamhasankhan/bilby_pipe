@@ -10,9 +10,10 @@ estimation on computing clusters.
 
 from . import bilbyargparser, main, parser, utils
 
-__short_version__ = utils.get_version_information().split(":", 1)[0]
-__long_version__ = utils.get_version_information()
+try:
+    from ._version import version as __version__
+except ModuleNotFoundError:  # development mode
+    __version__ = "unknown"
 
-from . import _version
-
-__version__ = _version.get_versions()["version"]
+__short_version__ = __version__
+__long_version__ = __version__

@@ -10,8 +10,6 @@ from bilby_pipe.bilbyargparser import BilbyArgParser
 from .main import __doc__ as usage
 from .utils import get_version_information, logger, nonefloat, noneint, nonestr
 
-__version__ = get_version_information()
-
 
 class StoreBoolean(argparse.Action):
     """argparse class for robust handling of booleans with configargparse
@@ -58,7 +56,7 @@ def create_parser(top_level=True):
     parser.add(
         "--version",
         action="version",
-        version=f"%(prog)s={__version__}\nbilby={bilby.__version__}",
+        version=f"%(prog)s={get_version_information()}\nbilby={bilby.__version__}",
     )
 
     calibration_parser = parser.add_argument_group(
