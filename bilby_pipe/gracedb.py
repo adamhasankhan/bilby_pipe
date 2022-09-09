@@ -770,10 +770,10 @@ def create_parser():
     parser.add_argument(
         "--sampler-kwargs",
         type=str,
-        default="Default",
+        default="DynestyDefault",
         help=(
             "Dictionary of sampler-kwargs to pass in, e.g., {nlive: 1000} OR "
-            "pass pre-defined set of sampler-kwargs {Default, FastTest}"
+            "pass pre-defined set of sampler-kwargs {DynestyDefault, BilbyMCMCDefault, FastTest}"
         ),
     )
     parser.add_argument(
