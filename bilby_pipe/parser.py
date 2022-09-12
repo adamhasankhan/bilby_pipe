@@ -963,7 +963,7 @@ def create_parser(top_level=True):
     )
     waveform_parser.add(
         "--waveform-generator",
-        default="bilby.gw.waveform_generator.WaveformGenerator",
+        default="bilby.gw.waveform_generator.LALCBCWaveformGenerator",
         type=str,
         help="The waveform generator class, should be a python path. This will "
         "not be able to use any arguments not passed to the default.",
