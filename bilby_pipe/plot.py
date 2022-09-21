@@ -40,6 +40,9 @@ def create_parser():
     parser.add("--skymap", action="store_true", help="Generate skymap")
     parser.add("--waveform", action="store_true", help="Generate waveform")
     parser.add(
+        "--outdir", type=str, required=False, help="The directory to save the plots in"
+    )
+    parser.add(
         "--format",
         type=str,
         default="png",
@@ -67,8 +70,10 @@ def _parse_and_load():
         result.meta_data["data_dump"]
     ):
         data_dump = DataDump.from_pickle(result.meta_data["data_dump"])
+        logger.info(f"Loaded data from {result.meta_data['data_dump']}")
     else:
         data_dump = None
+        logger.info("Failed to load data dump file")
 
     if hasattr(args, "webdir"):
         outdir = os.path.join(args.webdir, "bilby")
