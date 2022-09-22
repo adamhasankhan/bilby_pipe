@@ -59,7 +59,7 @@ def get_cluster_id(logfile):
         logger.info("No cluster ID found in log file")
 
 
-def rsync_via_ssh(cluster_id, outdir, verbose=False):
+def rsync_via_ssh(cluster_id, outdir, verbose=False, timeout=30):
     """Attempt to rsync the local (submit) directory to current running worker nodes
 
     This method applies when the job is actively executing on a remote worker
@@ -75,6 +75,8 @@ def rsync_via_ssh(cluster_id, outdir, verbose=False):
         The top-level outdir of the bilby_pipe job
     verbose: bool
         If true, print explicit error messages
+    timeout: int
+        The timeout interval
 
     Returns
     -------
@@ -84,7 +86,17 @@ def rsync_via_ssh(cluster_id, outdir, verbose=False):
     """
     sync_path = f"{outdir}/result/"
     target = f"{cluster_id}:{sync_path}"
-    cmd = ["rsync", "-v", "-r", "-e", '"condor_ssh_to_job"', target, sync_path]
+    cmd = [
+        "timeout",
+        str(timeout),
+        "rsync",
+        "-v",
+        "-r",
+        "-e",
+        '"condor_ssh_to_job"',
+        target,
+        sync_path,
+    ]
     logger.info("Running " + " ".join(cmd))
     out = subprocess.run(cmd, capture_output=True)
     if verbose:
