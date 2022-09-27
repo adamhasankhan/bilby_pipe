@@ -1,7 +1,7 @@
 import os
 import unittest
-from unittest.mock import create_autospec
 from shutil import copyfile, rmtree
+from unittest.mock import create_autospec
 
 import pandas as pd
 
