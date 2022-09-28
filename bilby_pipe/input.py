@@ -1402,20 +1402,10 @@ class Input(object):
         self.update_sampler_kwargs_conditional_on_request_cpus()
 
     def update_sampler_kwargs_conditional_on_request_cpus(self):
-        """If the user adds request-cpu >1, update kwargs based on the sampler"""
-
-        # Keys are samplers, values are the dictionary inputs to update
-        parallelisation_dict = dict(
-            bilby_mcmc=dict(npool=self.request_cpus),
-            dynesty=dict(npool=self.request_cpus),
-            ptemcee=dict(npool=self.request_cpus),
-            cpnest=dict(nthreads=self.request_cpus),
-        )
-
+        """If the user adds request-cpu >1, update npool in the sampler kwargs"""
         # Only run if request_cpus > 1
         if self.request_cpus > 1:
-            # Only update if parallelisation_dict contains the sampler
-            self._sampler_kwargs.update(parallelisation_dict.get(self.sampler, dict()))
+            self._sampler_kwargs.update(npool=self.request_cpus)
 
     def pretty_print_prior(self):
         try:

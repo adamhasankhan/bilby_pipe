@@ -1,6 +1,7 @@
 import os
 import unittest
 from shutil import copyfile, rmtree
+from unittest.mock import create_autospec
 
 import pandas as pd
 
@@ -658,6 +659,15 @@ class TestInput(unittest.TestCase):
         p1 = inputs._get_priors()
         p2 = bilby.gw.prior.BNSPriorDict(val)
         self.assertEqual(p1["lambda_1"], p2["lambda_1"])
+
+    def test_update_sampler_kwargs_conditional_on_request_cpus(self):
+        mock_input = create_autospec(bilby_pipe.main.Input)
+        mock_input.request_cpus = 2
+        mock_input._sampler_kwargs = dict(npoints=100)
+        bilby_pipe.main.Input.update_sampler_kwargs_conditional_on_request_cpus(
+            mock_input
+        )
+        self.assertEqual(mock_input._sampler_kwargs, dict(npoints=100, npool=2))
 
 
 if __name__ == "__main__":
