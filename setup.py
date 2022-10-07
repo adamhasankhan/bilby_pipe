@@ -53,7 +53,7 @@ setup(
         "ligo-gracedb",
         "bilby[gw]>=1.2.1",
         "scipy>=1.2.0",
-        "gwpy",
+        "gwpy>=3.0",
         "gwosc",
         "matplotlib",
         "numpy",
