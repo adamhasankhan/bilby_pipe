@@ -1,9 +1,6 @@
 import os
 import subprocess
-import sys
 import unittest
-
-import pytest
 
 import bilby_pipe.xml_converter
 
@@ -62,9 +59,6 @@ class TestInput(unittest.TestCase):
         )
         self.assertTrue(os.path.isfile(self.test_xml_file.replace("xml", "dat")))
 
-    @pytest.mark.skipif(
-        sys.version_info >= (3, 10), reason="XML package broken in python3.10 or higher"
-    )
     def test_conversion(self):
         df = bilby_pipe.xml_converter.xml_to_dataframe(self.test_xml_file, 20)
         row = df.iloc[0]
