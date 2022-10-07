@@ -493,7 +493,7 @@ def create_config_file(
     config_dict = dict(
         label=gracedb,
         outdir=outdir,
-        accounting="ligo.dev.o3.cbc.pe.lalinference",
+        accounting="ligo.dev.o4.cbc.pe.bilby",
         maximum_frequency=min(maximum_frequency, 2048),
         minimum_frequency=minimum_frequency,
         sampling_frequency=16384,
