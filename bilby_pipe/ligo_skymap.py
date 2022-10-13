@@ -33,10 +33,10 @@ def main():
         "dec",
         "luminosity_distance",
         "time",
-        "mass_1",
-        "mass_2",
-        "spin1z",
-        "spin2z",
+        "mass_1_source",
+        "mass_2_source",
+        "spin_1z",
+        "spin_2z",
     ]
 
     logger.info(f"Converting bilby result file {args.input_file}")
