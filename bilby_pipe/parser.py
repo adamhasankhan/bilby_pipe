@@ -740,6 +740,90 @@ def create_parser(top_level=True):
         help="Rescaling factor for the ROQ, default is 1 (no rescaling)",
     )
     likelihood_parser.add(
+        "--multiband-reference-chirp-mass",
+        default=None,
+        type=nonefloat,
+        help=(
+            "A reference chirp mass for determining how frequency range is "
+            "divided in the multiband technique. This is set to prior minimum"
+            " of chirp mass if not specified."
+        ),
+    )
+    likelihood_parser.add(
+        "--multiband-highest-mode",
+        default=2,
+        type=int,
+        help=(
+            "The maximum magnetic number of gravitational-wave moments, which "
+            "is used for determining how frequency range is divided in the "
+            "multiband technique. Default is 2."
+        ),
+    )
+    likelihood_parser.add(
+        "--multiband-linear-interpolation",
+        type=bool,
+        default=True,
+        help=(
+            "If True, the linear-interpolation method is used for the "
+            "computation of (h, h). Otherwise, the IFFT-FFT method is used."
+        ),
+    )
+    likelihood_parser.add(
+        "--multiband-accuracy-factor",
+        default=5.0,
+        type=float,
+        help=(
+            "A parameter to determine the accuracy of multiband likelihood. "
+            "The larger this factor is, the more accurate the approximation "
+            "is. This corresponds to L in the method paper of the multiband "
+            "technique. Default is 5."
+        ),
+    )
+    likelihood_parser.add(
+        "--multiband-time-offset",
+        default=None,
+        type=nonefloat,
+        help=(
+            "The time offset between the coalescence time and the end of "
+            "data, used for constructing frequency bands for the multiband "
+            "likelihood technique. It is inferred from the time prior if None."
+        ),
+    )
+    likelihood_parser.add(
+        "--multiband-delta-f-end",
+        default=None,
+        type=nonefloat,
+        help=(
+            "The frequency scale with which waveforms at the high-frequency "
+            "end are smoothed for the multiband likelihood technique. If None,"
+            " it is determined from the time prior."
+        ),
+    )
+    likelihood_parser.add(
+        "--multiband-maximum-banding-frequency",
+        default=None,
+        type=nonefloat,
+        help=(
+            "The upper limit on the starting frequency of a band for the "
+            "multiband likelihood technique (in unit of Hz)"
+        ),
+    )
+    likelihood_parser.add(
+        "--multiband-minimum-banding-duration",
+        default=0.0,
+        type=float,
+        help=(
+            "The lower limit on the duration of a band for the multiband "
+            "likelihood technique (in unit of seconds)"
+        ),
+    )
+    likelihood_parser.add(
+        "--multiband-weights",
+        type=nonestr,
+        default=None,
+        help="If given, the multiband weights to use (rather than building them).",
+    )
+    likelihood_parser.add(
         "--extra-likelihood-kwargs",
         type=nonestr,
         default=None,

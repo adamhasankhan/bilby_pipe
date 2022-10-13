@@ -437,6 +437,19 @@ class Input(object):
             raise BilbyPipeError("Unable to determine roq_source from source model")
 
     @property
+    def bilby_multiband_frequency_domain_source_model(self):
+        if "binary_neutron_star" in self.frequency_domain_source_model:
+            logger.info("Using the binary_neutron_star_frequency_sequence source model")
+            return bilby.gw.source.binary_neutron_star_frequency_sequence
+        elif "binary_black_hole" in self.frequency_domain_source_model:
+            logger.info("Using the binary_black_hole_frequency_sequence source model")
+            return bilby.gw.source.binary_black_hole_frequency_sequence
+        else:
+            raise BilbyPipeError(
+                "Unable to determine multiband_source from source model"
+            )
+
+    @property
     def frequency_domain_source_model(self):
         """String of which frequency domain source model to use"""
         return self._frequency_domain_source_model
@@ -1117,6 +1130,11 @@ class Input(object):
             likelihood_kwargs.update(
                 self.roq_likelihood_kwargs, jitter_time=self.jitter_time
             )
+
+        elif self.likelihood_type == "MBGravitationalWaveTransient":
+            Likelihood = bilby.gw.likelihood.MBGravitationalWaveTransient
+            likelihood_kwargs.update(self.multiband_likelihood_kwargs)
+
         elif "." in self.likelihood_type:
             split_path = self.likelihood_type.split(".")
             module = ".".join(split_path[:-1])
@@ -1125,6 +1143,8 @@ class Input(object):
             likelihood_kwargs.update(self.extra_likelihood_kwargs)
             if "roq" in self.likelihood_type.lower():
                 likelihood_kwargs.update(self.roq_likelihood_kwargs)
+            if "multiband" in self.likelihood_type.lower():
+                likelihood_kwargs.update(self.multiband_likelihood_kwargs)
         else:
             raise ValueError("Unknown Likelihood class {}")
 
@@ -1177,6 +1197,8 @@ class Input(object):
         ]
         if "roq" in self.likelihood_type.lower():
             forbidden_keys += ["weights", "roq_params", "roq_scale_factor"]
+        if self.is_likelihood_multiband:
+            forbidden_keys += ["weights"]
         for key in forbidden_keys:
             if key in likelihood_kwargs:
                 raise KeyError(
@@ -1204,6 +1226,15 @@ class Input(object):
         return dict(
             weights=weights, roq_params=params, roq_scale_factor=self.roq_scale_factor
         )
+
+    @property
+    def multiband_likelihood_kwargs(self):
+        if hasattr(self, "likelihood_multiband_weights"):
+            weights = self.likelihood_multiband_weights
+        else:
+            weights = self.meta_data["weight_file"]
+            logger.info(f"Loading multiband weights from {weights}")
+        return dict(weights=weights)
 
     @property
     def parameter_conversion(self):
@@ -1254,6 +1285,16 @@ class Input(object):
 
             waveform_generator = self.waveform_generator_class(
                 frequency_domain_source_model=self.bilby_roq_frequency_domain_source_model,
+                sampling_frequency=self.interferometers.sampling_frequency,
+                duration=self.interferometers.duration,
+                start_time=self.interferometers.start_time,
+                parameter_conversion=self.parameter_conversion,
+                waveform_arguments=waveform_arguments,
+            )
+
+        elif self.is_likelihood_multiband:
+            waveform_generator = self.waveform_generator_class(
+                frequency_domain_source_model=self.bilby_multiband_frequency_domain_source_model,
                 sampling_frequency=self.interferometers.sampling_frequency,
                 duration=self.interferometers.duration,
                 start_time=self.interferometers.start_time,
@@ -1488,3 +1529,9 @@ class Input(object):
             self._additional_transfer_paths = paths
         if paths is None or paths == [None]:
             self._additional_transfer_paths = list()
+
+    def is_likelihood_multiband(self):
+        return (
+            self.likelihood_type == "MBGravitationalWaveTransient"
+            or "multiband" in self.likelihood_type.lower()
+        )

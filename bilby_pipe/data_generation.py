@@ -161,6 +161,21 @@ class DataGenerationInput(Input):
         self.roq_weight_format = args.roq_weight_format
         self.roq_scale_factor = args.roq_scale_factor
 
+        # multiband
+        self.multiband_reference_chirp_mass = args.multiband_reference_chirp_mass
+        self.multiband_highest_mode = args.multiband_highest_mode
+        self.multiband_linear_interpolation = args.multiband_linear_interpolation
+        self.multiband_accuracy_factor = args.multiband_accuracy_factor
+        self.multiband_time_offset = args.multiband_time_offset
+        self.multiband_delta_f_end = args.multiband_delta_f_end
+        self.multiband_maximum_banding_frequency = (
+            args.multiband_maximum_banding_frequency
+        )
+        self.multiband_minimum_banding_duration = (
+            args.multiband_minimum_banding_duration
+        )
+        self.multiband_weights = args.multiband_weights
+
         # Calibration
         self.calibration_model = args.calibration_model
         self.spline_calibration_envelope_dict = args.spline_calibration_envelope_dict
@@ -1110,6 +1125,12 @@ class DataGenerationInput(Input):
             )
         else:
             likelihood_lookup_table = None
+        if self.is_likelihood_multiband:
+            likelihood_roq_weights = None
+            likelihood_multiband_weights = likelihood.weights
+        else:
+            likelihood_roq_weights = getattr(likelihood, "weights", None)
+            likelihood_multiband_weights = None
         data_dump = DataDump(
             outdir=self.data_directory,
             label=self.label,
@@ -1118,8 +1139,9 @@ class DataGenerationInput(Input):
             interferometers=self.interferometers,
             meta_data=self.meta_data,
             likelihood_lookup_table=likelihood_lookup_table,
-            likelihood_roq_weights=getattr(likelihood, "weights", None),
+            likelihood_roq_weights=likelihood_roq_weights,
             likelihood_roq_params=getattr(likelihood, "roq_params", None),
+            likelihood_multiband_weights=likelihood_multiband_weights,
             priors_dict=dict(self.priors),
             priors_class=self.priors.__class__,
         )
@@ -1200,6 +1222,41 @@ class DataGenerationInput(Input):
         self.meta_data["weight_file"] = weight_file
         likelihood.save_weights(weight_file, format=weight_format)
 
+    def save_multiband_weights(self):
+        waveform_arguments = self.get_default_waveform_arguments()
+
+        waveform_generator = self.waveform_generator_class(
+            sampling_frequency=self.interferometers.sampling_frequency,
+            duration=self.interferometers.duration,
+            frequency_domain_source_model=self.bilby_multiband_frequency_domain_source_model,
+            parameter_conversion=self.parameter_conversion,
+            start_time=self.interferometers.start_time,
+            waveform_arguments=waveform_arguments,
+        )
+
+        likelihood = bilby.gw.likelihood.MBGravitationalWaveTransient(
+            interferometers=self.interferometers,
+            priors=self.priors,
+            waveform_generator=waveform_generator,
+            reference_frame=self.reference_frame,
+            time_reference=self.time_reference,
+            reference_chirp_mass=self.multiband_reference_chirp_mass,
+            highest_mode=self.multiband_highest_mode,
+            linear_interpolation=self.multiband_linear_interpolation,
+            accuracy_factor=self.multiband_accuracy_factor,
+            time_offset=self.multiband_time_offset,
+            delta_f_end=self.multiband_delta_f_end,
+            maximum_banding_frequency=self.multiband_maximum_banding_frequency,
+            minimum_banding_duration=self.multiband_minimum_banding_duration,
+            weights=self.multiband_weights,
+        )
+
+        weight_file = os.path.join(
+            self.data_directory, f"{self.label}_multiband_weights.hdf5"
+        )
+        self.meta_data["weight_file"] = weight_file
+        likelihood.save_weights(weight_file)
+
 
 def create_generation_parser():
     """Data generation parser creation"""
@@ -1213,5 +1270,7 @@ def main():
     data = DataGenerationInput(args, unknown_args)
     if args.likelihood_type == "ROQGravitationalWaveTransient":
         data.save_roq_weights()
+    if data.is_likelihood_multiband:
+        data.save_multiband_weights()
     data.save_data_dump()
     logger.info("Completed data generation")
