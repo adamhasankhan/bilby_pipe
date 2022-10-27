@@ -71,6 +71,7 @@ class MainInput(Input):
         self.webdir = args.webdir
         self.email = args.email
         self.notification = args.notification
+        self.queue = args.queue
         self.existing_dir = args.existing_dir
 
         self.scheduler = args.scheduler

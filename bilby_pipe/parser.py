@@ -807,6 +807,11 @@ def create_parser(top_level=True):
         ),
     )
     output_parser.add(
+        "--queue",
+        type=nonestr,
+        help="Condor job queue. Use Online_PE for online parameter estimation runs.",
+    )
+    output_parser.add(
         "--existing-dir",
         type=nonestr,
         default=None,

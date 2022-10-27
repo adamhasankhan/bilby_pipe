@@ -90,6 +90,10 @@ class Node(object):
         if self.inputs.email is not None:
             self.extra_lines.append(f"notify_user = {self.inputs.email}")
 
+        if self.inputs.queue is not None:
+            self.extra_lines.append(f"+{self.inputs.queue} = True")
+            self.requirements.append(f"((TARGET.{self.inputs.queue} =?= True))")
+
         if self.universe != "local" and self.inputs.osg:
             if self.run_node_on_osg:
                 _osg_lines, _osg_reqs = self._osg_submit_options(
