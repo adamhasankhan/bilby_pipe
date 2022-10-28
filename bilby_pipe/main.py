@@ -47,7 +47,6 @@ class MainInput(Input):
         self.ini = args.ini
         self.submit = args.submit
         self.condor_job_priority = args.condor_job_priority
-        self.online_pe = args.online_pe
         self.create_summary = args.create_summary
 
         self.outdir = args.outdir

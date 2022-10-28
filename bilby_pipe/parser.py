@@ -578,9 +578,6 @@ def create_parser(top_level=True):
         help="If given, an alternative path for the log output",
     )
     submission_parser.add(
-        "--online-pe", action="store_true", help="Flag for online PE settings"
-    )
-    submission_parser.add(
         "--osg",
         action="store_true",
         default=False,

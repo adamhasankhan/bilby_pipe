@@ -353,7 +353,6 @@ def create_config_file(
     webdir,
     roq=True,
     search_type="cbc",
-    online=False,
     settings=None,
 ):
     """Creates ini file from defaults and candidate contents
@@ -376,8 +375,6 @@ def create_config_file(
         If True, use the default ROQ settings if required
     search_type: str
         What kind of search identified the trigger, options are "cbc" and "burst"
-    online: bool
-        Whether this is running online. This disables the pesummary ligo-skymap
     settings: str
         JSON filename containing settings to override the defaults
 
@@ -536,10 +533,7 @@ def create_config_file(
 
     config_dict.update(extra_config_arguments)
 
-    if online:
-        config_dict["summarypages_arguments"]["no_ligo_skymap"] = True
-    else:
-        config_dict["summarypages_arguments"]["nsamples_for_skymap"] = 5000
+    config_dict["summarypages_arguments"]["nsamples_for_skymap"] = 5000
     config_dict.update(settings)
 
     comment = (
@@ -709,14 +703,6 @@ def create_parser():
         help="Path to ligolw-xml file containing the PSDs for the interferometers.",
     )
     parser.add_argument(
-        "--online-pe",
-        action="store_true",
-        help=(
-            "Flag to use online PE dedicated nodes."
-            " To be used for online PE jobs only."
-        ),
-    )
-    parser.add_argument(
         "--convert-to-flat-in-component-mass",
         action="store_true",
         default=False,
@@ -849,7 +835,6 @@ def main(args=None, unknown_args=None):
         sampler_kwargs=sampler_kwargs,
         webdir=webdir,
         search_type=search_type,
-        online=args.online_pe,
         settings=args.settings,
     )
 
@@ -868,8 +853,6 @@ def main(args=None, unknown_args=None):
         if args.output == "full-submit":
             logger.info("Generating dag submissions files, submitting to condor")
             arguments.append("--submit")
-        if args.online_pe:
-            arguments.append("--online-pe")
         if len(unknown_args) > 1:
             arguments = arguments + unknown_args
         run_command_line(arguments)
