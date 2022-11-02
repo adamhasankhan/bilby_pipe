@@ -1,6 +1,6 @@
 import copy
 
-from ..utils import BilbyPipeError, logger
+from ..utils import BilbyPipeError, get_colored_string, logger
 from .dag import Dag
 from .nodes import (
     AnalysisNode,
@@ -111,6 +111,17 @@ def generate_dag(inputs):
         PESummaryNode(inputs, merged_node_list, generation_node_list, dag=dag)
     if inputs.postprocessing_executable is not None:
         PostProcessAllResultsNode(inputs, merged_node_list, dag)
+
+    THRESHOLD = 21
+    npar = len(all_parallel_node_list)
+    if npar > THRESHOLD and inputs.osg is False:
+        msg = (
+            f"You are requesting {npar} analysis jobs, this work would be "
+            "better suited to the IGWN-grid. See "
+            "https://lscsoft.docs.ligo.org/bilby_pipe/master/osg.html "
+            "for further information"
+        )
+        logger.warning(get_colored_string(msg))
 
     dag.build()
     create_overview(
