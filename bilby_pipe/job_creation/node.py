@@ -19,7 +19,6 @@ class Node(object):
         self.inputs = inputs
         self._universe = "vanilla"
         self.request_disk = self.inputs.request_disk
-        self.online_pe = self.inputs.online_pe
         self.getenv = True
         self.notification = inputs.notification
         self.retry = None
@@ -89,6 +88,10 @@ class Node(object):
         self.extra_lines.append(f"priority = {self.condor_job_priority}")
         if self.inputs.email is not None:
             self.extra_lines.append(f"notify_user = {self.inputs.email}")
+
+        if self.inputs.queue is not None:
+            self.extra_lines.append(f"+{self.inputs.queue} = True")
+            self.requirements.append(f"((TARGET.{self.inputs.queue} =?= True))")
 
         if self.universe != "local" and self.inputs.osg:
             if self.run_node_on_osg:

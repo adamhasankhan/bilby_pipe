@@ -578,9 +578,6 @@ def create_parser(top_level=True):
         help="If given, an alternative path for the log output",
     )
     submission_parser.add(
-        "--online-pe", action="store_true", help="Flag for online PE settings"
-    )
-    submission_parser.add(
         "--osg",
         action="store_true",
         default=False,
@@ -805,6 +802,11 @@ def create_parser(top_level=True):
             "the owner will not receive e-mail, regardless to what happens to the job. "
             "Note, an `email` arg is also required for notifications to be emailed. "
         ),
+    )
+    output_parser.add(
+        "--queue",
+        type=nonestr,
+        help="Condor job queue. Use Online_PE for online parameter estimation runs.",
     )
     output_parser.add(
         "--existing-dir",
