@@ -1,5 +1,26 @@
 # All notable changes will be documented in this file
 
+## v1.1.0 2022-11-07
+
+See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.1.0)
+
+### Changes
+- Update keys stored in result for ligo skymap (!482)
+- Improve npool behavior (!477)
+- Improve htcondor sync method (!475, !464, !470)
+- Updates for online PE (!478, !471, !467)
+- Default to using the LALCBCWaveformGenerator (!462)
+- Improvements to versioning and CI infrastructure (see logs)
+
+### Added
+- Enable specifying job queue (!485)
+- ROQ time marginalization (!461)
+- Python 3.10 testing
+
+### Removed
+- online-pe flag removed in favour of job queueu (!485)
+
+
 ## v1.0.6: 2022-04-25
 
 See MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.0.6)
