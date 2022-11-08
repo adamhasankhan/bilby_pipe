@@ -1,8 +1,8 @@
 # All notable changes will be documented in this file
 
-## v1.1.0 2022-11-07
+## v1.0.7 2022-11-07
 
-See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.1.0)
+See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.0.7)
 
 ### Changes
 - Update keys stored in result for ligo skymap (!482)
