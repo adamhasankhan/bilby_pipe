@@ -299,49 +299,300 @@ def _read_burst_candidate(candidate):
     return central_frequency, superevent, trigger_time, ifos
 
 
-def prior_lookup(duration, scale_factor, outdir, template=None, chirp_mass=None):
-    """Lookup the appropriate prior and apply rescaling factors
+def _get_cbc_likelihood_args(mode, chirp_mass):
+    """Return cbc likelihood arguments and quantities characterizing likelihood
 
     Parameters
     ----------
-    duration: float
-        Inferred duration of the signal
-    scale_factor: float
-    outdir: str
-        Output directory
+    mode: str
     chirp_mass: float
-        The chirp mass of the trigger
 
     Returns
     -------
-    prior_file, roq_folder: str
-        Path to the prior file to use usually written to the outdir, and the
-        roq folder
-    duration, minimum_frequency, maximum_frequency: int
-        The duration, minimum and maximum frequency to use (rescaled if needed)
-
+    likelihood_args: dict
+    likelihood_parameter_bounds: dict
+        bounds of parameter space where likelihood is expected to be accurate
+    minimum_frequency: float
+        minimum frequency of likelihood integration
+    maximum_frequency: float
+        maximum frequency of likelihood integration
+    duration: float
+        inverse of frequency interval of likelihood integration
     """
+    if mode in ["phenompv2_bbh_roq", "test"]:
+        return _choose_phenompv2_bbh_roq(chirp_mass, ignore_no_params=(mode == "test"))
+    elif mode == "phenompv2_bns_roq":
+        return _choose_phenompv2_bns_roq(chirp_mass)
+    elif mode in ["lowspin_phenomd_narrowmc_roq", "lowspin_phenomd_broadmc_roq"]:
+        return _choose_lowspin_phenomd_roq(
+            chirp_mass, narrow_mc=(mode == "lowspin_phenomd_narrowmc_roq")
+        )
+    else:
+        raise ValueError(f"Unknown mode: {mode}")
 
-    roq_folder = f"/home/cbc/ROQ_data/IMRPhenomPv2/{duration}s"
-    if os.path.isdir(roq_folder) is False:
-        logger.warning("Requested ROQ folder does not exist")
-        return f"{duration}s", None, duration, 20, 1024
 
-    roq_params = np.genfromtxt(os.path.join(roq_folder, "params.dat"), names=True)
+def _choose_phenompv2_bbh_roq(chirp_mass, ignore_no_params=False):
+    """Choose an appropriate PhenomPv2 ROQ folder, and return likelihood
+    arguments and quantities characterizing likelihood. The bases were
+    developed in the work of arXiv:1604.08253.
 
-    prior_file = generate_prior_from_template(
-        duration=duration,
-        roq_params=roq_params,
-        scale_factor=scale_factor,
-        outdir=outdir,
-        template=template,
-        chirp_mass=chirp_mass,
+    Parameters
+    ----------
+    chirp_mass: float
+    ignore_no_params: bool
+        If True, this ignores FileNotFoundError raised when roq params file is
+        not found, which is useful for testing this command outside the CIT
+        cluster.
+
+    Returns
+    -------
+    likelihood_args: dict
+    likelihood_parameter_bounds: dict
+        bounds of parameter space where likelihood is expected to be accurate
+    minimum_frequency: float
+        minimum frequency of likelihood integration
+    maximum_frequency: float
+        maximum frequency of likelihood integration
+    duration: float
+        inverse of frequency interval of likelihood integration
+    """
+    likelihood_parameter_bounds = {}
+    if chirp_mass > 90:
+        roq_folder = "/home/cbc/ROQ_data/IMRPhenomPv2/4s"
+        roq_scale_factor = 0.2
+    elif chirp_mass > 35:
+        roq_folder = "/home/cbc/ROQ_data/IMRPhenomPv2/4s"
+        roq_scale_factor = 0.5
+    elif chirp_mass > 13.53:
+        roq_folder = "/home/cbc/ROQ_data/IMRPhenomPv2/4s"
+        roq_scale_factor = 1
+    elif chirp_mass > 8.73:
+        roq_folder = "/home/cbc/ROQ_data/IMRPhenomPv2/8s"
+        roq_scale_factor = 1
+    elif chirp_mass > 5.66:
+        roq_folder = "/home/cbc/ROQ_data/IMRPhenomPv2/16s"
+        roq_scale_factor = 1
+    elif chirp_mass > 3.68:
+        roq_folder = "/home/cbc/ROQ_data/IMRPhenomPv2/32s"
+        roq_scale_factor = 1
+    elif chirp_mass > 2.39:
+        roq_folder = "/home/cbc/ROQ_data/IMRPhenomPv2/64s"
+        roq_scale_factor = 1
+    elif chirp_mass > 1.43:
+        roq_folder = "/home/cbc/ROQ_data/IMRPhenomPv2/128s"
+        roq_scale_factor = 1
+    elif chirp_mass > 0.9:
+        roq_folder = "/home/cbc/ROQ_data/IMRPhenomPv2/128s"
+        roq_scale_factor = 1.6
+    else:
+        roq_folder = "/home/cbc/ROQ_data/IMRPhenomPv2/128s"
+        roq_scale_factor = 2
+
+    roq_params_file = os.path.join(roq_folder, "params.dat")
+    if os.path.exists(roq_params_file):
+        roq_params = np.genfromtxt(roq_params_file, names=True)
+    elif ignore_no_params:
+        roq_params = {
+            "chirpmassmin": roq_scale_factor * chirp_mass * 0.9,
+            "chirpmassmax": roq_scale_factor * chirp_mass * 1.1,
+            "qmax": 8,
+            "compmin": 0,
+            "chiL1min": -0.99,
+            "chiL1max": 0.99,
+            "chiL2min": -0.99,
+            "chiL2max": 0.99,
+            "flow": 20,
+            "fhigh": 1024,
+            "seglen": 4,
+        }
+        logger.warning(
+            f"{roq_params_file} not found. ROQ parameters are set to {roq_params}."
+        )
+    else:
+        raise FileNotFoundError(f"{roq_params_file} not found.")
+
+    likelihood_parameter_bounds["chirp_mass_min"] = (
+        roq_params["chirpmassmin"] / roq_scale_factor
+    )
+    likelihood_parameter_bounds["chirp_mass_max"] = (
+        roq_params["chirpmassmax"] / roq_scale_factor
+    )
+    likelihood_parameter_bounds["mass_ratio_min"] = 1 / roq_params["qmax"]
+    likelihood_parameter_bounds["comp_min"] = roq_params["compmin"] / roq_scale_factor
+    likelihood_parameter_bounds["a_1_max"] = roq_params["chiL1max"]
+    likelihood_parameter_bounds["a_2_max"] = roq_params["chiL2max"]
+
+    minimum_frequency = roq_params["flow"] * roq_scale_factor
+    maximum_frequency = roq_params["fhigh"] * roq_scale_factor
+    duration = roq_params["seglen"] / roq_scale_factor
+
+    return (
+        {
+            "likelihood_type": "ROQGravitationalWaveTransient",
+            "roq_folder": roq_folder,
+            "roq_scale_factor": roq_scale_factor,
+            "waveform_approximant": "IMRPhenomPv2",
+        },
+        likelihood_parameter_bounds,
+        minimum_frequency,
+        maximum_frequency,
+        duration,
     )
 
-    minimum_frequency = roq_params["flow"] * scale_factor
-    maximum_frequency = roq_params["fhigh"] * scale_factor
-    duration /= scale_factor
-    return prior_file, roq_folder, duration, minimum_frequency, maximum_frequency
+
+def _choose_phenompv2_bns_roq(chirp_mass):
+    """Choose an appropriate BNS-mass IMRPhenomPv2 ROQ basis file, and return
+    likelihood arguments and quantities characterizing likelihood.
+
+    Parameters
+    ----------
+    chirp_mass: float
+
+    Returns
+    -------
+    likelihood_args: dict
+    likelihood_parameter_bounds: dict
+        bounds of parameter space where likelihood is expected to be accurate
+    minimum_frequency: float
+        minimum frequency of likelihood integration
+    maximum_frequency: float
+        maximum frequency of likelihood integration
+    duration: float
+        inverse of frequency interval of likelihood integration
+    """
+    roq_dir = "/home/roq/IMRPhenomPv2/bns"
+
+    logger.info(f"Searching for a basis file in {roq_dir} ...")
+    likelihood_parameter_bounds = {
+        "a_1_max": 0.99,
+        "a_2_max": 0.99,
+        "mass_ratio_min": 0.125,
+    }
+    # 2.31, 1.54, and 1.012 are 1.1 times the minimum chirp mass values of 64s,
+    # 128s, and 256s bases respectively.
+    if 4.0 > chirp_mass > 2.31:
+        basis = os.path.join(roq_dir, "basis_64s.hdf5")
+        likelihood_parameter_bounds["chirp_mass_min"] = 2.1
+        likelihood_parameter_bounds["chirp_mass_max"] = 4.0
+        maximum_frequency = 2048
+        duration = 64
+    elif chirp_mass > 1.54:
+        basis = os.path.join(roq_dir, "basis_128s.hdf5")
+        likelihood_parameter_bounds["chirp_mass_min"] = 1.4
+        likelihood_parameter_bounds["chirp_mass_max"] = 2.6
+        maximum_frequency = 4096
+        duration = 128
+    elif chirp_mass > 1.012:
+        basis = os.path.join(roq_dir, "basis_256s.hdf5")
+        likelihood_parameter_bounds["chirp_mass_min"] = 0.92
+        likelihood_parameter_bounds["chirp_mass_max"] = 1.7
+        maximum_frequency = 4096
+        duration = 256
+    elif chirp_mass > 0.6:
+        basis = os.path.join(roq_dir, "basis_512s.hdf5")
+        likelihood_parameter_bounds["chirp_mass_min"] = 0.6
+        likelihood_parameter_bounds["chirp_mass_max"] = 1.1
+        maximum_frequency = 4096
+        duration = 512
+    else:
+        raise ValueError(
+            "No BNS-mass PhenomPv2 basis has been found for "
+            f"chirp_mass={chirp_mass}!"
+        )
+    logger.info(f"The selected ROQ basis file is {basis}.")
+
+    return (
+        {
+            "likelihood_type": "ROQGravitationalWaveTransient",
+            "roq_linear_matrix": basis,
+            "roq_quadratic_matrix": basis,
+            "roq_scale_factor": 1,
+            "waveform_approximant": "IMRPhenomPv2",
+        },
+        likelihood_parameter_bounds,
+        20,
+        maximum_frequency,
+        duration,
+    )
+
+
+def _choose_lowspin_phenomd_roq(chirp_mass, narrow_mc=True):
+    """Choose an appropriate low-spin IMRPhenomD ROQ basis file, and return
+    likelihood arguments and quantities characterizing likelihood.
+
+    Parameters
+    ----------
+    chirp_mass: float
+    narrow_mc: bool
+
+    Returns
+    -------
+    likelihood_args: dict
+    likelihood_parameter_bounds: dict
+        bounds of parameter space where likelihood is expected to be accurate
+    minimum_frequency: float
+        minimum frequency of likelihood integration
+    maximum_frequency: float
+        maximum frequency of likelihood integration
+    duration: float
+        inverse of frequency interval of likelihood integration
+    """
+    if narrow_mc:
+        roq_dir = "/home/roq/IMRPhenomD/lowspin_narrowmc_bns"
+    else:
+        roq_dir = "/home/roq/IMRPhenomD/lowspin_broadmc_bns"
+
+    logger.info(f"Searching for a basis file in {roq_dir} ...")
+    likelihood_parameter_bounds = {
+        "a_1_max": 0.05,
+        "a_2_max": 0.05,
+        "mass_ratio_min": 0.125,
+    }
+    # 2.31, 1.54, and 1.012 are 1.1 times the minimum chirp mass values of 64s,
+    # 128s, and 256s bases respectively.
+    if 4.0 > chirp_mass > 2.31:
+        basis = os.path.join(roq_dir, "basis_64s.hdf5")
+        likelihood_parameter_bounds["chirp_mass_min"] = 2.1
+        likelihood_parameter_bounds["chirp_mass_max"] = 4.0
+        maximum_frequency = 2048
+        duration = 64
+    elif chirp_mass > 1.54:
+        basis = os.path.join(roq_dir, "basis_128s.hdf5")
+        likelihood_parameter_bounds["chirp_mass_min"] = 1.4
+        likelihood_parameter_bounds["chirp_mass_max"] = 2.6
+        maximum_frequency = 4096
+        duration = 128
+    elif chirp_mass > 1.012:
+        basis = os.path.join(roq_dir, "basis_256s.hdf5")
+        likelihood_parameter_bounds["chirp_mass_min"] = 0.92
+        likelihood_parameter_bounds["chirp_mass_max"] = 1.7
+        maximum_frequency = 4096
+        duration = 256
+    elif chirp_mass > 0.6:
+        basis = os.path.join(roq_dir, "basis_512s.hdf5")
+        likelihood_parameter_bounds["chirp_mass_min"] = 0.6
+        likelihood_parameter_bounds["chirp_mass_max"] = 1.1
+        maximum_frequency = 4096
+        duration = 512
+    else:
+        raise ValueError(
+            "No low-spin PhenomD basis has been found for " f"chirp_mass={chirp_mass}!"
+        )
+    logger.info(f"The selected ROQ basis file is {basis}.")
+
+    return (
+        {
+            "likelihood_type": "ROQGravitationalWaveTransient",
+            "roq_linear_matrix": basis,
+            "roq_quadratic_matrix": basis,
+            "roq_scale_factor": 1,
+            "waveform_approximant": "IMRPhenomD",
+        },
+        likelihood_parameter_bounds,
+        20,
+        maximum_frequency,
+        duration,
+    )
 
 
 def create_config_file(
@@ -351,8 +602,8 @@ def create_config_file(
     channel_dict,
     sampler_kwargs,
     webdir,
-    roq=True,
     search_type="cbc",
+    cbc_likelihood_mode="phenompv2_bbh_roq",
     settings=None,
 ):
     """Creates ini file from defaults and candidate contents
@@ -371,10 +622,12 @@ def create_config_file(
         Set of sampler arguments, or option for set of sampler arguments
     webdir: str
         Directory to store summary pages
-    roq: bool
-        If True, use the default ROQ settings if required
     search_type: str
         What kind of search identified the trigger, options are "cbc" and "burst"
+    cbc_likelihood_mode: str
+        Which mode of CBC likelihood settings is used, options are 'phenompv2_bbh_roq',
+        'phenompv2_bns_roq', 'lowspin_phenomd_narrowmc_roq', 'lowspin_phenomd_broadmc_roq',
+        and 'test'.
     settings: str
         JSON filename containing settings to override the defaults
 
@@ -402,42 +655,26 @@ def create_config_file(
             time_reference,
         ) = _read_cbc_candidate(candidate)
 
-        duration, scale_factor = determine_duration_and_scale_factor_from_parameters(
-            chirp_mass
-        )
-
-        distance_marginalization_lookup_table = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            "data_files",
-            f"{duration}s_distance_marginalization_lookup_phase.npz",
-        )
-
-        if sampler_kwargs == "FastTest":
-            template = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)),
-                "data_files/fast.prior.template",
-            )
-        else:
-            template = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)),
-                "data_files/roq.prior.template",
-            )
+        (
+            likelihood_args,
+            likelihood_parameter_bounds,
+            minimum_frequency,
+            maximum_frequency,
+            duration,
+        ) = _get_cbc_likelihood_args(cbc_likelihood_mode, chirp_mass)
 
         (
             prior_file,
-            roq_folder,
-            duration,
-            minimum_frequency,
-            maximum_frequency,
-        ) = prior_lookup(
-            duration=duration,
-            scale_factor=scale_factor,
-            outdir=outdir,
-            template=template,
-            chirp_mass=chirp_mass,
+            distance_marginalization_lookup_table,
+        ) = generate_cbc_prior_from_template(
+            cbc_likelihood_mode,
+            chirp_mass,
+            likelihood_parameter_bounds,
+            outdir,
+            fast_test=(sampler_kwargs == "FastTest"),
         )
-        calibration_model, calib_dict = calibration_dict_lookup(trigger_time, ifos)
 
+        calibration_model, calib_dict = calibration_dict_lookup(trigger_time, ifos)
         if calibration_model is None:
             spline_calibration_nodes = 0
         elif sampler_kwargs == "FastTest":
@@ -447,20 +684,17 @@ def create_config_file(
 
         extra_config_arguments = dict(
             reference_frequency=100,
-            time_marginalization=True,
+            time_marginalization=False,
             distance_marginalization=True,
             phase_marginalization=True,
             distance_marginalization_lookup_table=distance_marginalization_lookup_table,
-            roq_scale_factor=scale_factor,
             plot_trace=True,
             plot_data=True,
             calibration_model=calibration_model,
             spline_calibration_envelope_dict=calib_dict,
             spline_calibration_nodes=spline_calibration_nodes,
         )
-        if roq and duration > 4 and roq_folder is not None:
-            extra_config_arguments["likelihood-type"] = "ROQGravitationalWaveTransient"
-            extra_config_arguments["roq-folder"] = roq_folder
+        extra_config_arguments.update(likelihood_args)
     elif search_type == "burst":
         centre_frequency, superevent, trigger_time, ifos = _read_burst_candidate(
             candidate
@@ -554,78 +788,60 @@ def create_config_file(
     return filename
 
 
-def determine_duration_and_scale_factor_from_parameters(chirp_mass):
-    """Determine appropriate duration and roq scale factor from chirp mass
+def _get_distance_lookup(chirp_mass):
+    """Return appropriate distance bounds and lookup table
 
     Parameters
     ----------
     chirp_mass: float
-        The chirp mass of the source (in solar masses)
 
     Returns
     -------
-    duration: int
-    roq_scale_factor: float
+    distance_bounds: tuple
+    lookup_table: str
     """
-    roq_scale_factor = 1
-    if chirp_mass > 90:
-        duration = 4
-        roq_scale_factor = 4
-    elif chirp_mass > 35:
-        duration = 4
-        roq_scale_factor = 2
-    elif chirp_mass > 13.53:
-        duration = 4
+    if chirp_mass > 13.53:
+        _duration = 4
     elif chirp_mass > 8.73:
-        duration = 8
+        _duration = 8
     elif chirp_mass > 5.66:
-        duration = 16
+        _duration = 16
     elif chirp_mass > 3.68:
-        duration = 32
+        _duration = 32
     elif chirp_mass > 2.39:
-        duration = 64
-    elif chirp_mass > 1.43:
-        duration = 128
-    elif chirp_mass > 0.9:
-        duration = 128
-        roq_scale_factor = 1 / 1.6
+        _duration = 64
     else:
-        duration = 128
-        roq_scale_factor = 1 / 2
+        _duration = 128
+    distance_bounds = DEFAULT_DISTANCE_LOOKUPS[str(_duration) + "s"]
+    lookup_table = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        "data_files",
+        f"{_duration}s_distance_marginalization_lookup_phase.npz",
+    )
+    return distance_bounds, lookup_table
 
-    return duration, round(1 / roq_scale_factor, 1)
 
-
-def generate_prior_from_template(
-    duration, roq_params, scale_factor=1, outdir=".", template=None, chirp_mass=None
+def generate_cbc_prior_from_template(
+    mode, chirp_mass, likelihood_parameter_bounds, outdir, fast_test=False
 ):
-    """Generate a prior file from a template and write it to file
+    """Generate a cbc prior file from a template and write it to file. This
+    returns the paths to the prior file and the corresponding distance look-up
+    table
 
     Parameters
     ----------
-    duration: float
-        The segment duration
-    roq_params: dict
-        Dictionary of the ROQ params.dat file
-    scale_factor: float
-        Rescaling factor
+    mode: str
+    chirp_mass: float
+    likelihood_parameter_bounds: dict
     outdir: str
-        Path to the outdir (the prior is written to outdir/online.prior)
-    template: [str, None]
-        Alternative template file to use, otherwise the
-        data_files/roq.prior.template file is used
-    chirp_mass: [float, None]
-        The template chirp mass, used to set the prior bounds for low mass
-        systems
-    """
-    distance_bounds = DEFAULT_DISTANCE_LOOKUPS[str(duration) + "s"]
-    mc_min = roq_params["chirpmassmin"] / scale_factor
-    mc_max = roq_params["chirpmassmax"] / scale_factor
-    comp_min = roq_params["compmin"] / scale_factor
+    fast_test: bool (optional, default is False)
 
-    if chirp_mass is None:
-        bounds = (mc_min, mc_max)
-    elif chirp_mass < 2:
+    Returns
+    -------
+    prior_file: str
+    lookup_table: str
+    """
+    if chirp_mass < 2:
         bounds = (chirp_mass - 0.01, chirp_mass + 0.01)
     elif chirp_mass < 4:
         bounds = (chirp_mass - 0.1, chirp_mass + 0.1)
@@ -633,26 +849,67 @@ def generate_prior_from_template(
         bounds = (chirp_mass * 0.9, chirp_mass * 1.1)
     else:
         bounds = (0, 1000000)
-    mc_min = max(mc_min, bounds[0])
-    mc_max = min(mc_max, bounds[1])
+    chirp_mass_min = max(likelihood_parameter_bounds["chirp_mass_min"], bounds[0])
+    chirp_mass_max = min(likelihood_parameter_bounds["chirp_mass_max"], bounds[1])
 
-    if template is None:
+    try:
+        comp_min = likelihood_parameter_bounds["comp_min"]
+    except KeyError:
+        comp_min = 0.0
+    try:
+        a_1_max = likelihood_parameter_bounds["a_1_max"]
+    except KeyError:
+        a_1_max = 0.99
+    try:
+        a_2_max = likelihood_parameter_bounds["a_2_max"]
+    except KeyError:
+        a_2_max = 0.99
+
+    distance_bounds, lookup_table = _get_distance_lookup(chirp_mass)
+
+    if fast_test:
         template = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "data_files/roq.prior.template"
+            os.path.dirname(os.path.realpath(__file__)),
+            "data_files/fast.prior.template",
         )
+        with open(template, "r") as old_prior:
+            prior_string = old_prior.read().format(
+                mc_min=chirp_mass_min,
+                mc_max=chirp_mass_max,
+                comp_min=comp_min,
+                d_min=distance_bounds[0],
+                d_max=distance_bounds[1],
+            )
+    else:
+        if mode in ["phenompv2_bbh_roq", "test", "phenompv2_bns_roq"]:
+            template = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                "data_files/precessing_spin.prior.template",
+            )
+        elif mode in ["lowspin_phenomd_narrowmc_roq", "lowspin_phenomd_broadmc_roq"]:
+            template = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                "data_files/aligned_spin.prior.template",
+            )
+        else:
+            raise ValueError(f"Unknown mode: {mode}")
+        with open(template, "r") as old_prior:
+            prior_string = old_prior.read().format(
+                mc_min=chirp_mass_min,
+                mc_max=chirp_mass_max,
+                q_min=likelihood_parameter_bounds["mass_ratio_min"],
+                comp_min=comp_min,
+                a_1_max=a_1_max,
+                a_2_max=a_2_max,
+                d_min=distance_bounds[0],
+                d_max=distance_bounds[1],
+            )
 
-    with open(template, "r") as old_prior:
-        prior_string = old_prior.read().format(
-            mc_min=mc_min,
-            mc_max=mc_max,
-            comp_min=comp_min,
-            d_min=distance_bounds[0],
-            d_max=distance_bounds[1],
-        )
     prior_file = os.path.join(outdir, "online.prior")
     with open(prior_file, "w") as new_prior:
         new_prior.write(prior_string)
-    return prior_file
+
+    return prior_file, lookup_table
 
 
 def generate_burst_prior_from_template(
@@ -763,6 +1020,16 @@ def create_parser():
         ),
     )
     parser.add_argument(
+        "--cbc-likelihood-mode",
+        type=str,
+        default="phenompv2_bbh_roq",
+        help=(
+            "Which mode of CBC likelihood settings is used, options are 'phenompv2_bbh_roq', "
+            "'phenompv2_bns_roq', 'lowspin_phenomd_narrowmc_roq', 'lowspin_phenomd_broadmc_roq', "
+            "and 'test'. 'test' is for testing this command outside the CIT cluster."
+        ),
+    )
+    parser.add_argument(
         "--webdir",
         type=str,
         default=None,
@@ -835,6 +1102,7 @@ def main(args=None, unknown_args=None):
         sampler_kwargs=sampler_kwargs,
         webdir=webdir,
         search_type=search_type,
+        cbc_likelihood_mode=args.cbc_likelihood_mode,
         settings=args.settings,
     )
 

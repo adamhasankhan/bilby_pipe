@@ -144,46 +144,48 @@ class TestGraceDB(unittest.TestCase):
         self.assertEqual(args.gracedb_url, "https://gracedb.ligo.org/api/")
 
     def test_create_prior_file_high_mass(self):
-        gracedb.generate_prior_from_template(
-            duration=4,
-            roq_params=dict(
-                chirpmassmin=15,
-                chirpmassmax=45,
-                compmin=10,
+        gracedb.generate_cbc_prior_from_template(
+            mode="phenompv2_bbh_roq",
+            chirp_mass=20,
+            likelihood_parameter_bounds=dict(
+                chirp_mass_min=15,
+                chirp_mass_max=45,
+                mass_ratio_min=0.125,
+                comp_min=10,
             ),
-            scale_factor=1,
             outdir=self.outdir,
-            template=None,
-            chirp_mass=30,
         )
         priors = BBHPriorDict(f"{self.outdir}/online.prior")
         self.assertEqual(priors["chirp_mass"].minimum, 15)
         self.assertEqual(priors["chirp_mass"].maximum, 45)
+        self.assertEqual(priors["mass_ratio"].minimum, 0.125)
         self.assertEqual(priors["mass_1"].minimum, 10)
 
     def test_create_prior_file_low_mass(self):
-        gracedb.generate_prior_from_template(
-            duration=128,
-            roq_params=dict(
-                chirpmassmin=1,
-                chirpmassmax=2,
-                compmin=1,
-            ),
-            scale_factor=1,
-            outdir=self.outdir,
-            template=None,
+        gracedb.generate_cbc_prior_from_template(
+            mode="phenompv2_bbh_roq",
             chirp_mass=1.2,
+            likelihood_parameter_bounds=dict(
+                chirp_mass_min=1,
+                chirp_mass_max=2,
+                mass_ratio_min=0.125,
+                comp_min=1,
+            ),
+            outdir=self.outdir,
         )
         priors = BBHPriorDict(f"{self.outdir}/online.prior")
         self.assertEqual(priors["chirp_mass"].minimum, 1.2 - 0.01)
         self.assertEqual(priors["chirp_mass"].maximum, 1.2 + 0.01)
+        self.assertEqual(priors["mass_ratio"].minimum, 0.125)
         self.assertEqual(priors["mass_1"].minimum, 1)
 
     def test_main(self):
         gracedb_uid = "G298936"
         example_json_data = f"examples/gracedb/{gracedb_uid}.json"
         parser = gracedb.create_parser()
-        args = parser.parse_args(["--json", example_json_data])
+        args = parser.parse_args(
+            ["--json", example_json_data, "--cbc-likelihood-mode", "test"]
+        )
         gracedb.main(args)
         files = glob.glob(self.example_gracedb_uid_outdir + "/submit/*")
         print(files)
