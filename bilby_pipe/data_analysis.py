@@ -53,6 +53,7 @@ class DataAnalysisInput(Input):
         self.scheduler = args.scheduler
         self.periodic_restart_time = args.periodic_restart_time
         self.request_cpus = args.request_cpus
+        self.run_local = args.local
 
         # Naming arguments
         self.outdir = args.outdir
@@ -226,7 +227,7 @@ class DataAnalysisInput(Input):
         return likelihood, priors
 
     def run_sampler(self):
-        if self.scheduler.lower() == "condor":
+        if self.scheduler.lower() == "condor" and not self.run_local:
             signal.signal(signal.SIGALRM, handler=sighandler)
             signal.alarm(self.periodic_restart_time)
 
