@@ -88,7 +88,7 @@ smv_tag_whitelist = r"^(1.*|0.3.12)$"
 smv_branch_whitelist = r"^master$"
 
 # Whitelist pattern for remotes (set to None to use local branches only)
-smv_remote_whitelist = None
+smv_remote_whitelist = r"^(origin|upstream)$"
 
 # Format for versioned output directories inside the build directory
 smv_outputdir_format = "{ref.name}"

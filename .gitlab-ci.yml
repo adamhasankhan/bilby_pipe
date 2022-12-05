@@ -204,6 +204,7 @@ docs:
     - git checkout $CI_COMMIT_REF_NAME
     - git status
     - git branch
+    - git tag
     - sphinx-multiversion docs/ docs/_build/
 
   artifacts:
