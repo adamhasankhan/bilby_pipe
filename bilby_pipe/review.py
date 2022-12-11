@@ -188,7 +188,7 @@ def get_default_setup(args, review_name):
 
     base_dict = dict(
         label=base_label,
-        accounting="ligo.dev.o3.cbc.pe.lalinference",
+        accounting="ligo.dev.o4.cbc.pe.bilby",
         detectors=str(args.detectors),
         outdir=rundir,
         deltaT=0.2,
