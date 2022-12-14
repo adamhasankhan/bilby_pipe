@@ -1112,6 +1112,7 @@ class Input(object):
             time_marginalization=self.time_marginalization,
             reference_frame=self.reference_frame,
             time_reference=self.time_reference,
+            calibration_marginalization=self.calibration_marginalization,
         )
 
         if getattr(self, "likelihood_lookup_table", None) is not None:
