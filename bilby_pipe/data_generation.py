@@ -161,21 +161,6 @@ class DataGenerationInput(Input):
         self.roq_weight_format = args.roq_weight_format
         self.roq_scale_factor = args.roq_scale_factor
 
-        # multiband
-        self.multiband_reference_chirp_mass = args.multiband_reference_chirp_mass
-        self.multiband_highest_mode = args.multiband_highest_mode
-        self.multiband_linear_interpolation = args.multiband_linear_interpolation
-        self.multiband_accuracy_factor = args.multiband_accuracy_factor
-        self.multiband_time_offset = args.multiband_time_offset
-        self.multiband_delta_f_end = args.multiband_delta_f_end
-        self.multiband_maximum_banding_frequency = (
-            args.multiband_maximum_banding_frequency
-        )
-        self.multiband_minimum_banding_duration = (
-            args.multiband_minimum_banding_duration
-        )
-        self.multiband_weights = args.multiband_weights
-
         # Calibration
         self.calibration_model = args.calibration_model
         self.spline_calibration_envelope_dict = args.spline_calibration_envelope_dict
@@ -1240,15 +1225,23 @@ class DataGenerationInput(Input):
             waveform_generator=waveform_generator,
             reference_frame=self.reference_frame,
             time_reference=self.time_reference,
-            reference_chirp_mass=self.multiband_reference_chirp_mass,
-            highest_mode=self.multiband_highest_mode,
-            linear_interpolation=self.multiband_linear_interpolation,
-            accuracy_factor=self.multiband_accuracy_factor,
-            time_offset=self.multiband_time_offset,
-            delta_f_end=self.multiband_delta_f_end,
-            maximum_banding_frequency=self.multiband_maximum_banding_frequency,
-            minimum_banding_duration=self.multiband_minimum_banding_duration,
-            weights=self.multiband_weights,
+            reference_chirp_mass=self.extra_likelihood_kwargs.get(
+                "reference_chirp_mass", None
+            ),
+            highest_mode=self.extra_likelihood_kwargs.get("highest_mode", 2),
+            linear_interpolation=self.extra_likelihood_kwargs.get(
+                "linear_interpolation", True
+            ),
+            accuracy_factor=self.extra_likelihood_kwargs.get("accuracy_factor", 5),
+            time_offset=self.extra_likelihood_kwargs.get("time_offset", None),
+            delta_f_end=self.extra_likelihood_kwargs.get("delta_f_end", None),
+            maximum_banding_frequency=self.extra_likelihood_kwargs.get(
+                "maximum_banding_frequency", None
+            ),
+            minimum_banding_duration=self.extra_likelihood_kwargs.get(
+                "minimum_banding_duration", 0
+            ),
+            weights=self.extra_likelihood_kwargs.get("weights", None),
         )
 
         weight_file = os.path.join(

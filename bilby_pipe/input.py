@@ -1134,6 +1134,7 @@ class Input(object):
         elif self.likelihood_type == "MBGravitationalWaveTransient":
             Likelihood = bilby.gw.likelihood.MBGravitationalWaveTransient
             likelihood_kwargs.update(self.multiband_likelihood_kwargs)
+            likelihood_kwargs.update(self.extra_likelihood_kwargs)
 
         elif "." in self.likelihood_type:
             split_path = self.likelihood_type.split(".")
@@ -1197,8 +1198,6 @@ class Input(object):
         ]
         if "roq" in self.likelihood_type.lower():
             forbidden_keys += ["weights", "roq_params", "roq_scale_factor"]
-        if self.is_likelihood_multiband:
-            forbidden_keys += ["weights"]
         for key in forbidden_keys:
             if key in likelihood_kwargs:
                 raise KeyError(
@@ -1530,6 +1529,7 @@ class Input(object):
         if paths is None or paths == [None]:
             self._additional_transfer_paths = list()
 
+    @property
     def is_likelihood_multiband(self):
         return (
             self.likelihood_type == "MBGravitationalWaveTransient"
