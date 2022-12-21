@@ -93,8 +93,8 @@ def plot_calibration():
 
     logger.info("Generating calibration posterior")
     allowed_formats = list(plt.gcf().canvas.get_supported_filetypes())
-    if args.plot_format in allowed_formats:
-        _format = args.plot_format
+    if args.format in allowed_formats:
+        _format = args.format
     else:
         logger.info(
             f"Requested format '{args.format}' not recognised. Falling back to png."
