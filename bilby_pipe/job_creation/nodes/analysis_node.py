@@ -1,5 +1,7 @@
 import os
+from pathlib import Path
 
+from ...utils import check_directory_exists_and_if_not_mkdir, logger
 from ..node import Node
 
 
@@ -36,10 +38,19 @@ class AnalysisNode(Node):
 
         if self.inputs.transfer_files or self.inputs.osg:
             data_dump_file = generation_node.data_dump_file
-            input_files_to_transfer = [
-                str(data_dump_file),
-                str(self.inputs.complete_ini_file),
-            ]
+            input_files_to_transfer = (
+                [
+                    str(data_dump_file),
+                    str(self.inputs.complete_ini_file),
+                ]
+                + touch_checkpoint_files(
+                    os.path.join(inputs.outdir, "result"),
+                    self.job_name,
+                    inputs.sampler,
+                    inputs.result_format,
+                )
+                + inputs.additional_transfer_paths
+            )
             self.extra_lines.extend(
                 self._condor_file_transfer_lines(
                     input_files_to_transfer,
@@ -87,3 +98,66 @@ class AnalysisNode(Node):
         """Default wall-time for base-name"""
         # Seven days
         return self.inputs.scheduler_analysis_time
+
+
+def touch_checkpoint_files(directory, label, sampler, result_format="hdf5"):
+    """
+    Figure out the pathnames required to recover from a checkpoint.
+
+    These may change due to upstream changes in Bilby.
+    """
+
+    def touch_pickle_file(filename):
+        import dill
+
+        if not Path(filename).exists():
+            with open(filename, "wb") as ff:
+                dill.dump(dict(), ff)
+
+    abbreviations = dict(
+        ptmcmcsampler="ptmcmc_temp",
+        pymultinest="pm",
+        ultranest="ultra",
+    )
+
+    check_directory_exists_and_if_not_mkdir(directory=directory)
+    result_file = Path(directory) / f"{label}_result.{result_format}"
+    result_file.touch()
+    filenames = [str(result_file)]
+    if sampler.lower() == "dynesty":
+        for kind in ["resume", "dynesty"]:
+            filename = f"{directory}/{label}_{kind}.pickle"
+            touch_pickle_file(filename)
+            filenames.append(filename)
+    elif sampler.lower() == "bilby_mcmc":
+        filename = f"{directory}/{label}_resume.pickle"
+        touch_pickle_file(filename)
+        filenames.append(filename)
+    elif sampler.lower == "ptemcee":
+        filename = f"{directory}/{label}_checkpoint_resume.pickle"
+        touch_pickle_file(filename)
+        filenames.append(filename)
+    elif sampler.lower() == "nessai":
+        dirname = f"{directory}/{label}_nessai"
+        check_directory_exists_and_if_not_mkdir(directory=dirname)
+        filenames.append(dirname)
+    elif sampler.lower() in [
+        "cpnest",
+        "emcee",
+        "kombine",
+        "ultranest",
+        "ptmcmcsampler",
+        "pymultinest",
+        "zeus",
+    ]:
+        name = abbreviations.get(sampler.lower(), sampler.lower())
+        dirname = f"{directory}/{name}_{label}"
+        check_directory_exists_and_if_not_mkdir(directory=dirname)
+        filenames.append(dirname)
+    elif sampler.lower() == "pypolychord":
+        dirname = f"{directory}/chains"
+        check_directory_exists_and_if_not_mkdir(directory=dirname)
+        filenames.append(dirname)
+    else:
+        logger.warning(f"Unable to predict resume files for {sampler}")
+    return filenames

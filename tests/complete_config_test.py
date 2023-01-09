@@ -46,6 +46,11 @@ class TestMainInput(unittest.TestCase):
         )
         exclude_keys.append("postprocessing_arguments")
 
+        self.assertEqual(
+            inputs.additional_transfer_paths, complete_inputs.additional_transfer_paths
+        )
+        exclude_keys.append("additional_transfer_paths")
+
         self.assertEqual(args.mode_array, complete_args.mode_array[0])
         exclude_keys.append("mode_array")
 

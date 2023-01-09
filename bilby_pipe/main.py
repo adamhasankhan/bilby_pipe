@@ -59,6 +59,7 @@ class MainInput(Input):
         self.coherence_test = args.coherence_test
         self.n_parallel = args.n_parallel
         self.transfer_files = args.transfer_files
+        self.additional_transfer_paths = args.additional_transfer_paths
         self.osg = args.osg
         self.desired_sites = args.desired_sites
         self.analysis_executable = args.analysis_executable
@@ -370,7 +371,9 @@ def write_complete_config_file(parser, args, inputs, input_cls=MainInput):
             if os.path.isfile(val) or os.path.isdir(val):
                 setattr(args, key, os.path.abspath(val))
         if isinstance(val, list):
-            if isinstance(val[0], str):
+            if len(val) == 0:
+                setattr(args, key, "[]")
+            elif isinstance(val[0], str):
                 setattr(args, key, f"[{', '.join(val)}]")
     args.sampler_kwargs = str(inputs.sampler_kwargs)
     args.submit = False

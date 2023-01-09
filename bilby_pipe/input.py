@@ -1487,3 +1487,15 @@ class Input(object):
                 raise BilbyPipeError(
                     f"PSD file {psd_file} for detector {det} does not exist"
                 )
+
+    @property
+    def additional_transfer_paths(self):
+        return self._additional_transfer_paths
+
+    @additional_transfer_paths.setter
+    def additional_transfer_paths(self, paths):
+        print(paths)
+        if isinstance(paths, list):
+            self._additional_transfer_paths = paths
+        if paths is None or paths == [None]:
+            self._additional_transfer_paths = list()

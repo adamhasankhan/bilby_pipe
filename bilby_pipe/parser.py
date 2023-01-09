@@ -572,6 +572,19 @@ def create_parser(top_level=True):
         ),
     )
     submission_parser.add(
+        "--additional-transfer-paths",
+        action="append",
+        default=None,
+        type=nonestr,
+        help=(
+            "Additional files that should be transferred to the analysis jobs. "
+            "The default is not transferring any additional files. Additional "
+            "files can be specified as a list in the configuration file [a, b] "
+            "or on the command line as --additional-transfer-paths a "
+            "--additonal-transfer-paths b"
+        ),
+    )
+    submission_parser.add(
         "--log-directory",
         type=nonestr,
         default=None,
