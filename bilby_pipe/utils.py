@@ -221,6 +221,7 @@ SAMPLER_SETTINGS = {
     "FastTest": {
         "nlive": 50,
         "walks": 100,
+        "nact": "5",
         "dlogz": 1,
         "check_point_plot": True,
         "check_point_delta_t": 1800,
