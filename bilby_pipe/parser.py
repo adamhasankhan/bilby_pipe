@@ -971,6 +971,25 @@ def create_parser(top_level=True):
             "pass pre-defined set of sampler-kwargs {DynestyDefault, BilbyMCMCDefault, FastTest}"
         ),
     )
+    sampler_parser.add(
+        "--reweighting-configuration",
+        type=nonestr,
+        default=None,
+        help=(
+            "Configuration for reweighting the result. This can be specified "
+            "as either a dictionary in the configuration file, or a json file."
+        ),
+    )
+    sampler_parser.add(
+        "--reweight-nested-samples",
+        # type=argparse.BooleanOptionalAction,
+        default=True,
+        action=StoreBoolean,
+        help=(
+            "Whether to reweight nested samples directly. "
+            "Currently this only works with dynesty."
+        ),
+    )
 
     # Waveform arguments
     waveform_parser = parser.add_argument_group(

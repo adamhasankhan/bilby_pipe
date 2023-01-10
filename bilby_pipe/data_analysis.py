@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """ Script to perform data analysis """
+import json
 import os
 import signal
 import sys
@@ -14,6 +15,7 @@ from bilby_pipe.utils import (
     CHECKPOINT_EXIT_CODE,
     BilbyPipeError,
     DataDump,
+    convert_string_to_dict,
     log_version_information,
     logger,
 )
@@ -110,6 +112,10 @@ class DataAnalysisInput(Input):
         self.phase_marginalization = args.phase_marginalization
         self.time_marginalization = args.time_marginalization
         self.jitter_time = args.jitter_time
+
+        # Reweighting
+        self.reweighting_configuration = args.reweighting_configuration
+        self.reweight_nested_samples = args.reweight_nested_samples
 
         if test is False:
             self._load_data_dump()
@@ -233,13 +239,18 @@ class DataAnalysisInput(Input):
 
         likelihood, priors = self.get_likelihood_and_priors()
 
+        if self.reweighting_configuration is not None:
+            conversion_function = None
+        else:
+            conversion_function = self.parameter_generation
+
         self.result = bilby.run_sampler(
             likelihood=likelihood,
             priors=priors,
             sampler=self.sampler,
             label=self.label,
             outdir=self.result_directory,
-            conversion_function=self.parameter_generation,
+            conversion_function=conversion_function,
             injection_parameters=self.meta_data["injection_parameters"],
             meta_data=self.meta_data,
             result_class=self.result_class,
@@ -247,6 +258,102 @@ class DataAnalysisInput(Input):
             save=self.result_format,
             **self.sampler_kwargs,
         )
+
+    def get_likelihood_and_priors_for_reweighting(self):
+        if os.path.exists(self.reweighting_configuration):
+            with open(self.reweighting_configuration, "r") as ff:
+                data = json.load(ff)
+        else:
+            try:
+                data = convert_string_to_dict(self.reweighting_configuration)
+            except (ValueError, SyntaxError):
+                logger.error("Cannot parse reweighting configuration")
+                raise
+        need_likelihood = False
+        likelihood = None
+        priors = None
+        self.search_priors = self.priors.copy()
+
+        likelihood_arguments = [
+            "likelihood_type",
+            "waveform_generator_class",
+            "waveform_approximant",
+            "catch_waveform_errors",
+            "pn_spin_order",
+            "pn_tidal_order",
+            "pn_phase_order",
+            "pn_amplitude_order",
+            "mode_array",
+            "waveform_arguments_dict",
+            "numerical_relativity_file",
+            "frequency_domain_source_model",
+            "conversion_function",
+            "extra_likelihood_kwargs",
+        ]
+
+        if "prior-file" in data:
+            priors = self.priors.copy()
+            self.priors.update(bilby.core.prior.PriorDict(data["prior-file"]))
+            self.search_priors = priors
+        for key, value in data.items():
+            key = key.replace("-", "_")
+            if key in likelihood_arguments:
+                logger.info(f"Setting {key} to {value} for reweighting")
+                setattr(self, key.replace("-", "_"), value)
+                need_likelihood = True
+        if need_likelihood:
+            likelihood = self.likelihood
+            likelihood.parameters.update(self.search_priors.sample())
+        return likelihood, priors
+
+    def reweight_result(self):
+        old_priors = self.priors.copy()
+        self.search_priors = old_priors
+        reweight_nest = self.reweight_nested_samples
+        if self.sampler == "dynesty":
+            self.result.nested_samples["log_prior"] = old_priors.ln_prob(
+                {
+                    key: self.result.nested_samples[key].values
+                    for key in self.result.search_parameter_keys
+                },
+                axis=0,
+            )
+            for key in old_priors:
+                if isinstance(old_priors[key], bilby.core.prior.DeltaFunction):
+                    self.result.nested_samples[key] = old_priors[key].sample()
+        else:
+            reweight_nest = False
+        old_likelihood = self.likelihood
+        likelihood, priors = self.get_likelihood_and_priors_for_reweighting()
+        if likelihood is None:
+            old_likelihood = None
+        if priors is None:
+            old_priors = None
+        target_keys = list(self.search_priors.keys()) + ["log_prior", "log_likelihood"]
+        for key in list(self.result.posterior):
+            if key not in target_keys:
+                del self.result.posterior[key]
+
+        time_per_likelihood = (
+            self.result.meta_data["run_statistics"]["sampling_time_s"]
+            / self.result.meta_data["run_statistics"]["nlikelihood"]
+        )
+
+        reweighted = bilby.core.result.reweight(
+            result=self.result,
+            label=self.label,
+            new_likelihood=likelihood,
+            new_prior=priors,
+            old_likelihood=old_likelihood,
+            old_prior=old_priors,
+            conversion_function=self.parameter_generation,
+            npool=self.request_cpus,
+            verbose_output=False,
+            resume_file=f"{self.result_directory}/{self.label}_reweight_resume.pkl",
+            n_checkpoint=300 / time_per_likelihood,
+            use_nested_samples=reweight_nest,
+        )
+        reweighted.save_to_file(extension=self.result_format)
 
 
 def create_analysis_parser():
@@ -260,4 +367,6 @@ def main():
     log_version_information()
     analysis = DataAnalysisInput(args, unknown_args)
     analysis.run_sampler()
+    if analysis.reweighting_configuration is not None:
+        analysis.reweight_result()
     sys.exit(0)

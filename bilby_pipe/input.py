@@ -1173,6 +1173,8 @@ class Input(object):
             raise TypeError(
                 f"Type {type(likelihood_kwargs)} not understood for likelihood kwargs."
             )
+        for key in list(likelihood_kwargs.keys()):
+            likelihood_kwargs[key.replace("-", "_")] = likelihood_kwargs.pop(key)
         forbidden_keys = [
             "interferometers",
             "waveform_generator",
