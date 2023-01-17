@@ -213,7 +213,7 @@ SAMPLER_SETTINGS = {
     "DynestyDefault": {
         "nlive": 1000,
         "walks": 100,
-        "nact": "50",
+        "nact": 50,
         "check_point_plot": True,
         "check_point_delta_t": 1800,
         "print_method": "interval-60",
@@ -221,7 +221,7 @@ SAMPLER_SETTINGS = {
     "FastTest": {
         "nlive": 50,
         "walks": 100,
-        "nact": "5",
+        "nact": 5,
         "dlogz": 1,
         "check_point_plot": True,
         "check_point_delta_t": 1800,
