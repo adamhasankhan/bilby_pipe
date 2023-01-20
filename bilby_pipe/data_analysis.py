@@ -103,8 +103,15 @@ class DataAnalysisInput(Input):
 
         # Calibration
         self.calibration_model = args.calibration_model
-        self.spline_calibration_nodes = args.spline_calibration_nodes
         self.spline_calibration_envelope_dict = args.spline_calibration_envelope_dict
+        self.spline_calibration_amplitude_uncertainty_dict = (
+            args.spline_calibration_amplitude_uncertainty_dict
+        )
+        self.spline_calibration_phase_uncertainty_dict = (
+            args.spline_calibration_phase_uncertainty_dict
+        )
+        self.spline_calibration_nodes = args.spline_calibration_nodes
+        self.calibration_prior_boundary = args.calibration_prior_boundary
 
         # Marginalization
         self.distance_marginalization = args.distance_marginalization
@@ -112,6 +119,7 @@ class DataAnalysisInput(Input):
         self.phase_marginalization = args.phase_marginalization
         self.time_marginalization = args.time_marginalization
         self.jitter_time = args.jitter_time
+        self.calibration_marginalization = args.calibration_marginalization
 
         # Reweighting
         self.reweighting_configuration = args.reweighting_configuration

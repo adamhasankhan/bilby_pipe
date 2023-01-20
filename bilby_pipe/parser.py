@@ -632,6 +632,15 @@ def create_parser(top_level=True):
         description="Options for setting up the likelihood.",
     )
     likelihood_parser.add(
+        "--calibration-marginalization",
+        action="store_true",
+        default=False,
+        help=(
+            "Boolean. If true, use a likelihood that is numerically marginalized "
+            "over the calibration uncertainty as described in arXiv:2009.10193."
+        ),
+    )
+    likelihood_parser.add(
         "--distance-marginalization",
         action="store_true",
         default=False,

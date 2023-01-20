@@ -180,6 +180,7 @@ class DataGenerationInput(Input):
         )
         self.phase_marginalization = args.phase_marginalization
         self.time_marginalization = args.time_marginalization
+        self.calibration_marginalization = args.calibration_marginalization
         self.jitter_time = args.jitter_time
 
         # Plotting
