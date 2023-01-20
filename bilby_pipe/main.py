@@ -26,6 +26,7 @@ from .job_creation import generate_dag
 from .parser import create_parser
 from .utils import (
     BilbyPipeError,
+    get_colored_string,
     get_command_line_arguments,
     get_outdir_name,
     log_version_information,
@@ -162,6 +163,7 @@ class MainInput(Input):
         self.psd_dict = args.psd_dict
 
         self.check_source_model(args)
+        self.check_calibration_prior_boundary(args)
 
         self.extra_lines = []
         self.requirements = []
@@ -288,6 +290,19 @@ class MainInput(Input):
                     tcolors.END,
                 ]
                 logger.warning(" ".join(msg))
+
+    @staticmethod
+    def check_calibration_prior_boundary(args):
+        # List of recommendations: print warning if these are not adhered to
+        recs = dict(bilby_mcmc=None, dynesty="reflective")
+        suggested_boundary = recs.get(args.sampler, args.calibration_prior_boundary)
+        if args.calibration_prior_boundary != suggested_boundary:
+            msg = (
+                "You have requested a calibration prior boundary "
+                f"{args.calibration_prior_boundary}, but {suggested_boundary} "
+                "is recommended."
+            )
+            logger.warning(get_colored_string(msg))
 
     def check_injection(self):
         """Check injection behaviour
