@@ -15,10 +15,13 @@ that can be passed to the :code:`bilby_pipe` parser.
 
 If you are specifying a new prior file, the parameterization should remain the
 same, reweighting to include new parameters will generally not work with this
-implementation and should be done on a case-by-case basis.
+implementation and should be done on a case-by-case basis. The exception to this
+is adding calibration marginalization which can be included by specifying a new
+:code:`calibration-model` as described in
+`arXiv:2009.10193 <https://arxiv.org/abs/2009.10193>`_.
 
 If you are using the file transfer option, you must list this configuration file
-and any other needed files, e.g., a new prior file.
+and any other needed files, e.g., a new prior file/calibration envelopes.
 
 Reweighting nested samples
 --------------------------
