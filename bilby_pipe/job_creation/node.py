@@ -163,6 +163,7 @@ class Node(object):
             f"transfer_input_files = {','.join(inputs)}",
             f"transfer_output_files = {','.join(outputs)}",
             "when_to_transfer_output = ON_EXIT_OR_EVICT",
+            "preserve_relative_paths = True",
             "stream_error = True",
             "stream_output = True",
         ]
