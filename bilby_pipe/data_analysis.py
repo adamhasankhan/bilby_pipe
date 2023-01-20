@@ -295,11 +295,16 @@ class DataAnalysisInput(Input):
             priors = self.priors.copy()
             self.priors.update(bilby.core.prior.PriorDict(data["prior-file"]))
             self.search_priors = priors
+        if "calibration-model" in data:
+            self.calibaration_model = data["calibration-model"]
+            if self.calibaration_model is not None:
+                self.priors.update(self.calibration_prior)
+                need_likelihood = True
         for key, value in data.items():
             key = key.replace("-", "_")
             if key in likelihood_arguments:
                 logger.info(f"Setting {key} to {value} for reweighting")
-                setattr(self, key.replace("-", "_"), value)
+                setattr(self, key, value)
                 need_likelihood = True
         if need_likelihood:
             likelihood = self.likelihood
