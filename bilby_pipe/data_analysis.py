@@ -10,7 +10,7 @@ import numpy as np
 import bilby
 from bilby_pipe.input import Input
 from bilby_pipe.main import parse_args
-from bilby_pipe.parser import create_parser
+from bilby_pipe.parser import _get_items_in_group, create_parser
 from bilby_pipe.utils import (
     CHECKPOINT_EXIT_CODE,
     BilbyPipeError,
@@ -282,41 +282,29 @@ class DataAnalysisInput(Input):
         priors = None
         self.search_priors = self.priors.copy()
 
-        likelihood_arguments = [
-            "likelihood_type",
-            "waveform_generator_class",
-            "waveform_approximant",
-            "catch_waveform_errors",
-            "pn_spin_order",
-            "pn_tidal_order",
-            "pn_phase_order",
-            "pn_amplitude_order",
-            "mode_array",
-            "waveform_arguments_dict",
-            "numerical_relativity_file",
-            "frequency_domain_source_model",
-            "conversion_function",
-            "extra_likelihood_kwargs",
-        ]
+        target_arguments = _get_items_in_group("likelihood")
+        target_arguments += _get_items_in_group("waveform")
 
         if "prior-file" in data:
             priors = self.priors.copy()
             self.priors.update(bilby.core.prior.PriorDict(data["prior-file"]))
             self.search_priors = priors
         if "calibration-model" in data:
-            self.calibaration_model = data["calibration-model"]
-            if self.calibaration_model is not None:
+            self.calibration_model = data["calibration-model"]
+            if self.calibration_model is not None:
                 self.priors.update(self.calibration_prior)
                 need_likelihood = True
         for key, value in data.items():
             key = key.replace("-", "_")
-            if key in likelihood_arguments:
+            if key in target_arguments:
                 logger.info(f"Setting {key} to {value} for reweighting")
                 setattr(self, key, value)
                 need_likelihood = True
         if need_likelihood:
             likelihood = self.likelihood
             likelihood.parameters.update(self.search_priors.sample())
+            likelihood.outdir = self.outdir
+            likelihood.label = self.label
         return likelihood, priors
 
     def reweight_result(self):

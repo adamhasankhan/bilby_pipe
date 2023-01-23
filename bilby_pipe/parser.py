@@ -1123,6 +1123,22 @@ def create_parser(top_level=True):
     return parser
 
 
+def _get_items_in_group(label):
+    """
+    This is a utility function to get the names of all of the parser options
+    in a group. For example :code:`_get_items_in_group("waveform")` will return
+    a list of all the supported waveform arguments.
+    """
+    parser = create_parser()
+    names = list()
+    for group in parser._action_groups:
+        if group.title.lower() != f"{label} arguments":
+            continue
+        for action in group._group_actions:
+            names.append(action.dest)
+    return names
+
+
 def main():
     filename = sys.argv[1]
     if filename in ["-h", "--help"]:
