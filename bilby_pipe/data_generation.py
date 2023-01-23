@@ -750,6 +750,15 @@ class DataGenerationInput(Input):
         if np.all(data.value == 0):
             raise BilbyPipeError("Obtained data is all zeros")
 
+        if data.unit.to_string() != "":
+            from astropy.units import dimensionless_unscaled
+
+            logger.warning(
+                f"Loaded {det} data has unit '{data.unit.to_string()}', "
+                "overwriting to dimensionless"
+            )
+            data.override_unit(dimensionless_unscaled)
+
         if resample and data.sample_rate.value == self.sampling_frequency:
             logger.info("Sample rate matches data no resampling")
         elif resample:
