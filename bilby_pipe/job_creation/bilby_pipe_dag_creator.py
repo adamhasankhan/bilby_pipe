@@ -30,7 +30,7 @@ def get_trigger_time_list(inputs):
         trigger_times = start_times + inputs.duration - inputs.post_trigger_duration
     else:
         raise BilbyPipeError("Unable to determine input trigger times from ini file")
-    logger.info(f"Setting segment trigger-times {trigger_times}")
+    logger.debug(f"Setting segment trigger-times {trigger_times}")
     return trigger_times
 
 
