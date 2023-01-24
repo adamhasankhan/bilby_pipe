@@ -208,14 +208,14 @@ class Input(object):
     def _parse_gps_file(self):
         gpstimes = self.read_gps_file(self.gps_file)
         n = len(gpstimes)
-        logger.info(f"{n} start times found in gps_file={self.gps_file}")
+        logger.debug(f"{n} start times found in gps_file={self.gps_file}")
         self.gpstimes = gpstimes
 
     @staticmethod
     def read_gps_file(gps_file):
         gpstimes = np.loadtxt(gps_file, ndmin=2, delimiter=",")
         if gpstimes.ndim > 1:
-            logger.info(f"Reading column 0 from gps_file={gps_file}")
+            logger.debug(f"Reading column 0 from gps_file={gps_file}")
             gpstimes = gpstimes[:, 0]
         return gpstimes
 
@@ -306,7 +306,7 @@ class Input(object):
         self.timeslides = {}
         for i in range(len(self.detectors)):
             self.timeslides.update({self.detectors[i]: times[i].flatten()})
-        logger.info(
+        logger.debug(
             f"{number_rows} timeslides found in timeslide_file={self.timeslide_file}"
         )
 
@@ -325,7 +325,7 @@ class Input(object):
         timeslide_val = {
             det: timeslide[idx] for det, timeslide in self.timeslides.items()
         }
-        logger.info(f"Timeslide value: {timeslide_val}")
+        logger.debug(f"Timeslide value: {timeslide_val}")
         return timeslide_val
 
     @property
@@ -337,7 +337,7 @@ class Input(object):
         """
         if self.frequency_domain_source_model in bilby.gw.source.__dict__.keys():
             model = self._frequency_domain_source_model
-            logger.info(f"Using the {model} source model")
+            logger.debug(f"Using the {model} source model")
             return bilby.gw.source.__dict__[model]
         elif "." in self.frequency_domain_source_model:
             return get_function_from_string_path(self._frequency_domain_source_model)
@@ -428,10 +428,10 @@ class Input(object):
     @property
     def bilby_roq_frequency_domain_source_model(self):
         if "binary_neutron_star" in self.frequency_domain_source_model:
-            logger.info("Using the binary_neutron_star_roq source model")
+            logger.debug("Using the binary_neutron_star_roq source model")
             return bilby.gw.source.binary_neutron_star_roq
         elif "binary_black_hole" in self.frequency_domain_source_model:
-            logger.info("Using the binary_black_hole_roq source model")
+            logger.debug("Using the binary_black_hole_roq source model")
             return bilby.gw.source.binary_black_hole_roq
         else:
             raise BilbyPipeError("Unable to determine roq_source from source model")
@@ -456,14 +456,14 @@ class Input(object):
         if trigger_time is None:
             logger.debug("No trigger time given")
         elif isinstance(trigger_time, str) and "GW" in trigger_time:
-            logger.info(f"Using gwosc to find trigger time for event {trigger_time}")
+            logger.debug(f"Using gwosc to find trigger time for event {trigger_time}")
             trigger_time = event_gps(trigger_time)
         else:
             trigger_time = float(trigger_time)
 
         self._trigger_time = trigger_time
         if trigger_time is not None:
-            logger.info(f"Setting trigger time {trigger_time}")
+            logger.debug(f"Setting trigger time {trigger_time}")
 
     @property
     def start_time(self):
@@ -496,7 +496,7 @@ class Input(object):
         self._verify_start_time(start_time)
         self._start_time = start_time
         if start_time is not None:
-            logger.info(f"Setting segment start time {start_time}")
+            logger.debug(f"Setting segment start time {start_time}")
 
     @property
     def duration(self):
@@ -506,7 +506,7 @@ class Input(object):
     def duration(self, duration):
         self._duration = duration
         if duration is not None:
-            logger.info(f"Setting segment duration {duration}s")
+            logger.debug(f"Setting segment duration {duration}s")
 
     @property
     def injection_numbers(self):
@@ -551,7 +551,7 @@ class Input(object):
         if isinstance(injection_df, pd.DataFrame) is False:
             raise BilbyPipeError("Setting injection df with non-pandas DataFrame")
         elif self.injection_numbers is not None:
-            logger.info(
+            logger.debug(
                 f"Truncating injection injection df to rows {self.injection_numbers}"
             )
             try:
@@ -731,7 +731,7 @@ class Input(object):
             self.maximum_frequency_dict = {
                 det: self._maximum_frequency for det in self.detectors
             }
-            logger.info(
+            logger.debug(
                 "No maximum frequency given. "
                 "Setting to sampling frequency / 2 = {}".format(self._maximum_frequency)
             )
@@ -816,7 +816,7 @@ class Input(object):
         else:
             raise FileNotFoundError(f"No prior file {prior_file} available")
 
-        logger.info(f"Setting prior-file to {self._prior_file}")
+        logger.debug(f"Setting prior-file to {self._prior_file}")
 
     @property
     def prior_dict(self):
@@ -871,7 +871,7 @@ class Input(object):
                 self._distance_marginalization_lookup_table = None
         else:
             if hasattr(self, "_distance_marginalization_lookup_table"):
-                logger.info("Overwriting distance_marginalization_lookup_table")
+                logger.debug("Overwriting distance_marginalization_lookup_table")
             self._distance_marginalization_lookup_table = (
                 distance_marginalization_lookup_table
             )
@@ -1047,7 +1047,7 @@ class Input(object):
                     det in self.spline_calibration_amplitude_uncertainty_dict
                     and det in self.spline_calibration_phase_uncertainty_dict
                 ):
-                    logger.info(
+                    logger.debug(
                         "Creating calibration prior for {} from "
                         "provided constant uncertainty values.".format(det)
                     )
@@ -1076,10 +1076,10 @@ class Input(object):
     @calibration_model.setter
     def calibration_model(self, calibration_model):
         if calibration_model is not None:
-            logger.info(f"Setting calibration_model={calibration_model}")
+            logger.debug(f"Setting calibration_model={calibration_model}")
             self._calibration_model = calibration_model
         else:
-            logger.info(
+            logger.debug(
                 "No calibration_model model provided, calibration "
                 "marginalization will not be used"
             )
@@ -1103,7 +1103,7 @@ class Input(object):
         )
 
         if getattr(self, "likelihood_lookup_table", None) is not None:
-            logger.info("Using internally loaded likelihood_lookup_table")
+            logger.debug("Using internally loaded likelihood_lookup_table")
             likelihood_kwargs["distance_marginalization_lookup_table"] = getattr(
                 self, "likelihood_lookup_table"
             )
@@ -1142,7 +1142,7 @@ class Input(object):
 
         # If requested, use a zero likelihood: for testing purposes
         if self.likelihood_type == "zero":
-            logger.info("Using a ZeroLikelihood")
+            logger.debug("Using a ZeroLikelihood")
             likelihood = bilby.core.likelihood.ZeroLikelihood(likelihood)
 
         return likelihood
@@ -1199,7 +1199,7 @@ class Input(object):
             weights = self.likelihood_roq_weights
         else:
             weights = self.meta_data["weight_file"]
-            logger.info(f"Loading ROQ weights from {weights}")
+            logger.debug(f"Loading ROQ weights from {weights}")
 
         return dict(
             weights=weights, roq_params=params, roq_scale_factor=self.roq_scale_factor
@@ -1484,7 +1484,6 @@ class Input(object):
 
     @additional_transfer_paths.setter
     def additional_transfer_paths(self, paths):
-        print(paths)
         if isinstance(paths, list):
             self._additional_transfer_paths = paths
         if paths is None or paths == [None]:

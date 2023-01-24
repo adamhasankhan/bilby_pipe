@@ -40,7 +40,7 @@ from .utils import (
 class MainInput(Input):
     """An object to hold all the inputs to bilby_pipe"""
 
-    def __init__(self, args, unknown_args):
+    def __init__(self, args, unknown_args, perform_checks=True):
         super().__init__(args, unknown_args, print_msg=False)
 
         self.known_args = args
@@ -117,8 +117,6 @@ class MainInput(Input):
         self.injection_waveform_arguments = args.injection_waveform_arguments
         self.injection_waveform_approximant = args.injection_waveform_approximant
         self.generation_seed = args.generation_seed
-        if self.injection:
-            self.check_injection()
 
         self.request_disk = args.request_disk
         self.request_memory = args.request_memory
@@ -162,8 +160,11 @@ class MainInput(Input):
 
         self.psd_dict = args.psd_dict
 
-        self.check_source_model(args)
-        self.check_calibration_prior_boundary(args)
+        if perform_checks:
+            self.check_source_model(args)
+            self.check_calibration_prior_boundary(args)
+            if self.injection:
+                self.check_injection()
 
         self.extra_lines = []
         self.requirements = []
@@ -203,7 +204,7 @@ class MainInput(Input):
 
     @n_simulation.setter
     def n_simulation(self, n_simulation):
-        logger.info(f"Setting n_simulation={n_simulation}")
+        logger.debug(f"Setting n_simulation={n_simulation}")
         if isinstance(n_simulation, int) and n_simulation >= 0:
             self._n_simulation = n_simulation
         elif n_simulation is None:
@@ -230,7 +231,7 @@ class MainInput(Input):
     def request_disk(self, request_disk):
         self._request_disk = f"{request_disk}GB"
         self._request_disk_in_GB = float(request_disk)
-        logger.info(f"Setting analysis request_disk={self._request_disk}")
+        logger.debug(f"Setting analysis request_disk={self._request_disk}")
         self._request_disk = f"{request_disk}GB"
 
     @property
@@ -241,7 +242,7 @@ class MainInput(Input):
     def request_memory(self, request_memory):
         self._request_memory = f"{request_memory}GB"
         self._request_memory_in_GB = request_memory
-        logger.info(f"Setting analysis request_memory={self._request_memory}")
+        logger.debug(f"Setting analysis request_memory={self._request_memory}")
 
     @property
     def request_memory_generation(self):
@@ -254,7 +255,7 @@ class MainInput(Input):
             request_memory_generation = request_memory_generation_lookup(
                 self.duration, roq=roq
             )
-        logger.info(f"Setting request_memory_generation={request_memory_generation}GB")
+        logger.debug(f"Setting request_memory_generation={request_memory_generation}GB")
         self._request_memory_generation = f"{request_memory_generation}GB"
 
     @property
@@ -263,7 +264,7 @@ class MainInput(Input):
 
     @request_cpus.setter
     def request_cpus(self, request_cpus):
-        logger.info(f"Setting analysis request_cpus = {request_cpus}")
+        logger.debug(f"Setting analysis request_cpus = {request_cpus}")
         self._request_cpus = request_cpus
 
     @property
@@ -273,7 +274,7 @@ class MainInput(Input):
     @use_mpi.setter
     def use_mpi(self, use_mpi):
         if use_mpi:
-            logger.info(f"Turning on MPI for {self.sampler}")
+            logger.debug(f"Turning on MPI for {self.sampler}")
         self._use_mpi = use_mpi
 
     @staticmethod
@@ -315,19 +316,19 @@ class MainInput(Input):
             self.data_directory, self.label
         )
         if self.injection_dict is not None:
-            logger.info(
+            logger.debug(
                 "Using injection dict from ini file {}".format(
                     json.dumps(self.injection_dict, indent=2)
                 )
             )
         elif self.injection_file is not None:
-            logger.info(f"Using injection file {self.injection_file}")
+            logger.debug(f"Using injection file {self.injection_file}")
         elif os.path.isfile(default_injection_file_name):
             # This is done to avoid overwriting the injection file
-            logger.info(f"Using injection file {default_injection_file_name}")
+            logger.debug(f"Using injection file {default_injection_file_name}")
             self.injection_file = default_injection_file_name
         else:
-            logger.info("No injection file found, generating one now")
+            logger.debug("No injection file found, generating one now")
 
             if self.gps_file is not None or self.gps_tuple is not None:
                 if self.n_simulation > 0 and self.n_simulation != len(self.gpstimes):
@@ -374,7 +375,9 @@ class MainInput(Input):
                 )
         elif self.n_simulation == 0 and self.gps_file is None:
             self.n_simulation = len(self.injection_df)
-            logger.info(f"Setting n_simulation={self.n_simulation} to match injections")
+            logger.debug(
+                f"Setting n_simulation={self.n_simulation} to match injections"
+            )
 
 
 def write_complete_config_file(parser, args, inputs, input_cls=MainInput):
@@ -401,7 +404,7 @@ def write_complete_config_file(parser, args, inputs, input_cls=MainInput):
 
     # Verify that the written complete config is identical to the source config
     complete_args = parser.parse([inputs.complete_ini_file])
-    complete_inputs = input_cls(complete_args, "")
+    complete_inputs = input_cls(complete_args, "", perform_checks=False)
     ignore_keys = ["scheduler_module", "submit"]
     differences = []
     for key, val in inputs.__dict__.items():
@@ -432,6 +435,8 @@ def write_complete_config_file(parser, args, inputs, input_cls=MainInput):
                 inputs.ini, inputs.complete_ini_file, differences
             )
         )
+    else:
+        logger.info(f"To see full configuration, check {inputs.complete_ini_file}")
 
 
 def main():
@@ -453,7 +458,6 @@ def main():
 
     log_version_information()
     inputs = MainInput(args, unknown_args)
-    inputs.pretty_print_prior()
     write_complete_config_file(parser, args, inputs)
     generate_dag(inputs)
 
