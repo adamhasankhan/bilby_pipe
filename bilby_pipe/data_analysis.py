@@ -347,7 +347,7 @@ class DataAnalysisInput(Input):
                 likelihood.log_likelihood()
             time_per_likelihood = (time.time() - t_start) / n_evaluations
             logger.debug(f"{time_per_likelihood:.2f} s per likelihood evaluation")
-            n_checkpoint = 300 / time_per_likelihood
+            n_checkpoint = int(300 / time_per_likelihood)
         else:
             n_checkpoint = 3000
         logger.debug(f"Checkpointing every {n_checkpoint} samples")
