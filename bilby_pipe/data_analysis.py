@@ -311,7 +311,7 @@ class DataAnalysisInput(Input):
         old_priors = self.priors.copy()
         self.search_priors = old_priors
         reweight_nest = self.reweight_nested_samples
-        if self.sampler == "dynesty":
+        if self.sampler in ["dynesty", "nessai"]:
             self.result.nested_samples["log_prior"] = old_priors.ln_prob(
                 {
                     key: self.result.nested_samples[key].values
