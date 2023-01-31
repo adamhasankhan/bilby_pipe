@@ -231,11 +231,11 @@ pages:
 # Build the containers
 build-container:
   <<: *parallel
-  stage: initial
+  stage: deploy
   image: docker:20.10.23
   needs: ["containers"]
-  # only:
-  # - schedules
+  only:
+  - schedules
   script:
     - cd containers
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
