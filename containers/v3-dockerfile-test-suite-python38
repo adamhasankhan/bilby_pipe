@@ -13,4 +13,4 @@ RUN conda info
 RUN python --version
 
 # Install extras needed for testing
-RUN conda install -n ${{conda_env}} -c conda-forge bilby mock pesummary "python-ldas-tools-framecpp<3" python-nds2-client
+RUN conda install -n ${conda_env} -c conda-forge bilby mock pesummary "python-ldas-tools-framecpp<3" python-nds2-client
