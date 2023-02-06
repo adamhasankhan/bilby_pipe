@@ -163,6 +163,7 @@ class MainInput(Input):
         if perform_checks:
             self.check_source_model(args)
             self.check_calibration_prior_boundary(args)
+            self.check_cpu_parallelisation()
             if self.injection:
                 self.check_injection()
 
@@ -302,6 +303,16 @@ class MainInput(Input):
                 "You have requested a calibration prior boundary "
                 f"{args.calibration_prior_boundary}, but {suggested_boundary} "
                 "is recommended."
+            )
+            logger.warning(get_colored_string(msg))
+
+    def check_cpu_parallelisation(self):
+        request_cpus = self.request_cpus
+        npool = self.sampler_kwargs.get("npool", request_cpus)
+        if request_cpus != npool:
+            msg = (
+                f"request-cpus={request_cpus}, but sampler_kwargs[npool]={npool}:"
+                "this may cause inefficient performance"
             )
             logger.warning(get_colored_string(msg))
 
