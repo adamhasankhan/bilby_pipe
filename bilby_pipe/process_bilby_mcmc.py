@@ -107,7 +107,6 @@ def find_config(args):
 def get_output_fname(
     outdir_result, resume_files, naming_method="datetime", extension="json"
 ):
-
     file_labels = [
         rf.split("/")[-1].replace("_resume.pickle", "") for rf in resume_files
     ]
