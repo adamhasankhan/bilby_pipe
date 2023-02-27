@@ -207,7 +207,8 @@ def plot_whitened_data(
     """
     for ifo in interferometers:
         whitened_strain = ifo.whitened_frequency_domain_strain
-        normalization = (ifo.duration * ifo.sampling_frequency / 2) ** 0.5
+        frequency_window_factor = np.sum(ifo.frequency_mask) / len(ifo.frequency_mask)
+        normalization = np.sqrt(np.sum(ifo.frequency_mask)) / frequency_window_factor
         td_strain = np.fft.irfft(whitened_strain) * normalization
         whitened_strain = whitened_strain[ifo.frequency_mask]
         fig, axes = plt.subplots(
