@@ -141,6 +141,12 @@ def touch_checkpoint_files(directory, label, sampler, result_format="hdf5"):
         dirname = f"{directory}/{label}_nessai"
         check_directory_exists_and_if_not_mkdir(directory=dirname)
         filenames.append(dirname)
+        subdirectories = ["proposal", "diagnostics"]
+        for sd in subdirectories:
+            subdir = os.path.join(dirname, sd)
+            check_directory_exists_and_if_not_mkdir(subdir)
+            filenames.append(dirname)
+
     elif sampler.lower() in [
         "cpnest",
         "emcee",

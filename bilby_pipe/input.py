@@ -437,6 +437,19 @@ class Input(object):
             raise BilbyPipeError("Unable to determine roq_source from source model")
 
     @property
+    def bilby_multiband_frequency_domain_source_model(self):
+        if "binary_neutron_star" in self.frequency_domain_source_model:
+            logger.info("Using the binary_neutron_star_frequency_sequence source model")
+            return bilby.gw.source.binary_neutron_star_frequency_sequence
+        elif "binary_black_hole" in self.frequency_domain_source_model:
+            logger.info("Using the binary_black_hole_frequency_sequence source model")
+            return bilby.gw.source.binary_black_hole_frequency_sequence
+        else:
+            raise BilbyPipeError(
+                "Unable to determine multiband_source from source model"
+            )
+
+    @property
     def frequency_domain_source_model(self):
         """String of which frequency domain source model to use"""
         return self._frequency_domain_source_model
@@ -451,7 +464,6 @@ class Input(object):
 
     @trigger_time.setter
     def trigger_time(self, trigger_time):
-
         # Convert trigger time
         if trigger_time is None:
             logger.debug("No trigger time given")
@@ -1022,7 +1034,7 @@ class Input(object):
         if getattr(self, "_calibration_prior", None) is not None:
             return self._calibration_prior
         self._calibration_prior = bilby.core.prior.PriorDict()
-        if self.calibration_model is not None:
+        if self.calibration_model.lower() == "cubicspline":
             for det in self.detectors:
                 if (
                     self.spline_calibration_envelope_dict is not None
@@ -1067,6 +1079,11 @@ class Input(object):
                     )
                 else:
                     logger.warning(f"No calibration information for {det}")
+        elif self.calibration_model.lower() == "precomputed":
+            for det in self.detectors:
+                self._calibration_prior[
+                    f"recalib_index_{det}"
+                ] = bilby.core.prior.Categorical(1000)
         return self._calibration_prior
 
     @property
@@ -1087,7 +1104,6 @@ class Input(object):
 
     @property
     def likelihood(self):
-
         self.search_priors = self.priors.copy()
         likelihood_kwargs = dict(
             interferometers=self.interferometers,
@@ -1117,6 +1133,12 @@ class Input(object):
             likelihood_kwargs.update(
                 self.roq_likelihood_kwargs, jitter_time=self.jitter_time
             )
+
+        elif self.likelihood_type == "MBGravitationalWaveTransient":
+            Likelihood = bilby.gw.likelihood.MBGravitationalWaveTransient
+            likelihood_kwargs.update(self.multiband_likelihood_kwargs)
+            likelihood_kwargs.update(self.extra_likelihood_kwargs)
+
         elif "." in self.likelihood_type:
             split_path = self.likelihood_type.split(".")
             module = ".".join(split_path[:-1])
@@ -1125,6 +1147,8 @@ class Input(object):
             likelihood_kwargs.update(self.extra_likelihood_kwargs)
             if "roq" in self.likelihood_type.lower():
                 likelihood_kwargs.update(self.roq_likelihood_kwargs)
+            if "multiband" in self.likelihood_type.lower():
+                likelihood_kwargs.update(self.multiband_likelihood_kwargs)
         else:
             raise ValueError("Unknown Likelihood class {}")
 
@@ -1206,6 +1230,15 @@ class Input(object):
         )
 
     @property
+    def multiband_likelihood_kwargs(self):
+        if hasattr(self, "likelihood_multiband_weights"):
+            weights = self.likelihood_multiband_weights
+        else:
+            weights = self.meta_data["weight_file"]
+            logger.info(f"Loading multiband weights from {weights}")
+        return dict(weights=weights)
+
+    @property
     def parameter_conversion(self):
         cf = self.conversion_function
 
@@ -1261,6 +1294,16 @@ class Input(object):
                 waveform_arguments=waveform_arguments,
             )
 
+        elif self.is_likelihood_multiband:
+            waveform_generator = self.waveform_generator_class(
+                frequency_domain_source_model=self.bilby_multiband_frequency_domain_source_model,
+                sampling_frequency=self.interferometers.sampling_frequency,
+                duration=self.interferometers.duration,
+                start_time=self.interferometers.start_time,
+                parameter_conversion=self.parameter_conversion,
+                waveform_arguments=waveform_arguments,
+            )
+
         else:
             waveform_generator = self.waveform_generator_class(
                 frequency_domain_source_model=self.bilby_frequency_domain_source_model,
@@ -1294,7 +1337,6 @@ class Input(object):
 
     @property
     def parameter_generation(self):
-
         gf = self.generation_function
 
         _lookups = dict(noconvert=None)
@@ -1366,7 +1408,6 @@ class Input(object):
 
     @sampler_kwargs.setter
     def sampler_kwargs(self, sampler_kwargs):
-
         # Set up the default choices
         if self.sampler == "dynesty":
             self._sampler_kwargs = SAMPLER_SETTINGS["DynestyDefault"]
@@ -1488,3 +1529,10 @@ class Input(object):
             self._additional_transfer_paths = paths
         if paths is None or paths == [None]:
             self._additional_transfer_paths = list()
+
+    @property
+    def is_likelihood_multiband(self):
+        return (
+            self.likelihood_type == "MBGravitationalWaveTransient"
+            or "multiband" in self.likelihood_type.lower()
+        )

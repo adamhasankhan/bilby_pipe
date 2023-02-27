@@ -405,6 +405,24 @@ class TestInput(unittest.TestCase):
             inputs.frequency_domain_source_model = "unknown"
             inputs.bilby_roq_frequency_domain_source_model
 
+    def test_bilby_multiband_frequency_domain_source_model(self):
+        inputs = bilby_pipe.main.Input(None, None)
+        inputs.frequency_domain_source_model = "lal_binary_black_hole"
+        self.assertEqual(
+            inputs.bilby_multiband_frequency_domain_source_model,
+            bilby.gw.source.binary_black_hole_frequency_sequence,
+        )
+
+        inputs.frequency_domain_source_model = "lal_binary_neutron_star"
+        self.assertEqual(
+            inputs.bilby_multiband_frequency_domain_source_model,
+            bilby.gw.source.binary_neutron_star_frequency_sequence,
+        )
+
+        with self.assertRaises(BilbyPipeError):
+            inputs.frequency_domain_source_model = "unknown"
+            inputs.bilby_multiband_frequency_domain_source_model
+
     def test_default_prior_files(self):
         inputs = bilby_pipe.main.Input(None, None)
         self.assertEqual(inputs.get_default_prior_files(), inputs.default_prior_files)

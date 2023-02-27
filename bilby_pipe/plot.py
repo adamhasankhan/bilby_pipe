@@ -7,7 +7,9 @@ import os
 from bilby.core.utils import check_directory_exists_and_if_not_mkdir
 from bilby.gw.result import CBCResult
 from bilby.gw.source import (
+    binary_black_hole_frequency_sequence,
     binary_black_hole_roq,
+    binary_neutron_star_frequency_sequence,
     binary_neutron_star_roq,
     lal_binary_black_hole,
     lal_binary_neutron_star,
@@ -143,17 +145,31 @@ def plot_skymap():
 def plot_waveform():
     args, result, data_dump = _parse_and_load()
     interferometers = getattr(data_dump, "interferometers", None)
-    if result.frequency_domain_source_model == binary_black_hole_roq:
+    if result.frequency_domain_source_model in [
+        binary_black_hole_roq,
+        binary_black_hole_frequency_sequence,
+    ]:
+        if result.frequency_domain_source_model == binary_black_hole_roq:
+            model = "binary_black_hole_roq"
+        else:
+            model = "binary_black_hole_frequency_sequence"
         logger.info(
-            "Sampling used the binary_black_hole_roq source model, using "
+            f"Sampling used the {model} source model, using "
             "the lal_binary_black_hole_model for the waveform plot."
         )
         result.meta_data["likelihood"][
             "frequency_domain_source_model"
         ] = lal_binary_black_hole
-    elif result.frequency_domain_source_model == binary_neutron_star_roq:
+    elif result.frequency_domain_source_model in [
+        binary_neutron_star_roq,
+        binary_neutron_star_frequency_sequence,
+    ]:
+        if result.frequency_domain_source_model == binary_neutron_star_roq:
+            model = "binary_neutron_star_roq"
+        else:
+            model = "binary_neutron_star_frequency_sequence"
         logger.info(
-            "Sampling used the binary_neutron_star_roq source model, using "
+            f"Sampling used the {model} source model, using "
             "the lal_binary_neutron_star_model for the waveform plot."
         )
         result.meta_data["likelihood"][

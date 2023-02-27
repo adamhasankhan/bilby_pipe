@@ -1074,6 +1074,34 @@ class DataGenerationInput(Input):
                 maximum_frequency=ifo.maximum_frequency,
                 n_points=self.spline_calibration_nodes,
             )
+        elif self.calibration_model == "Precomputed":
+            model = bilby.gw.calibration.Precomputed
+            det = ifo.name
+            if (
+                self.spline_calibration_envelope_dict is not None
+                and det in self.spline_calibration_envelope_dict
+            ):
+                ifo.calibration_model = model.from_envelope_file(
+                    self.spline_calibration_envelope_dict[det],
+                    frequency_array=ifo.frequency_array[ifo.frequency_mask],
+                    n_nodes=self.spline_calibration_nodes,
+                    label=det,
+                    n_curves=1000,
+                )
+            elif (
+                det in self.spline_calibration_amplitude_uncertainty_dict
+                and det in self.spline_calibration_phase_uncertainty_dict
+            ):
+                ifo.calibration_model = model.constant_uncertainty_spline(
+                    amplitude_sigma=self.spline_calibration_amplitude_uncertainty_dict[
+                        det
+                    ],
+                    phase_sigma=self.spline_calibration_phase_uncertainty_dict[det],
+                    frequency_array=ifo.frequency_array[ifo.frequency_mask],
+                    n_nodes=self.spline_calibration_nodes,
+                    label=det,
+                    n_curves=1000,
+                )
         else:
             raise BilbyPipeError(
                 f"calibration model {self.calibration_model} not implemented"
@@ -1110,6 +1138,12 @@ class DataGenerationInput(Input):
             )
         else:
             likelihood_lookup_table = None
+        if self.is_likelihood_multiband:
+            likelihood_roq_weights = None
+            likelihood_multiband_weights = likelihood.weights
+        else:
+            likelihood_roq_weights = getattr(likelihood, "weights", None)
+            likelihood_multiband_weights = None
         data_dump = DataDump(
             outdir=self.data_directory,
             label=self.label,
@@ -1118,8 +1152,9 @@ class DataGenerationInput(Input):
             interferometers=self.interferometers,
             meta_data=self.meta_data,
             likelihood_lookup_table=likelihood_lookup_table,
-            likelihood_roq_weights=getattr(likelihood, "weights", None),
+            likelihood_roq_weights=likelihood_roq_weights,
             likelihood_roq_params=getattr(likelihood, "roq_params", None),
+            likelihood_multiband_weights=likelihood_multiband_weights,
             priors_dict=dict(self.priors),
             priors_class=self.priors.__class__,
         )
@@ -1200,6 +1235,49 @@ class DataGenerationInput(Input):
         self.meta_data["weight_file"] = weight_file
         likelihood.save_weights(weight_file, format=weight_format)
 
+    def save_multiband_weights(self):
+        waveform_arguments = self.get_default_waveform_arguments()
+
+        waveform_generator = self.waveform_generator_class(
+            sampling_frequency=self.interferometers.sampling_frequency,
+            duration=self.interferometers.duration,
+            frequency_domain_source_model=self.bilby_multiband_frequency_domain_source_model,
+            parameter_conversion=self.parameter_conversion,
+            start_time=self.interferometers.start_time,
+            waveform_arguments=waveform_arguments,
+        )
+
+        likelihood = bilby.gw.likelihood.MBGravitationalWaveTransient(
+            interferometers=self.interferometers,
+            priors=self.priors,
+            waveform_generator=waveform_generator,
+            reference_frame=self.reference_frame,
+            time_reference=self.time_reference,
+            reference_chirp_mass=self.extra_likelihood_kwargs.get(
+                "reference_chirp_mass", None
+            ),
+            highest_mode=self.extra_likelihood_kwargs.get("highest_mode", 2),
+            linear_interpolation=self.extra_likelihood_kwargs.get(
+                "linear_interpolation", True
+            ),
+            accuracy_factor=self.extra_likelihood_kwargs.get("accuracy_factor", 5),
+            time_offset=self.extra_likelihood_kwargs.get("time_offset", None),
+            delta_f_end=self.extra_likelihood_kwargs.get("delta_f_end", None),
+            maximum_banding_frequency=self.extra_likelihood_kwargs.get(
+                "maximum_banding_frequency", None
+            ),
+            minimum_banding_duration=self.extra_likelihood_kwargs.get(
+                "minimum_banding_duration", 0
+            ),
+            weights=self.extra_likelihood_kwargs.get("weights", None),
+        )
+
+        weight_file = os.path.join(
+            self.data_directory, f"{self.label}_multiband_weights.hdf5"
+        )
+        self.meta_data["weight_file"] = weight_file
+        likelihood.save_weights(weight_file)
+
 
 def create_generation_parser():
     """Data generation parser creation"""
@@ -1213,5 +1291,7 @@ def main():
     data = DataGenerationInput(args, unknown_args)
     if args.likelihood_type == "ROQGravitationalWaveTransient":
         data.save_roq_weights()
+    if data.is_likelihood_multiband:
+        data.save_multiband_weights()
     data.save_data_dump()
     logger.info("Completed data generation")

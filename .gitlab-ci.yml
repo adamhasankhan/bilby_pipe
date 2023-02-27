@@ -174,7 +174,7 @@ example-ini-file-gracedb:
     - source activate python$PRIMARY_VERSION
     - pip install --upgrade bilby pesummary
     - pip install .
-    - bilby_pipe_gracedb --json examples/gracedb/G298936.json --local --bilby-test-mode --output full-submit --settings examples/gracedb/settings.json --n-parallel 1
+    - bilby_pipe_gracedb --json examples/gracedb/G298936.json --local --bilby-test-mode --cbc-likelihood-mode test --output full-submit --settings examples/gracedb/settings.json --n-parallel 1
     - if [[ ! -f outdir_G298936/results_page/home.html ]] ; then exit 1; else echo "Webpage exists"; fi
 
 
@@ -232,7 +232,7 @@ pages:
 build-container:
   <<: *parallel
   stage: deploy
-  image: docker:19.03.12
+  image: docker:20.10.23
   needs: ["containers"]
   only:
   - schedules
@@ -256,7 +256,7 @@ deploy_release:
           twine
   script:
     # generate distributions
-    - python -m build
+    - python -m build --sdist --wheel --outdir dist/ .
     - ls dist/
     # upload them
     - python -m twine upload dist/*

@@ -4,6 +4,7 @@ import json
 import os
 import signal
 import sys
+import time
 
 import numpy as np
 
@@ -235,6 +236,7 @@ class DataAnalysisInput(Input):
         self.likelihood_lookup_table = self.data_dump.likelihood_lookup_table
         self.likelihood_roq_weights = self.data_dump.likelihood_roq_weights
         self.likelihood_roq_params = self.data_dump.likelihood_roq_params
+        self.likelihood_multiband_weights = self.data_dump.likelihood_multiband_weights
 
         likelihood = self.likelihood
         priors = self.search_priors
@@ -311,7 +313,7 @@ class DataAnalysisInput(Input):
         old_priors = self.priors.copy()
         self.search_priors = old_priors
         reweight_nest = self.reweight_nested_samples
-        if self.sampler == "dynesty":
+        if self.sampler in ["dynesty", "nessai"]:
             self.result.nested_samples["log_prior"] = old_priors.ln_prob(
                 {
                     key: self.result.nested_samples[key].values
@@ -335,10 +337,21 @@ class DataAnalysisInput(Input):
             if key not in target_keys:
                 del self.result.posterior[key]
 
-        time_per_likelihood = (
-            self.result.meta_data["run_statistics"]["sampling_time_s"]
-            / self.result.meta_data["run_statistics"]["nlikelihood"]
-        )
+        if likelihood is not None:
+            n_evaluations = 100
+            t_start = time.time()
+            for i in range(n_evaluations):
+                likelihood.parameters = {
+                    key: self.result.posterior.iloc[i][key]
+                    for key in self.result.posterior
+                }
+                likelihood.log_likelihood()
+            time_per_likelihood = (time.time() - t_start) / n_evaluations
+            logger.debug(f"{time_per_likelihood:.2f} s per likelihood evaluation")
+            n_checkpoint = int(300 / time_per_likelihood)
+        else:
+            n_checkpoint = 3000
+        logger.debug(f"Checkpointing every {n_checkpoint} samples")
 
         reweighted = bilby.core.result.reweight(
             result=self.result,
@@ -351,7 +364,7 @@ class DataAnalysisInput(Input):
             npool=self.request_cpus,
             verbose_output=False,
             resume_file=f"{self.result_directory}/{self.label}_reweight_resume.pkl",
-            n_checkpoint=300 / time_per_likelihood,
+            n_checkpoint=n_checkpoint,
             use_nested_samples=reweight_nest,
         )
         reweighted.save_to_file(extension=self.result_format)
