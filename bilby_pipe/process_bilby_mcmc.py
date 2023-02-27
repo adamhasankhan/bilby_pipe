@@ -108,7 +108,9 @@ def get_output_fname(
     outdir_result, resume_files, naming_method="datetime", extension="json"
 ):
 
-    file_labels = [rf.split("/")[-1].replace("_resume.pickle", "") for rf in resume_files]
+    file_labels = [
+        rf.split("/")[-1].replace("_resume.pickle", "") for rf in resume_files
+    ]
     base_labels = {bl.split("_par")[0] for bl in file_labels}
     if len(base_labels) > 1:
         raise ValueError("Processing error: resume files mismatch")
@@ -321,7 +323,10 @@ def main():
     resume_files = get_resume_file_paths(args, label)
 
     fname = get_output_fname(
-        outdir_result, resume_files, args.naming_method, extension=analysis.result_format
+        outdir_result,
+        resume_files,
+        args.naming_method,
+        extension=analysis.result_format,
     )
 
     results = []
