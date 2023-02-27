@@ -236,6 +236,7 @@ class DataAnalysisInput(Input):
         self.likelihood_lookup_table = self.data_dump.likelihood_lookup_table
         self.likelihood_roq_weights = self.data_dump.likelihood_roq_weights
         self.likelihood_roq_params = self.data_dump.likelihood_roq_params
+        self.likelihood_multiband_weights = self.data_dump.likelihood_multiband_weights
 
         likelihood = self.likelihood
         priors = self.search_priors
