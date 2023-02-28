@@ -464,7 +464,6 @@ class Input(object):
 
     @trigger_time.setter
     def trigger_time(self, trigger_time):
-
         # Convert trigger time
         if trigger_time is None:
             logger.debug("No trigger time given")
@@ -1035,7 +1034,7 @@ class Input(object):
         if getattr(self, "_calibration_prior", None) is not None:
             return self._calibration_prior
         self._calibration_prior = bilby.core.prior.PriorDict()
-        if self.calibration_model is not None:
+        if self.calibration_model.lower() == "cubicspline":
             for det in self.detectors:
                 if (
                     self.spline_calibration_envelope_dict is not None
@@ -1080,6 +1079,11 @@ class Input(object):
                     )
                 else:
                     logger.warning(f"No calibration information for {det}")
+        elif self.calibration_model.lower() == "precomputed":
+            for det in self.detectors:
+                self._calibration_prior[
+                    f"recalib_index_{det}"
+                ] = bilby.core.prior.Categorical(1000)
         return self._calibration_prior
 
     @property
@@ -1100,7 +1104,6 @@ class Input(object):
 
     @property
     def likelihood(self):
-
         self.search_priors = self.priors.copy()
         likelihood_kwargs = dict(
             interferometers=self.interferometers,
@@ -1334,7 +1337,6 @@ class Input(object):
 
     @property
     def parameter_generation(self):
-
         gf = self.generation_function
 
         _lookups = dict(noconvert=None)
@@ -1406,7 +1408,6 @@ class Input(object):
 
     @sampler_kwargs.setter
     def sampler_kwargs(self, sampler_kwargs):
-
         # Set up the default choices
         if self.sampler == "dynesty":
             self._sampler_kwargs = SAMPLER_SETTINGS["DynestyDefault"]
