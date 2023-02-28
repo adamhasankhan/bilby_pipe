@@ -55,7 +55,7 @@ setup(
         "scipy>=1.2.0",
         "gwpy>=3.0",
         "gwosc",
-        "matplotlib",
+        "matplotlib<3.7",
         "numpy",
         "tqdm",
         "corner",
