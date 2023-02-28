@@ -44,7 +44,6 @@ class Node(object):
             subprocess.run([self.executable] + self.arguments.argument_list, check=True)
 
     def _get_executable_path(self, exe_name):
-
         if self.inputs._conda_path is not None:
             exe_name = f"{self.inputs._conda_path}/bin/{exe_name}"
 

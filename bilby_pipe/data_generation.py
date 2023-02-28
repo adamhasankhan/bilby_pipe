@@ -1074,6 +1074,34 @@ class DataGenerationInput(Input):
                 maximum_frequency=ifo.maximum_frequency,
                 n_points=self.spline_calibration_nodes,
             )
+        elif self.calibration_model == "Precomputed":
+            model = bilby.gw.calibration.Precomputed
+            det = ifo.name
+            if (
+                self.spline_calibration_envelope_dict is not None
+                and det in self.spline_calibration_envelope_dict
+            ):
+                ifo.calibration_model = model.from_envelope_file(
+                    self.spline_calibration_envelope_dict[det],
+                    frequency_array=ifo.frequency_array[ifo.frequency_mask],
+                    n_nodes=self.spline_calibration_nodes,
+                    label=det,
+                    n_curves=1000,
+                )
+            elif (
+                det in self.spline_calibration_amplitude_uncertainty_dict
+                and det in self.spline_calibration_phase_uncertainty_dict
+            ):
+                ifo.calibration_model = model.constant_uncertainty_spline(
+                    amplitude_sigma=self.spline_calibration_amplitude_uncertainty_dict[
+                        det
+                    ],
+                    phase_sigma=self.spline_calibration_phase_uncertainty_dict[det],
+                    frequency_array=ifo.frequency_array[ifo.frequency_mask],
+                    n_nodes=self.spline_calibration_nodes,
+                    label=det,
+                    n_curves=1000,
+                )
         else:
             raise BilbyPipeError(
                 f"calibration model {self.calibration_model} not implemented"

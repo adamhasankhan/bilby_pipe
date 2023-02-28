@@ -18,7 +18,6 @@ class TestMainInput(unittest.TestCase):
         self.run_test("tests/test_complete_config_with_postprocessing.ini")
 
     def run_test(self, inifile):
-
         args_list = [inifile, "--outdir", self.outdir]
 
         args, unknown_args = self.parser.parse_known_args(args_list)
