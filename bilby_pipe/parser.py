@@ -67,7 +67,7 @@ def create_parser(top_level=True):
         "--calibration-model",
         type=nonestr,
         default=None,
-        choices=["CubicSpline", None],
+        choices=["CubicSpline", "Precomputed", None],
         help="Choice of calibration model, if None, no calibration is used",
     )
 

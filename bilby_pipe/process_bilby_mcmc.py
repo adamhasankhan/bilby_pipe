@@ -117,7 +117,6 @@ def find_config(args):
 def get_output_fname(
     outdir_result, ptsamplers, naming_method="datetime", extension="json"
 ):
-
     base_labels = {"_".join(pt.label.split("_")[:-1]) for pt in ptsamplers}
     if len(base_labels) > 1:
         raise ValueError("Processing error: resume files mismatch")
@@ -140,7 +139,6 @@ def get_output_fname(
 
 
 def update_convergence_inputs(args, ptsampler):
-
     # Read in convergence inputs from sampler
     inputs = dict()
     s0 = ptsampler.sampler_list[0]
@@ -227,7 +225,6 @@ def get_args():
 
 
 def process_sampler(ptsampler, analysis, outdir, args):
-
     # Obtain likelihood and priors
     likelihood, search_priors = analysis.get_likelihood_and_priors()
     priors = analysis.priors
@@ -307,7 +304,6 @@ def process_sampler(ptsampler, analysis, outdir, args):
 
 
 def main():
-
     # Setup
     args = get_args()
     config = find_config(args)

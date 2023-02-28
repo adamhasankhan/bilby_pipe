@@ -11,7 +11,6 @@ from ..utils import logger
 
 class SubmitSLURM(object):
     def __init__(self, dag):
-
         self.dag = dag.pycondor_dag
         self.submit_dir = dag.inputs.submit_directory
         self.submit = dag.inputs.submit
@@ -40,7 +39,6 @@ class SubmitSLURM(object):
         """
 
         with open(self.slurm_master_bash, "w") as f:
-
             # reformat slurm options
             if self.scheduler_args is not None:
                 slurm_args = " ".join(
@@ -129,12 +127,10 @@ class SubmitSLURM(object):
             logger.info(f"slurm scripts written, to run jobs submit:\n$ {command_line}")
 
     def _write_individual_processes(self, name, executable, args):
-
         fname = name + ".sh"
         job_path = self.submit_dir + "/" + fname
 
         with open(job_path, "w") as ff:
-
             ff.write("#!/bin/bash\n")
 
             if self.scheduler_module:
@@ -171,7 +167,6 @@ class SubmitSLURM(object):
 
     @staticmethod
     def _output_name_from_dag(extra_lines):
-
         # probably a faster way to do this, but the list is short so this should be fine
         for i in range(len(extra_lines)):
             if extra_lines[i].startswith("output"):
