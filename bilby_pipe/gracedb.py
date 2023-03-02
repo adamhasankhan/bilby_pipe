@@ -745,7 +745,7 @@ def create_config_file(
         plot_trace=True,
         plot_data=True,
         plot_calibration=False,
-        plot_corner=True,
+        plot_corner=False,
         plot_marginal=False,
         plot_skymap=False,
         plot_waveform=False,
