@@ -437,6 +437,19 @@ class Input(object):
             raise BilbyPipeError("Unable to determine roq_source from source model")
 
     @property
+    def bilby_relative_binning_frequency_domain_source_model(self):
+        if "binary_neutron_star" in self.frequency_domain_source_model:
+            logger.debug("Using the binary_neutron_star_relative_binning source model")
+            return bilby.gw.source.lal_binary_neutron_star_relative_binning
+        elif "binary_black_hole" in self.frequency_domain_source_model:
+            logger.debug("Using the binary_black_hole_relative_binning source model")
+            return bilby.gw.source.lal_binary_black_hole_relative_binning
+        else:
+            raise BilbyPipeError(
+                "Unable to determine relative binning source from source model"
+            )
+
+    @property
     def bilby_multiband_frequency_domain_source_model(self):
         if "binary_neutron_star" in self.frequency_domain_source_model:
             logger.info("Using the binary_neutron_star_frequency_sequence source model")
@@ -1117,6 +1130,11 @@ class Input(object):
             time_reference=self.time_reference,
             calibration_marginalization=self.calibration_marginalization,
         )
+        relative_binning_kwargs = dict(
+            fiducial_parameters=self.fiducial_parameters,
+            update_fiducial_parameters=self.update_fiducial_parameters,
+            epsilon=self.epsilon,
+        )
 
         if getattr(self, "likelihood_lookup_table", None) is not None:
             logger.debug("Using internally loaded likelihood_lookup_table")
@@ -1133,12 +1151,13 @@ class Input(object):
             likelihood_kwargs.update(
                 self.roq_likelihood_kwargs, jitter_time=self.jitter_time
             )
-
+        elif self.likelihood_type == "RelativeBinningGravitationalWaveTransient":
+            Likelihood = bilby.gw.likelihood.RelativeBinningGravitationalWaveTransient
+            likelihood_kwargs.update(relative_binning_kwargs)
         elif self.likelihood_type == "MBGravitationalWaveTransient":
             Likelihood = bilby.gw.likelihood.MBGravitationalWaveTransient
             likelihood_kwargs.update(self.multiband_likelihood_kwargs)
             likelihood_kwargs.update(self.extra_likelihood_kwargs)
-
         elif "." in self.likelihood_type:
             split_path = self.likelihood_type.split(".")
             module = ".".join(split_path[:-1])
@@ -1147,6 +1166,8 @@ class Input(object):
             likelihood_kwargs.update(self.extra_likelihood_kwargs)
             if "roq" in self.likelihood_type.lower():
                 likelihood_kwargs.update(self.roq_likelihood_kwargs)
+            elif "relative" in self.likelihood_type.lower():
+                likelihood_kwargs.update(relative_binning_kwargs)
             if "multiband" in self.likelihood_type.lower():
                 likelihood_kwargs.update(self.multiband_likelihood_kwargs)
         else:
@@ -1285,34 +1306,22 @@ class Input(object):
                 waveform_arguments["frequency_nodes_linear"] = freq_nodes_linear
                 waveform_arguments["frequency_nodes_quadratic"] = freq_nodes_quadratic
 
-            waveform_generator = self.waveform_generator_class(
-                frequency_domain_source_model=self.bilby_roq_frequency_domain_source_model,
-                sampling_frequency=self.interferometers.sampling_frequency,
-                duration=self.interferometers.duration,
-                start_time=self.interferometers.start_time,
-                parameter_conversion=self.parameter_conversion,
-                waveform_arguments=waveform_arguments,
-            )
-
+            fdsm = self.bilby_roq_frequency_domain_source_model
+        elif "relative" in self.likelihood_type.lower():
+            fdsm = self.bilby_relative_binning_frequency_domain_source_model
         elif self.is_likelihood_multiband:
-            waveform_generator = self.waveform_generator_class(
-                frequency_domain_source_model=self.bilby_multiband_frequency_domain_source_model,
-                sampling_frequency=self.interferometers.sampling_frequency,
-                duration=self.interferometers.duration,
-                start_time=self.interferometers.start_time,
-                parameter_conversion=self.parameter_conversion,
-                waveform_arguments=waveform_arguments,
-            )
-
+            fdsm = self.bilby_multiband_frequency_domain_source_model
         else:
-            waveform_generator = self.waveform_generator_class(
-                frequency_domain_source_model=self.bilby_frequency_domain_source_model,
-                sampling_frequency=self.interferometers.sampling_frequency,
-                duration=self.interferometers.duration,
-                parameter_conversion=self.parameter_conversion,
-                start_time=self.interferometers.start_time,
-                waveform_arguments=waveform_arguments,
-            )
+            fdsm = self.bilby_frequency_domain_source_model
+
+        waveform_generator = self.waveform_generator_class(
+            frequency_domain_source_model=fdsm,
+            sampling_frequency=self.interferometers.sampling_frequency,
+            duration=self.interferometers.duration,
+            parameter_conversion=self.parameter_conversion,
+            start_time=self.interferometers.start_time,
+            waveform_arguments=waveform_arguments,
+        )
 
         return waveform_generator
 

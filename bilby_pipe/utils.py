@@ -214,20 +214,20 @@ MAXIMUM_FREQUENCY_LOOKUPS = {
 SAMPLER_SETTINGS = {
     "DynestyDefault": {
         "nlive": 1000,
-        "walks": 100,
-        "nact": 50,
+        "naccept": 60,
         "check_point_plot": True,
         "check_point_delta_t": 1800,
         "print_method": "interval-60",
+        "sample": "acceptance-walk",
     },
     "FastTest": {
         "nlive": 50,
-        "walks": 100,
-        "nact": 5,
+        "naccept": 5,
         "dlogz": 1,
         "check_point_plot": True,
         "check_point_delta_t": 1800,
         "print_method": "interval-10",
+        "sample": "acceptance-walk",
     },
     "BilbyMCMCDefault": {
         "nsamples": 1000,
