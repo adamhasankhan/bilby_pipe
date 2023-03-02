@@ -62,7 +62,7 @@ def glob_and_filter_files(args, globpath):
     return files
 
 
-def read_in_checkpoints(args, label):
+def get_resume_file_paths(args, label):
     # Identify existing resume files
     path = os.path.join(args.directory, RESULT_SUBDIR, f"{label}*resume.pickle")
     resume_files = glob_and_filter_files(args, path)
@@ -71,20 +71,7 @@ def read_in_checkpoints(args, label):
     else:
         print("No checkpoint files found, exiting")
         sys.exit()
-
-    ptsamplers = []
-    for file in resume_files:
-        with open(file, "rb") as f:
-            ptsampler = RobustUnpickler(f).load()
-
-        # Add the individual label
-        ptsampler.label = extract_label_from_filename(file)
-
-        if len(ptsampler.samples) > 0:
-            ptsamplers.append(ptsampler)
-        else:
-            print(f"Resume file {file} contains no usable samples")
-    return ptsamplers
+    return resume_files
 
 
 def extract_label_from_filename(filename):
@@ -92,32 +79,38 @@ def extract_label_from_filename(filename):
     return filename.replace("_resume.pickle", "")
 
 
+def check_unique_file(files, ftype):
+    if len(files) > 1:
+        raise ValueError(f"Multiple {ftype} files found, aborting")
+    elif len(files) == 0:
+        raise ValueError(f"No {ftype} files found, aborting")
+
+
 def find_data_dump_file(args):
     path = os.path.join(args.directory, "data", "*dump.pickle")
-    dd_files = glob_and_filter_files(args, path)
-    if len(dd_files) == 1:
-        fname = dd_files[0]
-        print(f"Using data dump file {fname}")
-        return fname
-    else:
-        raise ValueError("Multiple data dump files found, aborting")
+    dd_files = glob.glob(path)
+    check_unique_file(dd_files, "data dump")
+    fname = dd_files[0]
+    print(f"Using data dump file {fname}")
+    return fname
 
 
 def find_config(args):
     path = os.path.join(args.directory, "*ini")
     config_files = glob.glob(path)
-    if len(config_files) == 1:
-        fname = config_files[0]
-        print(f"Using config file {fname}")
-        return fname
-    else:
-        raise ValueError("Multiple config files found, aborting")
+    check_unique_file(config_files, "config")
+    fname = config_files[0]
+    print(f"Using config file {fname}")
+    return fname
 
 
 def get_output_fname(
-    outdir_result, ptsamplers, naming_method="datetime", extension="json"
+    outdir_result, resume_files, naming_method="datetime", extension="json"
 ):
-    base_labels = {"_".join(pt.label.split("_")[:-1]) for pt in ptsamplers}
+    file_labels = [
+        rf.split("/")[-1].replace("_resume.pickle", "") for rf in resume_files
+    ]
+    base_labels = {bl.split("_par")[0] for bl in file_labels}
     if len(base_labels) > 1:
         raise ValueError("Processing error: resume files mismatch")
     else:
@@ -323,15 +316,28 @@ def main():
 
     label = config_args.label
 
-    ptsamplers = read_in_checkpoints(args, label)
+    resume_files = get_resume_file_paths(args, label)
 
     fname = get_output_fname(
-        outdir_result, ptsamplers, args.naming_method, extension=analysis.result_format
+        outdir_result,
+        resume_files,
+        args.naming_method,
+        extension=analysis.result_format,
     )
 
     results = []
-    for ii, ptsampler in enumerate(ptsamplers):
-        print(f"Processing sampler {ii+1}/{len(ptsamplers)}")
+    for ii, resume_file in enumerate(resume_files):
+        print(f"Processing sampler {ii+1}/{len(resume_files)}")
+        with open(resume_file, "rb") as f:
+            ptsampler = RobustUnpickler(f).load()
+
+        # Add the individual label
+        ptsampler.label = extract_label_from_filename(resume_file)
+
+        if len(ptsampler.samples) == 0:
+            print(f"Resume file {resume_file} contains no usable samples")
+            break
+
         result = process_sampler(ptsampler, analysis, outdir_result, args)
         results.append(result)
 
