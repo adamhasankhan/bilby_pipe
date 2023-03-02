@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """ Script to perform data generation steps """
 import glob
+import json
 import os
 import sys
 
@@ -9,7 +10,7 @@ import lal
 import numpy as np
 
 import bilby
-from bilby.gw.detector import PowerSpectralDensity
+from bilby.gw.detector import PowerSpectralDensity, calibration
 from bilby_pipe.input import Input
 from bilby_pipe.main import parse_args
 from bilby_pipe.parser import create_parser
@@ -191,12 +192,16 @@ class DataGenerationInput(Input):
         self.phase_marginalization = args.phase_marginalization
         self.time_marginalization = args.time_marginalization
         self.calibration_marginalization = args.calibration_marginalization
+        self.calibration_lookup_table = args.calibration_lookup_table
         self.jitter_time = args.jitter_time
 
         # Plotting
         self.plot_data = args.plot_data
         self.plot_spectrogram = args.plot_spectrogram
         self.plot_injection = args.plot_injection
+
+        # Reweighting
+        self.reweighting_configuration = args.reweighting_configuration
 
         if create_data:
             self.create_data(args)
@@ -1077,7 +1082,9 @@ class DataGenerationInput(Input):
             )
 
     def add_calibration_model_to_interferometers(self, ifo):
-        if self.calibration_model == "CubicSpline":
+        if self.calibration_model in [None, "Recalibrate"]:
+            ifo.calibration_model = bilby.gw.calibration.Recalibrate()
+        elif self.calibration_model == "CubicSpline":
             ifo.calibration_model = bilby.gw.calibration.CubicSpline(
                 prefix=f"recalib_{ifo.name}_",
                 minimum_frequency=ifo.minimum_frequency,
@@ -1139,8 +1146,50 @@ class DataGenerationInput(Input):
                 label=self.label,
             )
 
+    def build_calibration_lookups_if_needed(self):
+        """
+        Build lookup files that are needed for incorporating calibration uncertainty.
+        These are needed if:
+
+          - :code:`calibration_marginalization` is used either during sampling or
+            post-processing
+          - the calibration model is :code:`Precomputed`
+        """
+        sampling_calibration = self.calibration_model
+        sampling_marginalization = self.calibration_marginalization
+        calibration_lookup = self.calibration_lookup_table
+        if self.reweighting_configuration is not None:
+            with open(self.reweighting_configuration, "r") as ff:
+                data = json.load(ff)
+            if "calibration-model" in data:
+                self.calibration_model = data["calibration-model"]
+                for ifo in self.interferometers:
+                    self.add_calibration_model_to_interferometers(ifo)
+            if "calibration-marginalization" in data:
+                self.calibration_marginalization = data["calibration-marginalization"]
+            if "calibration-lookup-table" in data:
+                self.calibration_lookup_table = data["calibration-lookup-table"]
+
+        if (
+            self.calibration_marginalization
+            or self.calibration_model == "Precomputed"
+            or self.calibration_lookup_table
+        ):
+            calibration.build_calibration_lookup(
+                interferometers=self.interferometers,
+                lookup_files=self.calibration_lookup_table,
+                priors=self.calibration_prior,
+            )
+        self.calibration_model = sampling_calibration
+        for ifo in self.interferometers:
+            self.add_calibration_model_to_interferometers(ifo)
+        self.calibration_marginalization = sampling_marginalization
+        self.calibration_lookup_table = calibration_lookup
+
     def save_data_dump(self):
         """Method to dump the saved data to disk for later analysis"""
+        self.build_calibration_lookups_if_needed()
+
         likelihood = self.likelihood
         if self.distance_marginalization:
             likelihood_lookup_table = dict(
