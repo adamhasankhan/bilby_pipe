@@ -129,6 +129,11 @@ class DataAnalysisInput(Input):
         if test is False:
             self._load_data_dump()
 
+            # heterodyning - this relies on the data dump
+            self.fiducial_parameters = self.meta_data.get("fiducial_parameters", None)
+            self.update_fiducial_parameters = False
+            self.epsilon = args.epsilon
+
     @property
     def sampling_seed(self):
         return self._sampling_seed

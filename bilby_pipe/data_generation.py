@@ -153,14 +153,6 @@ class DataGenerationInput(Input):
             self.psd_start_time = args.psd_start_time
             self.psd_method = args.psd_method
 
-        # ROQ
-        self.roq_folder = args.roq_folder
-        self.roq_linear_matrix = args.roq_linear_matrix
-        self.roq_quadratic_matrix = args.roq_quadratic_matrix
-        self.roq_weights = args.roq_weights
-        self.roq_weight_format = args.roq_weight_format
-        self.roq_scale_factor = args.roq_scale_factor
-
         # Calibration
         self.calibration_model = args.calibration_model
         self.spline_calibration_envelope_dict = args.spline_calibration_envelope_dict
@@ -172,6 +164,24 @@ class DataGenerationInput(Input):
         )
         self.spline_calibration_nodes = args.spline_calibration_nodes
         self.calibration_prior_boundary = args.calibration_prior_boundary
+
+        # ROQ
+        self.roq_folder = args.roq_folder
+        self.roq_linear_matrix = args.roq_linear_matrix
+        self.roq_quadratic_matrix = args.roq_quadratic_matrix
+        self.roq_weights = args.roq_weights
+        self.roq_weight_format = args.roq_weight_format
+        self.roq_scale_factor = args.roq_scale_factor
+
+        # Heterodyning
+        if args.fiducial_parameters is not None:
+            self.fiducial_parameters = convert_string_to_dict(args.fiducial_parameters)
+        else:
+            self.fiducial_parameters = args.fiducial_parameters
+        self.update_fiducial_parameters = args.update_fiducial_parameters
+        if self.fiducial_parameters is None:
+            self.update_fiducial_parameters = True
+        self.epsilon = args.epsilon
 
         # Marginalization
         self.distance_marginalization = args.distance_marginalization
@@ -1138,6 +1148,8 @@ class DataGenerationInput(Input):
             )
         else:
             likelihood_lookup_table = None
+        if hasattr(likelihood, "fiducial_parameters"):
+            self.meta_data["fiducial_parameters"] = likelihood.fiducial_parameters
         if self.is_likelihood_multiband:
             likelihood_roq_weights = None
             likelihood_multiband_weights = likelihood.weights

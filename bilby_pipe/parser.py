@@ -740,6 +740,27 @@ def create_parser(top_level=True):
         help="Rescaling factor for the ROQ, default is 1 (no rescaling)",
     )
     likelihood_parser.add(
+        "--fiducial-parameters",
+        default=None,
+        type=nonestr,
+        help="The reference parameters for the relative binning likelihod. "
+        "If this is not specified, the value will be drawn from the prior.",
+    )
+    likelihood_parser.add(
+        "--update-fiducial-parameters",
+        action=StoreBoolean,
+        default=False,
+        help="Whether to update the fiducial parameters using an optimization "
+        "algorithm. This is automatically set to True if --fiducial-parameters "
+        "is None.",
+    )
+    likelihood_parser.add(
+        "--epsilon",
+        default=0.025,
+        type=float,
+        help="Epsilon value for the relative binning likelihood",
+    )
+    likelihood_parser.add(
         "--extra-likelihood-kwargs",
         type=nonestr,
         default=None,
