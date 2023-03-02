@@ -1116,6 +1116,16 @@ class Input(object):
             self._calibration_model = None
 
     @property
+    def calibration_lookup_table(self):
+        return getattr(self, "_calibration_lookup_table", None)
+
+    @calibration_lookup_table.setter
+    def calibration_lookup_table(self, lookup):
+        if isinstance(lookup, str):
+            lookup = convert_string_to_dict(lookup)
+        self._calibration_lookup_table = lookup
+
+    @property
     def likelihood(self):
         self.search_priors = self.priors.copy()
         likelihood_kwargs = dict(
@@ -1129,6 +1139,7 @@ class Input(object):
             reference_frame=self.reference_frame,
             time_reference=self.time_reference,
             calibration_marginalization=self.calibration_marginalization,
+            calibration_lookup_table=self.calibration_lookup_table,
         )
         relative_binning_kwargs = dict(
             fiducial_parameters=self.fiducial_parameters,

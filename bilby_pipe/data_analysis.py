@@ -121,6 +121,7 @@ class DataAnalysisInput(Input):
         self.time_marginalization = args.time_marginalization
         self.jitter_time = args.jitter_time
         self.calibration_marginalization = args.calibration_marginalization
+        self.calibration_lookup_table = args.calibration_lookup_table
 
         # Reweighting
         self.reweighting_configuration = args.reweighting_configuration
@@ -296,11 +297,6 @@ class DataAnalysisInput(Input):
             priors = self.priors.copy()
             self.priors.update(bilby.core.prior.PriorDict(data["prior-file"]))
             self.search_priors = priors
-        if "calibration-model" in data:
-            self.calibration_model = data["calibration-model"]
-            if self.calibration_model is not None:
-                self.priors.update(self.calibration_prior)
-                need_likelihood = True
         for key, value in data.items():
             key = key.replace("-", "_")
             if key in target_arguments:
@@ -343,7 +339,7 @@ class DataAnalysisInput(Input):
                 del self.result.posterior[key]
 
         if likelihood is not None:
-            n_evaluations = 100
+            n_evaluations = min(100, len(self.result.posterior))
             t_start = time.time()
             for i in range(n_evaluations):
                 likelihood.parameters = {

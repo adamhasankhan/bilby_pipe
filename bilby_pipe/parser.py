@@ -699,6 +699,15 @@ def create_parser(top_level=True):
         ),
     )
     likelihood_parser.add(
+        "--calibration-lookup-table",
+        type=nonestr,
+        help=(
+            "Dictionary of calibration lookup files for use with calibration "
+            "marginalization/the precomputed model. If these files don't "
+            "exist, they will be generated from the passed uncertainties."
+        ),
+    )
+    likelihood_parser.add(
         "--roq-folder", type=nonestr, default=None, help="The data for ROQ"
     )
     likelihood_parser.add(
