@@ -323,6 +323,8 @@ def _get_cbc_likelihood_args(mode, chirp_mass):
         return _choose_phenompv2_bbh_roq(chirp_mass, ignore_no_params=(mode == "test"))
     elif mode == "phenompv2_bns_roq":
         return _choose_phenompv2_bns_roq(chirp_mass)
+    elif mode == "phenompv2nrtidalv2_roq":
+        return _choose_phenompv2nrtidalv2_roq(chirp_mass)
     elif mode in ["lowspin_phenomd_narrowmc_roq", "lowspin_phenomd_broadmc_roq"]:
         return _choose_lowspin_phenomd_roq(
             chirp_mass, narrow_mc=(mode == "lowspin_phenomd_narrowmc_roq")
@@ -516,6 +518,82 @@ def _choose_phenompv2_bns_roq(chirp_mass):
     )
 
 
+def _choose_phenompv2nrtidalv2_roq(chirp_mass):
+    """Choose an appropriate IMRPhenomPv2_NRTidalv2 ROQ basis file, and return
+    likelihood arguments and quantities characterizing likelihood.
+
+    Parameters
+    ----------
+    chirp_mass: float
+
+    Returns
+    -------
+    likelihood_args: dict
+    likelihood_parameter_bounds: dict
+        bounds of parameter space where likelihood is expected to be accurate
+    minimum_frequency: float
+        minimum frequency of likelihood integration
+    maximum_frequency: float
+        maximum frequency of likelihood integration
+    duration: float
+        inverse of frequency interval of likelihood integration
+    """
+    roq_dir = "/home/roq/IMRPhenomPv2_NRTidalv2/bns"
+
+    logger.info(f"Searching for a basis file in {roq_dir} ...")
+    likelihood_parameter_bounds = {
+        "a_1_max": 0.4,
+        "a_2_max": 0.4,
+        "mass_ratio_min": 0.125,
+    }
+    # 2.31, 1.54, and 1.012 are 1.1 times the minimum chirp mass values of 64s,
+    # 128s, and 256s bases respectively.
+    if 4.0 > chirp_mass > 2.31:
+        basis = os.path.join(roq_dir, "basis_64s.hdf5")
+        likelihood_parameter_bounds["chirp_mass_min"] = 2.1
+        likelihood_parameter_bounds["chirp_mass_max"] = 4.0
+        maximum_frequency = 2048
+        duration = 64
+    elif chirp_mass > 1.54:
+        basis = os.path.join(roq_dir, "basis_128s.hdf5")
+        likelihood_parameter_bounds["chirp_mass_min"] = 1.4
+        likelihood_parameter_bounds["chirp_mass_max"] = 2.6
+        maximum_frequency = 4096
+        duration = 128
+    elif chirp_mass > 1.012:
+        basis = os.path.join(roq_dir, "basis_256s.hdf5")
+        likelihood_parameter_bounds["chirp_mass_min"] = 0.92
+        likelihood_parameter_bounds["chirp_mass_max"] = 1.7
+        maximum_frequency = 4096
+        duration = 256
+    elif chirp_mass > 0.6:
+        basis = os.path.join(roq_dir, "basis_512s.hdf5")
+        likelihood_parameter_bounds["chirp_mass_min"] = 0.6
+        likelihood_parameter_bounds["chirp_mass_max"] = 1.1
+        maximum_frequency = 4096
+        duration = 512
+    else:
+        raise ValueError(
+            "No PhenomPv2_NRTidalv2 basis has been found for "
+            f"chirp_mass={chirp_mass}!"
+        )
+    logger.info(f"The selected ROQ basis file is {basis}.")
+
+    return (
+        {
+            "likelihood_type": "ROQGravitationalWaveTransient",
+            "roq_linear_matrix": basis,
+            "roq_quadratic_matrix": basis,
+            "roq_scale_factor": 1,
+            "waveform_approximant": "IMRPhenomPv2_NRTidalv2",
+        },
+        likelihood_parameter_bounds,
+        20,
+        maximum_frequency,
+        duration,
+    )
+
+
 def _choose_lowspin_phenomd_roq(chirp_mass, narrow_mc=True):
     """Choose an appropriate low-spin IMRPhenomD ROQ basis file, and return
     likelihood arguments and quantities characterizing likelihood.
@@ -625,9 +703,8 @@ def create_config_file(
     search_type: str
         What kind of search identified the trigger, options are "cbc" and "burst"
     cbc_likelihood_mode: str
-        Which mode of CBC likelihood settings is used, options are 'phenompv2_bbh_roq',
-        'phenompv2_bns_roq', 'lowspin_phenomd_narrowmc_roq', 'lowspin_phenomd_broadmc_roq',
-        and 'test'.
+        Which mode of CBC likelihood settings is used, options are 'phenompv2_bbh_roq', 'phenompv2_bns_roq',
+        'phenompv2nrtidalv2_roq', 'lowspin_phenomd_narrowmc_roq', 'lowspin_phenomd_broadmc_roq', and 'test'.
     settings: str
         JSON filename containing settings to override the defaults
 
@@ -695,6 +772,11 @@ def create_config_file(
             spline_calibration_nodes=spline_calibration_nodes,
         )
         extra_config_arguments.update(likelihood_args)
+        if cbc_likelihood_mode == "phenompv2nrtidalv2_roq":
+            extra_config_arguments["default_prior"] = "BNSPriorDict"
+            extra_config_arguments[
+                "frequency_domain_source_model"
+            ] = "binary_neutron_star_roq"
     elif search_type == "burst":
         centre_frequency, superevent, trigger_time, ifos = _read_burst_candidate(
             candidate
@@ -886,6 +968,11 @@ def generate_cbc_prior_from_template(
                 os.path.dirname(os.path.realpath(__file__)),
                 "data_files/precessing_spin.prior.template",
             )
+        elif mode == "phenompv2nrtidalv2_roq":
+            template = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                "data_files/precessing_spin_tides.prior.template",
+            )
         elif mode in ["lowspin_phenomd_narrowmc_roq", "lowspin_phenomd_broadmc_roq"]:
             template = os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
@@ -1025,8 +1112,8 @@ def create_parser():
         default="phenompv2_bbh_roq",
         help=(
             "Which mode of CBC likelihood settings is used, options are 'phenompv2_bbh_roq', "
-            "'phenompv2_bns_roq', 'lowspin_phenomd_narrowmc_roq', 'lowspin_phenomd_broadmc_roq', "
-            "and 'test'. 'test' is for testing this command outside the CIT cluster."
+            "'phenompv2_bns_roq', 'phenompv2nrtidalv2_roq', 'lowspin_phenomd_narrowmc_roq', "
+            "'lowspin_phenomd_broadmc_roq', and 'test'. 'test' is for testing this command outside the CIT cluster."
         ),
     )
     parser.add_argument(
