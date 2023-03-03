@@ -10,7 +10,7 @@ class AnalysisNode(Node):
     run_node_on_osg = True
 
     def __init__(self, inputs, generation_node, detectors, sampler, parallel_idx, dag):
-        super().__init__(inputs)
+        super().__init__(inputs, retry=3)
         self.dag = dag
         self.generation_node = generation_node
         self.detectors = detectors

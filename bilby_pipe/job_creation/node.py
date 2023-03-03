@@ -15,13 +15,13 @@ class Node(object):
     # Flag to not run on the OSG - overwritten in child nodes
     run_node_on_osg = False
 
-    def __init__(self, inputs):
+    def __init__(self, inputs, retry=None):
         self.inputs = inputs
         self._universe = "vanilla"
         self.request_disk = self.inputs.request_disk
         self.getenv = True
         self.notification = inputs.notification
-        self.retry = None
+        self.retry = retry
         self.verbose = 0
         self.condor_job_priority = inputs.condor_job_priority
         self.extra_lines = list(self.inputs.extra_lines)
