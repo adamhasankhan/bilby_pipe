@@ -1,5 +1,27 @@
 # All notable changes will be documented in this file
 
+## v1.0.8 2023-03-02
+
+See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.0.8)
+
+### Changes
+- Fixed calibration bugs with latest bilby release (!519, !508)
+- Improvements to online mode (!518, !499))
+- Improve the bilby_pipe processing methods (!514)
+- Improvemenst to enable nessai features (!512, !509)
+- Use relative paths for file transfer (!501)
+- No restart time on local jobs (!492)
+
+### Added
+- Set automatic retries for analysis jobs (!520)
+- Relative binning likelihood (!506)
+- Warnings for npool and ncpu mismatch (!505)
+- Warnings for calibration boundary (!503)
+- Quality of life improvements (reduce verbosity of outputs) (!504)
+- Add stub files for transfer (!498)
+- Support for calibration marginalized likelihood (!497)
+- Implement multiband likelihood (!492)
+
 ## v1.0.7 2022-11-07
 
 See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.0.7)
