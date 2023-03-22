@@ -311,7 +311,7 @@ class DataAnalysisInput(Input):
         return likelihood, priors
 
     def reweight_result(self):
-        old_priors = self.priors.copy()
+        old_priors = self.result.priors
         self.search_priors = old_priors
         reweight_nest = self.reweight_nested_samples
         if self.sampler in ["dynesty", "nessai"]:
@@ -368,7 +368,7 @@ class DataAnalysisInput(Input):
             n_checkpoint=n_checkpoint,
             use_nested_samples=reweight_nest,
         )
-        reweighted.save_to_file(extension=self.result_format)
+        reweighted.save_to_file(extension=self.result_format, overwrite=True)
 
 
 def create_analysis_parser():
@@ -384,4 +384,5 @@ def main():
     analysis.run_sampler()
     if analysis.reweighting_configuration is not None:
         analysis.reweight_result()
+    logger.info("Run completed")
     sys.exit(0)
