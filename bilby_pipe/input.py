@@ -1128,13 +1128,6 @@ class Input(object):
     @property
     def likelihood(self):
         self.search_priors = self.priors.copy()
-        # Get the number of response curves from reweighting config if given
-        n_response = 1000
-        if hasattr(self, "reweighting_configuration"):
-            if self.reweighting_configuration is not None:
-                with open(self.reweighting_configuration, "r") as ff:
-                    data = json.load(ff)
-                    n_response = data.get("number-of-response-curves", 1000)
 
         likelihood_kwargs = dict(
             interferometers=self.interferometers,
@@ -1148,7 +1141,7 @@ class Input(object):
             time_reference=self.time_reference,
             calibration_marginalization=self.calibration_marginalization,
             calibration_lookup_table=self.calibration_lookup_table,
-            number_of_response_curves=n_response,
+            number_of_response_curves=self.number_of_response_curves,
         )
         relative_binning_kwargs = dict(
             fiducial_parameters=self.fiducial_parameters,
@@ -1565,3 +1558,21 @@ class Input(object):
             self.likelihood_type == "MBGravitationalWaveTransient"
             or "multiband" in self.likelihood_type.lower()
         )
+
+    @property
+    def reweighting_configuration(self):
+        return getattr(self, "_reweighting_configuration", None)
+
+    @reweighting_configuration.setter
+    def reweighting_configuration(self, conf):
+        if isinstance(conf, str):
+            if os.path.exists(conf):
+                with open(conf, "r") as ff:
+                    conf = json.load(ff)
+            else:
+                try:
+                    conf = convert_string_to_dict(conf)
+                except (ValueError, SyntaxError):
+                    logger.error("Cannot parse reweighting configuration")
+                    raise
+        self._reweighting_configuration = conf

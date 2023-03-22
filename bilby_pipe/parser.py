@@ -708,6 +708,12 @@ def create_parser(top_level=True):
         ),
     )
     likelihood_parser.add(
+        "--number-of-response-curves",
+        type=int,
+        default=1000,
+        help="The number of response curves to use for calibration marginalization",
+    )
+    likelihood_parser.add(
         "--roq-folder", type=nonestr, default=None, help="The data for ROQ"
     )
     likelihood_parser.add(
