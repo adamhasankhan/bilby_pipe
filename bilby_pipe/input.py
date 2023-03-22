@@ -1128,6 +1128,14 @@ class Input(object):
     @property
     def likelihood(self):
         self.search_priors = self.priors.copy()
+        # Get the number of response curves from reweighting config if given
+        n_response = 1000
+        if hasattr(self, "reweighting_configuration"):
+            if self.reweighting_configuration is not None:
+                with open(self.reweighting_configuration, "r") as ff:
+                    data = json.load(ff)
+                    n_response = data.get("number-of-response-curves", 1000)
+
         likelihood_kwargs = dict(
             interferometers=self.interferometers,
             waveform_generator=self.waveform_generator,
@@ -1140,6 +1148,7 @@ class Input(object):
             time_reference=self.time_reference,
             calibration_marginalization=self.calibration_marginalization,
             calibration_lookup_table=self.calibration_lookup_table,
+            number_of_response_curves=n_response,
         )
         relative_binning_kwargs = dict(
             fiducial_parameters=self.fiducial_parameters,

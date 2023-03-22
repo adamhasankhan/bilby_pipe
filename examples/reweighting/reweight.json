@@ -2,5 +2,6 @@
     "likelihood-type": "bilby.gw.likelihood.GravitationalWaveTransient",
     "waveform_approximant": "IMRPhenomXHM",
     "calibration-model": "CubicSpline",
-    "calibration-marginalization": true
+    "calibration-marginalization": true,
+    "number-of-response-curves": 1000
 }

@@ -1169,6 +1169,7 @@ class DataGenerationInput(Input):
                 self.calibration_marginalization = data["calibration-marginalization"]
             if "calibration-lookup-table" in data:
                 self.calibration_lookup_table = data["calibration-lookup-table"]
+            n_response = data.get("number-of-response-curves", 1000)
 
         if (
             self.calibration_marginalization
@@ -1179,6 +1180,7 @@ class DataGenerationInput(Input):
                 interferometers=self.interferometers,
                 lookup_files=self.calibration_lookup_table,
                 priors=self.calibration_prior,
+                number_of_response_curves=n_response,
             )
         self.calibration_model = sampling_calibration
         for ifo in self.interferometers:
