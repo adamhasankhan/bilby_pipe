@@ -368,7 +368,9 @@ class DataAnalysisInput(Input):
             n_checkpoint=n_checkpoint,
             use_nested_samples=reweight_nest,
         )
-        reweighted.save_to_file(extension=self.result_format, overwrite=True)
+        reweighted.save_to_file(
+            extension=self.result_format, overwrite=True, outdir=self.outdir
+        )
 
 
 def create_analysis_parser():
