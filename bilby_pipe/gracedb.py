@@ -137,15 +137,23 @@ def extract_psds_from_xml(coinc_file, ifos, outdir="."):
     from gwpy.frequencyseries import FrequencySeries
 
     psd_filenames = dict()
+    psd_maximum_frequency = None
     for ifo in ifos:
         try:
             psd = FrequencySeries.read(coinc_file, instrument=ifo)
+            if psd_maximum_frequency is None:
+                psd_maximum_frequency = psd.frequencies.value[-1]
+            else:
+                psd_maximum_frequency = min(
+                    psd_maximum_frequency,
+                    psd.frequencies.value[-1],
+                )
             filename = f"{outdir}/{ifo}_psd.txt"
             psd.write(target=filename, format="txt")
             psd_filenames[ifo] = filename
         except ValueError:
             logger.warning(f"PSD for {ifo} not found in {coinc_file}.")
-    return psd_filenames
+    return psd_filenames, psd_maximum_frequency
 
 
 def read_from_json(json_file):
@@ -683,6 +691,7 @@ def create_config_file(
     search_type="cbc",
     cbc_likelihood_mode="phenompv2_bbh_roq",
     settings=None,
+    psd_cut=0.95,
 ):
     """Creates ini file from defaults and candidate contents
 
@@ -707,6 +716,8 @@ def create_config_file(
         'phenompv2nrtidalv2_roq', 'lowspin_phenomd_narrowmc_roq', 'lowspin_phenomd_broadmc_roq', and 'test'.
     settings: str
         JSON filename containing settings to override the defaults
+    psd_cut: float
+        Fractional maximum frequency cutoff relative to the maximum frequency of pipeline psd
 
     Returns
     -------
@@ -801,13 +812,11 @@ def create_config_file(
             f"search_type should be either 'cbc' or 'burst', not {search_type}"
         )
 
-    # the maximum frequency cut is set by the content of coinc xml PSDs
-    # this may also be pipeline dependent
     config_dict = dict(
         label=gracedb,
         outdir=outdir,
         accounting="ligo.dev.o4.cbc.pe.bilby",
-        maximum_frequency=min(maximum_frequency, 2048),
+        maximum_frequency=maximum_frequency,
         minimum_frequency=minimum_frequency,
         sampling_frequency=16384,
         trigger_time=trigger_time,
@@ -842,10 +851,18 @@ def create_config_file(
         config_dict["n_parallel"] = 4
 
     if candidate.get("coinc_file", None) is not None:
-        psd_dict = extract_psds_from_xml(
+        psd_dict, psd_maximum_frequency = extract_psds_from_xml(
             coinc_file=candidate["coinc_file"], ifos=ifos, outdir=outdir
         )
         config_dict["psd_dict"] = psd_dict
+        if psd_maximum_frequency is not None:
+            psd_maximum_frequency *= min(psd_cut, 1)
+            if config_dict["maximum_frequency"] > psd_maximum_frequency:
+                config_dict["maximum_frequency"] = psd_maximum_frequency
+                logger.info(
+                    f"maximum_frequency is reduced to {psd_maximum_frequency} "
+                    "due to the limination of pipeline psd"
+                )
 
     config_dict.update(extra_config_arguments)
 
@@ -1131,6 +1148,15 @@ def create_parser():
         default=None,
         help="JSON file containing extra settings to override the defaults",
     )
+    parser.add_argument(
+        "--psd-cut",
+        type=float,
+        default=0.95,
+        help=(
+            "maximum frequency is set to this value multiplied by the maximum frequency of psd contained in coinc.xml."
+            " This is to avoid likelihood overflow caused by the roll-off of pipeline psd due to low-pass filter."
+        ),
+    )
     return parser
 
 
@@ -1187,6 +1213,7 @@ def main(args=None, unknown_args=None):
         channel_dict=channel_dict,
         sampler_kwargs=sampler_kwargs,
         webdir=webdir,
+        psd_cut=args.psd_cut,
         search_type=search_type,
         cbc_likelihood_mode=args.cbc_likelihood_mode,
         settings=args.settings,
