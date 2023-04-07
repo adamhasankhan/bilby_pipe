@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 """ Script to perform data generation steps """
 import glob
-import json
 import os
 import sys
 
@@ -193,6 +192,7 @@ class DataGenerationInput(Input):
         self.time_marginalization = args.time_marginalization
         self.calibration_marginalization = args.calibration_marginalization
         self.calibration_lookup_table = args.calibration_lookup_table
+        self.number_of_response_curves = args.number_of_response_curves
         self.jitter_time = args.jitter_time
 
         # Plotting
@@ -1158,9 +1158,9 @@ class DataGenerationInput(Input):
         sampling_calibration = self.calibration_model
         sampling_marginalization = self.calibration_marginalization
         calibration_lookup = self.calibration_lookup_table
+        n_response = self.number_of_response_curves
         if self.reweighting_configuration is not None:
-            with open(self.reweighting_configuration, "r") as ff:
-                data = json.load(ff)
+            data = self.reweighting_configuration
             if "calibration-model" in data:
                 self.calibration_model = data["calibration-model"]
                 for ifo in self.interferometers:
@@ -1169,7 +1169,8 @@ class DataGenerationInput(Input):
                 self.calibration_marginalization = data["calibration-marginalization"]
             if "calibration-lookup-table" in data:
                 self.calibration_lookup_table = data["calibration-lookup-table"]
-            n_response = data.get("number-of-response-curves", 1000)
+            if "number-of-response-curves" in data:
+                self.number_of_response_curves = data["number-of-response-curves"]
 
         if (
             self.calibration_marginalization
@@ -1180,13 +1181,14 @@ class DataGenerationInput(Input):
                 interferometers=self.interferometers,
                 lookup_files=self.calibration_lookup_table,
                 priors=self.calibration_prior,
-                number_of_response_curves=n_response,
+                number_of_response_curves=self.number_of_response_curves,
             )
         self.calibration_model = sampling_calibration
         for ifo in self.interferometers:
             self.add_calibration_model_to_interferometers(ifo)
         self.calibration_marginalization = sampling_marginalization
         self.calibration_lookup_table = calibration_lookup
+        self.number_of_response_curves = n_response
 
     def save_data_dump(self):
         """Method to dump the saved data to disk for later analysis"""
@@ -1207,6 +1209,7 @@ class DataGenerationInput(Input):
         else:
             likelihood_roq_weights = getattr(likelihood, "weights", None)
             likelihood_multiband_weights = None
+        self.meta_data["reweighting_configuration"] = self.reweighting_configuration
         data_dump = DataDump(
             outdir=self.data_directory,
             label=self.label,

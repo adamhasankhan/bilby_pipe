@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 """ Script to perform data analysis """
-import json
 import os
 import signal
 import sys
@@ -16,7 +15,6 @@ from bilby_pipe.utils import (
     CHECKPOINT_EXIT_CODE,
     BilbyPipeError,
     DataDump,
-    convert_string_to_dict,
     log_version_information,
     logger,
 )
@@ -122,13 +120,16 @@ class DataAnalysisInput(Input):
         self.jitter_time = args.jitter_time
         self.calibration_marginalization = args.calibration_marginalization
         self.calibration_lookup_table = args.calibration_lookup_table
-
-        # Reweighting
-        self.reweighting_configuration = args.reweighting_configuration
-        self.reweight_nested_samples = args.reweight_nested_samples
+        self.number_of_response_curves = args.number_of_response_curves
 
         if test is False:
             self._load_data_dump()
+
+            # Reweighting
+            self.reweighting_configuration = self.meta_data.get(
+                "reweighting_configuration", None
+            )
+            self.reweight_nested_samples = args.reweight_nested_samples
 
             # heterodyning - this relies on the data dump
             self.fiducial_parameters = self.meta_data.get("fiducial_parameters", None)
@@ -276,15 +277,7 @@ class DataAnalysisInput(Input):
         )
 
     def get_likelihood_and_priors_for_reweighting(self):
-        if os.path.exists(self.reweighting_configuration):
-            with open(self.reweighting_configuration, "r") as ff:
-                data = json.load(ff)
-        else:
-            try:
-                data = convert_string_to_dict(self.reweighting_configuration)
-            except (ValueError, SyntaxError):
-                logger.error("Cannot parse reweighting configuration")
-                raise
+        data = self.reweighting_configuration
         need_likelihood = False
         likelihood = None
         priors = None
