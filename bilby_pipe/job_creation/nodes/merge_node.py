@@ -20,6 +20,9 @@ class MergeNode(Node):
         self.arguments.add("extension", self.inputs.result_format)
         self.arguments.add_flag("merge")
 
+        if self.disable_hdf5_locking:
+            self.extra_lines.append('environment = "HDF5_USE_FILE_LOCKING=FALSE"')
+
         self.process_node()
         for pn in parallel_node_list:
             self.job.add_parent(pn.job)

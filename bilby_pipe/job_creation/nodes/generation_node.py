@@ -37,6 +37,10 @@ class GenerationNode(Node):
             self.arguments.add("injection-file", self.inputs.injection_file)
         if self.inputs.timeslide_file is not None:
             self.arguments.add("timeslide-file", self.inputs.timeslide_file)
+
+        if self.disable_hdf5_locking:
+            self.extra_lines.append('environment = "HDF5_USE_FILE_LOCKING=FALSE"')
+
         self.process_node()
         if parent:
             self.job.add_parent(parent.job)

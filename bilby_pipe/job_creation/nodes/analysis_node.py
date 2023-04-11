@@ -67,7 +67,12 @@ class AnalysisNode(Node):
 
         self.extra_lines.extend(self._checkpoint_submit_lines())
         if self.request_cpus > 1:
-            self.extra_lines.extend(['environment = "OMP_NUM_THREADS=1"'])
+            env_vars = '"OMP_NUM_THREADS=1"'
+        else:
+            env_vars = ""
+        if self.disable_hdf5_locking:
+            env_vars += ' "USE_HDF5_FILE_LOCKING=FALSE"'
+        self.extra_lines.append(f"environment = {env_vars}")
 
         self.process_node()
         self.job.add_parent(generation_node.job)
