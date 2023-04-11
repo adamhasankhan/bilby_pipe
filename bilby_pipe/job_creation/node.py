@@ -24,6 +24,7 @@ class Node(object):
         self.retry = retry
         self.verbose = 0
         self.condor_job_priority = inputs.condor_job_priority
+        self.disable_hdf5_locking = inputs.disable_hdf5_locking
         self.extra_lines = list(self.inputs.extra_lines)
         self.requirements = (
             [self.inputs.requirements] if self.inputs.requirements else []
