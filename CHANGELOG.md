@@ -1,6 +1,20 @@
 # All notable changes will be documented in this file
 
 ## v1.0.8 2023-03-02
+See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.0.9)
+
+### Additions
+- Add option to disable HDF5 locking, on by default (!529)
+- Allow inline reweighting config (!523)
+
+### Changes
+- Enable increment of outdir naming past `_Z` (!531)
+- Updates to online PE gracedb (!530, !526, !521)
+- Introduce psd_cut in gracedb (!526)
+- Bugfixes to reweighting outdir (!528)
+- Fixes to time calibration (!522)
+
+## v1.0.8 2023-03-02
 
 See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.0.8)
 
