@@ -228,6 +228,17 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(conv("1:3"), [1, 2])
         self.assertEqual(conv("0:5"), [0, 1, 2, 3, 4])
 
+    def test_generate_new_outdir_name(self):
+        basename = "outdir"
+        new_name = bilby_pipe.utils.generate_new_outdir_name(basename)
+        self.assertEqual(new_name, basename + "_A")
+
+        new_name = bilby_pipe.utils.generate_new_outdir_name(basename + "_B")
+        self.assertEqual(new_name, basename + "_C")
+
+        new_name = bilby_pipe.utils.generate_new_outdir_name(basename + "_Z")
+        self.assertEqual(new_name, basename + "_AA")
+
 
 if __name__ == "__main__":
     unittest.main()
