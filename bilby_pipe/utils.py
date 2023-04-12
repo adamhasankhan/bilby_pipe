@@ -377,15 +377,52 @@ def get_outdir_name(outdir, fail_on_match=False, base_increment="A"):
             raise BilbyPipeError(msg)
 
         while os.path.exists(outdir):
-            # Test if outdir is already an incremented-name
-            if outdir[-2] == "_" and outdir[-1].isalnum():
-                outdir = outdir[:-1] + chr(ord(outdir[-1]) + 1)
-            else:
-                outdir += f"_{base_increment}"
+            outdir = generate_new_outdir_name(outdir)
 
         msg += f" Incrementing outdir to {outdir}"
         logger.warning(get_colored_string(msg))
         return outdir
+
+
+def generate_new_outdir_name(outdir):
+    """Generate a new outdir name to avoid naming conflicts
+
+    The incrementing name format is "_A", "_B", etc. Once "_Z" is reached, we then move to "_AA" etc.
+
+    """
+    tokens = outdir.split("_")
+    if len(tokens) <= 1 or len(tokens[-1]) == 0:
+        new_outdir = outdir + "_A"
+        return new_outdir
+
+    new_chars = []
+    suffix = tokens[-1]
+    n_chars = len(suffix)
+    stop_idx = -1
+    for idx in range(n_chars - 1, -1, -1):
+        if ord(suffix[idx]) == ord("Z"):
+            new_chars.append("A")
+            continue
+        else:
+            new_chars.append(chr(ord(suffix[idx]) + 1))
+            stop_idx = idx
+            break
+    if len(new_chars) > 0:
+        new_chars.reverse()
+    if stop_idx == -1:
+        new_suffix = ""
+        for idx in range(n_chars):
+            new_suffix = new_suffix + new_chars[idx]
+        new_suffix = new_suffix + "A"  # increase one character
+    else:
+        new_suffix = ""
+        for idx in range(stop_idx):
+            new_suffix = new_suffix + suffix[idx]
+        for idx in range(len(new_chars)):
+            new_suffix = new_suffix + new_chars[idx]
+    roots = tokens[:-1]
+    new_outdir = "_".join(roots) + "_" + new_suffix
+    return new_outdir
 
 
 def log_version_information():
