@@ -380,4 +380,31 @@ def main():
     if analysis.reweighting_configuration is not None:
         analysis.reweight_result()
     logger.info("Run completed")
-    sys.exit(0)
+
+
+def reweight():
+    parser = create_analysis_parser()
+    parser.add_argument("--result-file", type=str, default=None)
+    args, unknown_args = parse_args(sys.argv[1:], parser)
+
+    log_version_information()
+    analysis = DataAnalysisInput(args, unknown_args)
+    analysis.reweighting_configuration = args.reweighting_configuration
+    _ = analysis.get_likelihood_and_priors()
+
+    outdir = f"{analysis.outdir}/result"
+    if args.result_file is None:
+        filename = f"{outdir}/{analysis.label}_result.{analysis.result_format}"
+    else:
+        filename = args.result_file
+    result = bilby.core.result.read_in_result(filename)
+    result.outdir = outdir
+
+    analysis.result = result
+    analysis.label += "_reweighted"
+
+    if analysis.reweighting_configuration is not None:
+        logger.info("Running reweighting")
+        analysis.reweight_result()
+    else:
+        raise ValueError("Reweighting configuration not passed")
