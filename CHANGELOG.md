@@ -1,6 +1,12 @@
 # All notable changes will be documented in this file
 
-## v1.0.8 2023-03-02
+## v1.0.10 2023-13-04
+See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.0.10)
+
+### Changes
+- Hotfix a breaking issue with HDF5 file locking (!534)
+
+## v1.0.9 2023-12-04
 See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.0.9)
 
 ### Additions
