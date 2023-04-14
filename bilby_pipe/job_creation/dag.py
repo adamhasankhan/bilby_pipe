@@ -90,8 +90,11 @@ class Dag(object):
                 ff.write(
                     f"# CHILDREN {' '.join([job.name for job in node.children])}\n"
                 )
-                job_str = f"{node.executable} {node.args[0].arg}\n\n"
-                ff.write(job_str)
+                ff.write(f'if [[ "{node.name}" == *"$1"* ]]; then\n')
+                job_str = f"{node.executable} {node.args[0].arg}"
+                ff.write(f'    echo "Running: {job_str}"\n')
+                ff.write(f"    {job_str}\n")
+                ff.write("fi\n\n")
 
     @property
     def bash_file(self):

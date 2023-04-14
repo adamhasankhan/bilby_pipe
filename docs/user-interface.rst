@@ -55,6 +55,48 @@ Alternatively, you can initialise and submit your jobs with
 
    $ bilby_pipe my-run.ini --submit
 
+Running all or part of the job directly
+---------------------------------------
+
+In some cases, you may need to run all or part of the job directly (e.g., not
+through a scheduler). This can be done by using the file prepended with
+`bash` in the `submit/` directory. This file is a simple bash script that runs
+all commands in sequence. One simple way to run part of the job is to open the
+bash file and copy the commands you require to another script and then run that.
+For convenience, we also add if statements to the bash script to enable
+you to run parts of the analysis by providing a pattern as a command line.
+For example, to run the data generation step, you can call the bash script with
+`generation` in the arguments, e.g.:
+
+.. code-block:: console
+
+   $ bash outdir/submit/bash_my_label.sh generation
+
+If you want to run the analysis step and `n-parallel=1`, then you would use
+
+.. code-block:: console
+
+   $ bash outdir/submit/bash_my_label.sh analysis
+
+Note, if `n-parallel > 1` this will run all the parallel jobs. To run just one,
+run (replacing `par0` with the analysis you want to run):
+
+.. code-block:: console
+
+   $ bash outdir/submit/bash_my_label.sh par0
+
+Finally to merge the analyses, run
+
+.. code-block:: console
+
+   $ bash outdir/submit/bash_my_label.sh merge
+
+Internally, the bash script is simply matching the given argument to the job
+name. This works in simple cases, but will likely fail or need inspection of
+the base file itself in complicated cases. Moreover, if you use any of the
+special key words (generation, analysis, par, or merge) in your label, the
+ability to filter to single jobs will be lost.
+
 Using the slurm batch scheduler
 -------------------------------
 
