@@ -22,7 +22,7 @@ class GenerationNode(Node):
             dependencies
         """
 
-        super().__init__(inputs)
+        super().__init__(inputs, retry=3)
         self.inputs = inputs
         self.trigger_time = trigger_time
         self.idx = idx
