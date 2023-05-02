@@ -342,6 +342,31 @@ class TestPriorSettings(unittest.TestCase):
         else:
             self.assertTrue("lambda_2" not in priors)
 
+    @parameterized.expand([True, False])
+    def test_psi(self, half):
+        likelihood_parameter_bounds = dict(
+            chirp_mass_min=0.1,
+            chirp_mass_max=10,
+            mass_ratio_min=0.125,
+            comp_min=0.1,
+            a_1_max=0.99,
+            a_2_max=0.99,
+            spin_template="precessing",
+        )
+        if half:
+            likelihood_parameter_bounds["psi_max"] = np.pi / 2
+        with tempfile.TemporaryDirectory() as outdir:
+            gracedb.generate_cbc_prior_from_template(
+                chirp_mass=1,
+                likelihood_parameter_bounds=likelihood_parameter_bounds,
+                outdir=outdir,
+            )
+            priors = BBHPriorDict(f"{outdir}/online.prior")
+        if half:
+            self.assertEqual(priors["psi"].maximum, np.pi / 2)
+        else:
+            self.assertEqual(priors["psi"].maximum, np.pi)
+
     def test_fast_settings(self):
         with tempfile.TemporaryDirectory() as outdir:
             gracedb.generate_cbc_prior_from_template(
@@ -508,6 +533,7 @@ class TestLikelihoodSettings(unittest.TestCase):
         }
         bounds_answer = {
             "mass_ratio_min": 0.125,
+            "psi_max": np.pi / 2,
         }
         minimum_frequency_answer = 20
         maximum_frequency_answer = 4096

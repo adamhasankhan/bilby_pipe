@@ -497,7 +497,10 @@ def _choose_bns_roq(chirp_mass, mode):
     duration: float
         inverse of frequency interval of likelihood integration
     """
-    likelihood_parameter_bounds = {"mass_ratio_min": 0.125}
+    # When phase marginalization is used, psi + np.pi / 2 is indistingushable
+    # from psi. That is why decreasing its maximum to pi / 2 does not change
+    # the inference results at all.
+    likelihood_parameter_bounds = {"mass_ratio_min": 0.125, "psi_max": np.pi / 2}
     # 2.31, 1.54, and 1.012 are 1.1 times the minimum chirp mass values of 64s,
     # 128s, and 256s bases respectively.
     if mode == "lowspin_phenomd_narrowmc_roq":
@@ -509,6 +512,18 @@ def _choose_bns_roq(chirp_mass, mode):
     elif mode == "lowspin_phenomd_broadmc_roq":
         waveform_approximant = "IMRPhenomD"
         roq_dir = "/home/roq/IMRPhenomD/lowspin_broadmc_bns"
+        likelihood_parameter_bounds["a_1_max"] = 0.05
+        likelihood_parameter_bounds["a_2_max"] = 0.05
+        likelihood_parameter_bounds["spin_template"] = "aligned"
+    elif mode == "lowspin_phenomd_fhigh1024_roq":
+        waveform_approximant = "IMRPhenomD"
+        roq_dir = "/home/roq/IMRPhenomD/lowspin_fhigh1024"
+        likelihood_parameter_bounds["a_1_max"] = 0.05
+        likelihood_parameter_bounds["a_2_max"] = 0.05
+        likelihood_parameter_bounds["spin_template"] = "aligned"
+    elif mode == "lowspin_taylorf2_roq":
+        waveform_approximant = "TaylorF2"
+        roq_dir = "/home/roq/TaylorF2/lowspin_narrowmc_bns"
         likelihood_parameter_bounds["a_1_max"] = 0.05
         likelihood_parameter_bounds["a_2_max"] = 0.05
         likelihood_parameter_bounds["spin_template"] = "aligned"
@@ -557,6 +572,8 @@ def _choose_bns_roq(chirp_mass, mode):
             f"No BNS-mass {waveform_approximant} basis has been found for "
             f"chirp_mass={chirp_mass}!"
         )
+    if mode == "lowspin_phenomd_fhigh1024_roq" or mode == "lowspin_taylorf2_roq":
+        maximum_frequency = 1024
     logger.info(f"The selected ROQ basis file is {basis}.")
 
     return (
@@ -1041,6 +1058,7 @@ def generate_cbc_prior_from_template(
                     a_2_max=a_2_max,
                     d_min=distance_bounds[0],
                     d_max=distance_bounds[1],
+                    psi_max=likelihood_parameter_bounds.get("psi_max", np.pi),
                 )
                 + to_add
             )
