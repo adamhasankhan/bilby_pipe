@@ -103,25 +103,17 @@ SAMPLER_KEYS = ["nlive", "walks", "nact", "maxmcmc"]
 
 
 def get_default_top_level_dir():
-    bilby_version_number = bilby.__version__.split(":")[0]
-    try:
-        bilby_git_hash = bilby.__version__.split(" ")[2]
-    except IndexError:
-        bilby_git_hash = "release"
-    bilby_state = ["CLEAN", "UNCLEAN"]["UNCLEAN" in bilby.__version__]
+    def _parse_version(module):
+        version_tuple = module._version.version_tuple
+        if len(version_tuple) == 3:
+            version = "{}.{}.{}".format(*version_tuple)
+            git_hash = "release"
+        else:
+            version = "{}.{}.{}".format(*version_tuple[:3])
+            git_hash = version_tuple[4].split(".")[0]
+        return f"{module.__name__}-{version}-{git_hash}"
 
-    bilby_pipe_version_number = bilby_pipe.__long_version__.split(":")[0]
-    bilby_pipe_git_hash = bilby_pipe.__long_version__.split(" ")[2]
-    bilby_pipe_state = ["CLEAN", "UNCLEAN"]["UNCLEAN" in bilby_pipe.__long_version__]
-
-    return "bilby{}-{}-{}_bilby_pipe{}-{}-{}".format(
-        bilby_version_number,
-        bilby_git_hash,
-        bilby_state,
-        bilby_pipe_version_number,
-        bilby_pipe_git_hash,
-        bilby_pipe_state,
-    )
+    return f"{_parse_version(bilby)}_{_parse_version(bilby_pipe)}"
 
 
 def get_top_level_dir(args):
