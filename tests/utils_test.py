@@ -239,6 +239,29 @@ class TestUtils(unittest.TestCase):
         new_name = bilby_pipe.utils.generate_new_outdir_name(basename + "_Z")
         self.assertEqual(new_name, basename + "_AA")
 
+        new_name = bilby_pipe.utils.generate_new_outdir_name(basename + "_Z")
+        self.assertEqual(new_name, basename + "_AA")
+
+        basename = "GW150914"
+        new_name = bilby_pipe.utils.generate_new_outdir_name(basename)
+        self.assertEqual(new_name, basename + "_A")
+
+        basename = "outdir_underscore"
+        new_name = bilby_pipe.utils.generate_new_outdir_name(basename)
+        self.assertEqual(new_name, basename + "_A")
+
+        basename = "outdir_AB"
+        new_name = bilby_pipe.utils.generate_new_outdir_name(basename)
+        self.assertEqual(new_name, "outdir_AC")
+
+        basename = "outdir_ab"
+        new_name = bilby_pipe.utils.generate_new_outdir_name(basename)
+        self.assertEqual(new_name, "outdir_ab_A")
+
+        basename = "outdir_ABC"
+        new_name = bilby_pipe.utils.generate_new_outdir_name(basename)
+        self.assertEqual(new_name, "outdir_ABC_A")
+
 
 if __name__ == "__main__":
     unittest.main()
