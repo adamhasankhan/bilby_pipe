@@ -391,7 +391,18 @@ def generate_new_outdir_name(outdir):
 
     """
     tokens = outdir.split("_")
-    if len(tokens) <= 1 or len(tokens[-1]) == 0:
+    # Check if at least one _ and non-empty
+    if (
+        len(tokens) <= 1
+        or len(tokens[-1]) == 0
+        or re.match("[A-Z]{1,2}$", tokens[-1]) is None
+    ):
+        new_outdir = outdir + "_A"
+        return new_outdir
+
+    # Check if target matches standard form
+    matches = re.findall("^[A-Z]+", tokens[-1])
+    if len(matches) == 1 and matches[0] != tokens[-1]:
         new_outdir = outdir + "_A"
         return new_outdir
 
