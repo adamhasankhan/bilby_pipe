@@ -484,7 +484,7 @@ class TestLikelihoodSettings(unittest.TestCase):
             minimum_frequency,
             maximum_frequency,
             duration,
-        ) = gracedb._get_cbc_likelihood_args("test", trigger_values)
+        ) = gracedb._get_cbc_likelihood_args("phenompv2_bbh_roq", trigger_values)
 
         self.assertEqual(likelihood_args["waveform_approximant"], "IMRPhenomPv2")
 
