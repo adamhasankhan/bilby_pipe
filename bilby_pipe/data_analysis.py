@@ -288,7 +288,7 @@ class DataAnalysisInput(Input):
 
         if "prior-file" in data:
             priors = self.priors.copy()
-            self.priors.update(bilby.core.prior.PriorDict(data["prior-file"]))
+            priors.update(bilby.core.prior.PriorDict(data["prior-file"]))
             self.search_priors = priors
         for key, value in data.items():
             key = key.replace("-", "_")
@@ -362,7 +362,7 @@ class DataAnalysisInput(Input):
             use_nested_samples=reweight_nest,
         )
         reweighted.save_to_file(
-            extension=self.result_format, overwrite=True, outdir=self.outdir
+            extension=self.result_format, overwrite=True, outdir=self.result_directory
         )
 
 
