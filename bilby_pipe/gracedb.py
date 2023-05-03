@@ -341,17 +341,21 @@ def _get_cbc_likelihood_args(mode, trigger_values):
     duration: float
         inverse of frequency interval of likelihood integration
     """
-    if mode in ["phenompv2_bbh_roq", "test"]:
+    if mode in ["phenompv2_bbh_roq"]:
         return _choose_phenompv2_bbh_roq(
             trigger_values["chirp_mass"], ignore_no_params=(mode == "test")
         )
     elif mode in [
         "lowspin_phenomd_narrowmc_roq",
         "lowspin_phenomd_broadmc_roq",
+        "lowspin_phenomd_fhigh1024_roq",
+        "lowspin_taylorf2_roq",
         "phenompv2_bns_roq",
         "phenompv2nrtidalv2_roq",
     ]:
         return _choose_bns_roq(trigger_values["chirp_mass"], mode)
+    elif mode in ["test"]:
+        return _get_default_likelihood_args(trigger_values)
     else:
         return _get_cbc_likelihood_args_from_json(mode, trigger_values)
 
@@ -403,24 +407,12 @@ def _choose_phenompv2_bbh_roq(chirp_mass, ignore_no_params=False):
     else:
         likelihood_args["likelihood_type"] = "ROQGravitationalWaveTransient"
         roq_scale_factor = 1
-        if chirp_mass > 13.53:
-            likelihood_args["roq_folder"] = "/home/cbc/ROQ_data/IMRPhenomPv2/4s"
-        elif chirp_mass > 8.73:
-            likelihood_args["roq_folder"] = "/home/cbc/ROQ_data/IMRPhenomPv2/8s"
-        elif chirp_mass > 5.66:
-            likelihood_args["roq_folder"] = "/home/cbc/ROQ_data/IMRPhenomPv2/16s"
-        elif chirp_mass > 3.68:
-            likelihood_args["roq_folder"] = "/home/cbc/ROQ_data/IMRPhenomPv2/32s"
-        elif chirp_mass > 2.39:
-            likelihood_args["roq_folder"] = "/home/cbc/ROQ_data/IMRPhenomPv2/64s"
-        elif chirp_mass > 1.43:
-            likelihood_args["roq_folder"] = "/home/cbc/ROQ_data/IMRPhenomPv2/128s"
-        elif chirp_mass > 0.9:
-            likelihood_args["roq_folder"] = "/home/cbc/ROQ_data/IMRPhenomPv2/128s"
-            roq_scale_factor = 1.6
-        else:
-            likelihood_args["roq_folder"] = "/home/cbc/ROQ_data/IMRPhenomPv2/128s"
+        duration = _get_default_duration(chirp_mass)
+        likelihood_args["roq_folder"] = f"/home/cbc/ROQ_data/IMRPhenomPv2/{duration}s"
+        if chirp_mass < 0.9:
             roq_scale_factor = 2
+        elif chirp_mass < 1.43:
+            roq_scale_factor = 1.6
 
         roq_params_file = os.path.join(likelihood_args["roq_folder"], "params.dat")
         if os.path.exists(roq_params_file):
@@ -692,12 +684,9 @@ def _get_cbc_likelihood_args_from_json(filename, trigger_values):
                 trigger_dependent_settings["likelihood_parameter_bounds"][selected_idx]
             )
 
-    minimum_frequency = likelihood_args["minimum_frequency"]
-    likelihood_args.pop("minimum_frequency")
-    maximum_frequency = likelihood_args["maximum_frequency"]
-    likelihood_args.pop("maximum_frequency")
-    duration = likelihood_args["duration"]
-    likelihood_args.pop("duration")
+    minimum_frequency = likelihood_args.pop("minimum_frequency")
+    maximum_frequency = likelihood_args.pop("maximum_frequency")
+    duration = likelihood_args.pop("duration")
 
     return (
         likelihood_args,
@@ -706,6 +695,24 @@ def _get_cbc_likelihood_args_from_json(filename, trigger_values):
         maximum_frequency,
         duration,
     )
+
+
+def _get_default_likelihood_args(trigger_values):
+    logger.info("Using default likelihood settings, these may not be optimal.")
+    bounds = dict(
+        chirp_mass_min=trigger_values["chirp_mass"] / 2,
+        chirp_mass_max=trigger_values["chirp_mass"] * 2,
+        spin_template="precessing",
+        a_1_max=0.99,
+        a_2_max=0.99,
+        mass_ratio_min=0.125,
+    )
+
+    duration = _get_default_duration(trigger_values["chirp_mass"])
+    minimum_frequency = 20
+    maximum_frequency = 1024
+
+    return dict(), bounds, minimum_frequency, maximum_frequency, duration
 
 
 def create_config_file(
@@ -920,6 +927,32 @@ def create_config_file(
     return filename
 
 
+def _get_default_duration(chirp_mass):
+    """Return default duration based on chirp mass
+
+    Parameters
+    ----------
+    chirp_mass: float
+
+    Returns
+    -------
+    duration: float
+    """
+    if chirp_mass > 13.53:
+        duration = 4
+    elif chirp_mass > 8.73:
+        duration = 8
+    elif chirp_mass > 5.66:
+        duration = 16
+    elif chirp_mass > 3.68:
+        duration = 32
+    elif chirp_mass > 2.39:
+        duration = 64
+    else:
+        duration = 128
+    return duration
+
+
 def _get_distance_lookup(chirp_mass, phase_marginalization=True):
     """Return appropriate distance bounds and lookup table
 
@@ -933,23 +966,12 @@ def _get_distance_lookup(chirp_mass, phase_marginalization=True):
     distance_bounds: tuple
     lookup_table: str
     """
-    if chirp_mass > 13.53:
-        _duration = 4
-    elif chirp_mass > 8.73:
-        _duration = 8
-    elif chirp_mass > 5.66:
-        _duration = 16
-    elif chirp_mass > 3.68:
-        _duration = 32
-    elif chirp_mass > 2.39:
-        _duration = 64
-    else:
-        _duration = 128
-    distance_bounds = DEFAULT_DISTANCE_LOOKUPS[str(_duration) + "s"]
+    duration = _get_default_duration(chirp_mass)
+    distance_bounds = DEFAULT_DISTANCE_LOOKUPS[f"{duration}s"]
     if phase_marginalization:
-        filename = f"{_duration}s_distance_marginalization_lookup_phase.npz"
+        filename = f"{duration}s_distance_marginalization_lookup_phase.npz"
     else:
-        filename = f"{_duration}s_distance_marginalization_lookup.npz"
+        filename = f"{duration}s_distance_marginalization_lookup.npz"
     lookup_table = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
         "data_files",
