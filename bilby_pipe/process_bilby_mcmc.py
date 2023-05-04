@@ -17,9 +17,11 @@ import datetime
 import glob
 import logging
 import os
+import re
 import sys
 
 import dill
+import matplotlib.colors as mcolors
 import numpy as np
 
 import bilby
@@ -55,10 +57,11 @@ class RobustUnpickler(dill.Unpickler):
 
 def glob_and_filter_files(args, globpath):
     files = glob.glob(globpath)
+    files = sorted(files)
     if args.filter_match is not None:
-        files = [f for f in files if args.filter_match in f]
+        files = [f for f in files if re.search(args.filter_match, f) is not None]
     if args.filter_antimatch is not None:
-        files = [f for f in files if args.filter_antimatch not in f]
+        files = [f for f in files if re.search(args.filter_antimatch, f) is None]
     return files
 
 
@@ -120,7 +123,11 @@ def get_output_fname(
         now = datetime.datetime.now().strftime("%y%m%d-%H%M")
         fname = f"{outdir_result}/{base_label}_PRELIM_result{now}.{extension}"
     elif naming_method == "final":
-        fname = f"{outdir_result}/{base_label}_merge_result.{extension}"
+        if len(resume_files) > 1:
+            fname = f"{outdir_result}/{base_label}_merge_result.{extension}"
+        else:
+            # If a single file, name it appropriately
+            fname = f"{outdir_result}/{file_labels[0]}_result.{extension}"
     else:
         fname = f"{outdir_result}/{base_label}_PRELIM_resultA.{extension}"
         index = "resultA"
@@ -166,6 +173,12 @@ def get_args():
             " the configuration file"
         ),
     )
+    parser.add_argument(
+        "-o",
+        "--output-directory",
+        type=str,
+        help="Directory to write outputs, if not given `directory` is used.",
+    )
     parser.add_argument("--npool", type=int, default=1, help="Multiprocess using npool")
     parser.add_argument(
         "--thin-by-nact",
@@ -177,7 +190,9 @@ def get_args():
         "--plot", action="store_true", help="Create plots for each individual sampler."
     )
     parser.add_argument(
-        "--diagnostic", action="store_true", help="Create diagnostic plots."
+        "--convergence-check",
+        action="store_true",
+        help="Create convergence check plots.",
     )
     parser.add_argument(
         "--pt-rejection-sample",
@@ -201,7 +216,7 @@ def get_args():
         default=None,
         help=(
             "Filter globbed files against this: anything not containing "
-            "filter-match is discarded."
+            "filter-match is discarded. Can use regex for matching."
         ),
     )
     parser.add_argument(
@@ -210,8 +225,19 @@ def get_args():
         default=None,
         help=(
             "Filter globbed files against this: anything containing "
-            "filter-antimatch is discarded."
+            "filter-antimatch is discarded. Can use regex for matching."
         ),
+    )
+    parser.add_argument(
+        "--no-conversion-function",
+        action="store_true",
+        help=("If given, ignore the conversion_function"),
+    )
+    parser.add_argument(
+        "--minimum-independent-samples",
+        default=50,
+        type=int,
+        help=("The minimum number of independent samples per chain."),
     )
 
     return parser.parse_args()
@@ -222,16 +248,18 @@ def process_sampler(ptsampler, analysis, outdir, args):
     likelihood, search_priors = analysis.get_likelihood_and_priors()
     priors = analysis.priors
 
+    search_priors.convert_floats_to_delta_functions()
+
     ind_label = ptsampler.label
 
     result_kwargs = dict(
         label=ind_label,
         outdir=outdir,
         sampler=analysis.sampler,
-        search_parameter_keys=priors.non_fixed_keys,
-        fixed_parameter_keys=priors.fixed_keys,
-        constraint_parameter_keys=priors.constraint_keys,
-        priors=priors,
+        search_parameter_keys=search_priors.non_fixed_keys,
+        fixed_parameter_keys=search_priors.fixed_keys,
+        constraint_parameter_keys=search_priors.constraint_keys,
+        priors=search_priors,
         meta_data=analysis.meta_data,
         injection_parameters=analysis.meta_data["injection_parameters"],
         sampler_kwargs=analysis.sampler_kwargs,
@@ -242,8 +270,6 @@ def process_sampler(ptsampler, analysis, outdir, args):
         result = bilby.gw.result.CompactBinaryCoalescenceResult(**result_kwargs)
     else:
         result = analysis.result_class(**result_kwargs)
-
-    ptsampler = update_convergence_inputs(args, ptsampler)
 
     result = Bilby_MCMC.add_data_to_result(
         result=result,
@@ -257,8 +283,6 @@ def process_sampler(ptsampler, analysis, outdir, args):
     prior_class = analysis.priors.__class__
     search_priors_copy = copy.deepcopy(prior_class(search_priors))
     likelihood_copy = copy.deepcopy(likelihood)
-    if likelihood.jitter_time:
-        result.search_parameter_keys.append("time_jitter")
 
     # Convert sampling time into seconds
     result.sampling_time = result.sampling_time.total_seconds()
@@ -271,26 +295,34 @@ def process_sampler(ptsampler, analysis, outdir, args):
         result.log_noise_evidence = likelihood.noise_log_likelihood()
         result.log_bayes_factor = result.log_evidence - result.log_noise_evidence
 
-    conversion_function = analysis.parameter_generation
+    if args.no_conversion_function:
+        conversion_function = None
+    else:
+        conversion_function = analysis.parameter_generation
+
     if None not in [result.injection_parameters, conversion_function]:
         result.injection_parameters = conversion_function(result.injection_parameters)
 
     result.samples_to_posterior(
         likelihood=likelihood_copy,
         priors=search_priors_copy,
-        conversion_function=analysis.parameter_generation,
+        conversion_function=conversion_function,
         npool=args.npool,
     )
+
+    # Overwrite the priors: search_priors_copy is updated in place
+    result.priors = search_priors_copy
     result.meta_data["likelihood"] = likelihood_copy.meta_data
     result.meta_data["loaded_modules"] = loaded_modules_dict()
-
-    result.posterior["log_likelihood"] = ptsampler.samples["logl"]
-    result.posterior = result.posterior.drop(columns=["waveform_approximant"])
-    result.posterior = result.posterior.astype(np.float64)
+    result.posterior["log_likelihood"] = result.log_likelihood_evaluations
 
     if args.plot:
         Bilby_MCMC.plot_progress(
-            ptsampler, result.label, outdir, priors, diagnostic=args.diagnostic
+            ptsampler,
+            result.label,
+            outdir,
+            priors,
+            diagnostic=True,
         )
 
     return result
@@ -318,29 +350,199 @@ def main():
 
     resume_files = get_resume_file_paths(args, label)
 
-    fname = get_output_fname(
-        outdir_result,
-        resume_files,
-        args.naming_method,
-        extension=analysis.result_format,
-    )
-
     results = []
+    chain_data = {}
+    min_ind_samples = args.minimum_independent_samples
     for ii, resume_file in enumerate(resume_files):
-        print(f"Processing sampler {ii+1}/{len(resume_files)}")
+        print(f"Processing sampler {ii+1}/{len(resume_files)}: {resume_file}")
         with open(resume_file, "rb") as f:
             ptsampler = RobustUnpickler(f).load()
 
+        if ptsampler == {}:
+            print(f"Resume file {resume_file} is empty: ignoring")
+            continue
+        elif len(ptsampler.samples) == 0:
+            print(f"Resume file {resume_file} contains no samples: ignoring")
+            continue
+        elif (
+            ptsampler.nsamples * ptsampler.convergence_inputs.thin_by_nact
+            < min_ind_samples
+        ):
+            print(
+                f"Resume file {resume_file} contains less than {min_ind_samples}"
+                " independent samples: this chain will not be included."
+            )
+            continue
+
         # Add the individual label
         ptsampler.label = extract_label_from_filename(resume_file)
-
-        if len(ptsampler.samples) == 0:
-            print(f"Resume file {resume_file} contains no usable samples")
-            break
+        ptsampler = update_convergence_inputs(args, ptsampler)
 
         result = process_sampler(ptsampler, analysis, outdir_result, args)
         results.append(result)
 
-    combined_result = bilby.core.result.ResultList(results).combine()
-    combined_result.save_to_file(fname, extension=analysis.result_format)
-    print(f"Saving results with {len(combined_result.posterior)} samples to {fname}")
+        # Add to the convergence plot
+        chain_data[ii] = extract_chain_data(ptsampler)
+
+    if args.output_directory is not None:
+        outdir = args.output_directory
+    else:
+        outdir = outdir_result
+
+    result_fname = get_output_fname(
+        outdir,
+        resume_files,
+        args.naming_method,
+        extension=analysis.result_format,
+    )
+    if len(results) > 0:
+        combined_result = bilby.core.result.ResultList(results).combine()
+        combined_result.save_to_file(result_fname, extension=analysis.result_format)
+        print(
+            f"Saving results with {len(combined_result.posterior)} samples to {result_fname}"
+        )
+    else:
+        print("No samples yet available")
+
+    if args.convergence_check:
+        create_convergence_plot(chain_data, result_fname)
+
+
+def extract_chain_data(ptsampler):
+    keys = ptsampler.sampler_dictionary[1][0].parameters
+    keys = [key for key in keys if "recalib" not in key]
+
+    if len(ptsampler.sampler_dictionary[1]) > 1:
+        raise ValueError("This method is not implemented for ensemble sampling")
+    else:
+        sampler = ptsampler.sampler_dictionary[1][0]
+
+    nburn = sampler.chain.minimum_index
+    end = sampler.chain.position
+    thin = max([1, int(sampler.chain.thin_by_nact * sampler.chain.tau_last)])
+    nsamples = sampler.nsamples
+    n_independent_samples = int(nsamples * sampler.chain.thin_by_nact)
+
+    data = {}
+    data["iterations"] = np.arange(nburn, end)
+    data["keys"] = keys
+    for key in keys:
+        data[key] = sampler.chain.get_1d_array(key)[nburn:end:thin]
+    data["label"] = ptsampler.label.split("_")[-1]
+    data[
+        "label"
+    ] += f": tau={sampler.chain.tau_last} | N_samp={nsamples} | N_ind_samp={n_independent_samples}"
+    return data
+
+
+def create_convergence_plot(chain_data, result_fname):
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+
+    keys = chain_data[0]["keys"]
+    ndim = len(keys)
+
+    # Calculate Gelman Rubin statistics
+    mchains = len(chain_data)
+    lengths = [len(chain_data[i][chain_data[i]["keys"][0]]) for i in range(mchains)]
+    nlength = min(lengths)
+    if mchains > 1:
+        PSRF_dict = {}
+        for key in keys:
+            arr = np.zeros((mchains, nlength))
+            for ii, data in chain_data.items():
+                arr[ii] = data[key][:nlength]
+            theta_hat = np.mean(arr)
+            theta_hat_m = np.mean(arr, axis=1)
+            sigma2_hat_m = np.var(arr, axis=1)
+            B = nlength / (mchains - 1) * np.sum((theta_hat_m - theta_hat) ** 2)
+            W = 1 / (mchains) * np.sum(sigma2_hat_m)
+            Vhat = (nlength - 1) * W / nlength + (mchains + 1) / (nlength * mchains) * B
+            PSRF = Vhat / W
+            PSRF_dict[key] = f"{PSRF:.2f}"
+    else:
+        PSRF_dict = {key: "N/A" for key in keys}
+
+    subplot_titles = []
+    for key in keys:
+        subplot_titles.append(f"PSRF={PSRF_dict[key]}")
+        subplot_titles.append("")
+
+    fig = make_subplots(
+        rows=ndim, cols=2, shared_xaxes=False, subplot_titles=subplot_titles
+    )
+
+    # Set axes titles and link axes
+    for ii, key in enumerate(keys):
+        left = 2 * ii + 1
+        right = 2 * ii + 2
+        fig["layout"][f"xaxis{left}"]["title"] = "Sample index"
+        fig["layout"][f"yaxis{left}"]["title"] = key
+        fig["layout"][f"xaxis{right}"]["title"] = key
+        fig["layout"][f"yaxis{right}"]["title"] = "%"
+
+        fig.update_xaxes(row=(ii + 1), col=1, matches=f"x{2 * ii + 3}")
+        fig.update_xaxes(row=(ii + 1), col=2, matches=f"y{2 * ii + 1}")
+
+    # Set of standard colours
+    colors = list(mcolors.TABLEAU_COLORS.values()) + list(mcolors.XKCD_COLORS.values())
+
+    # Iterate over chain data and plot
+    for ii, data in chain_data.items():
+        label = data["label"]
+        for jj, key in enumerate(keys):
+            xx = data["iterations"]
+            yy = data[key]
+
+            if jj == 0:
+                showlegend = True
+            else:
+                showlegend = False
+
+            fig.add_trace(
+                go.Scattergl(
+                    x=xx,
+                    y=yy,
+                    name=label,
+                    line=dict(color=colors[ii], width=0.8),
+                    showlegend=showlegend,
+                    hovertemplate=" ",
+                    text=label,
+                ),
+                row=(jj + 1),
+                col=1,
+            )
+
+            fig.add_trace(
+                go.Histogram(
+                    x=yy,
+                    name=label,
+                    nbinsx=50,
+                    opacity=0.5,
+                    showlegend=False,
+                    histnorm="percent",
+                    hovertemplate=" ",
+                    marker=dict(
+                        color=colors[ii],
+                    ),
+                ),
+                row=(jj + 1),
+                col=2,
+            )
+
+    fig.update_layout(
+        autosize=False,
+        width=1200,
+        height=4000,
+        barmode="overlay",
+        margin=dict(l=10, r=10, b=10, t=10, pad=1),
+    )
+    fname_split = result_fname.split(".")
+    fname_split[-1] = "html"
+    fname = ".".join(fname_split)
+    print(f"Saving convergence plot to {fname}")
+    fig.write_html(fname)
+
+
+if __name__ == "__main__":
+    main()

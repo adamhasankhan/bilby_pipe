@@ -64,6 +64,7 @@ setup(
         "seaborn",
         "jinja2",
         "astropy",
+        "plotly",
         "python-ligo-lw>=1.8.0",
     ],
     python_requires=f">={minimum_py_major}.{minimum_py_minor}",
