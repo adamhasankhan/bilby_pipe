@@ -342,9 +342,7 @@ def _get_cbc_likelihood_args(mode, trigger_values):
         inverse of frequency interval of likelihood integration
     """
     if mode in ["phenompv2_bbh_roq"]:
-        return _choose_phenompv2_bbh_roq(
-            trigger_values["chirp_mass"], ignore_no_params=(mode == "test")
-        )
+        return _choose_phenompv2_bbh_roq(trigger_values["chirp_mass"])
     elif mode in [
         "lowspin_phenomd_narrowmc_roq",
         "lowspin_phenomd_broadmc_roq",
