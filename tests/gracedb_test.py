@@ -475,16 +475,15 @@ class TestLikelihoodSettings(unittest.TestCase):
             [x[k] for k in keys_x], [y[k] for k in keys_x]
         )
 
-    @parameterized.expand([(50,), (20,), (10,), (7,), (5,), (3,), (2,), (1.2,), (0.7,)])
+    @parameterized.expand([50, 20, 10, 7, 5, 3, 2, 1.2, 0.7])
     def test_phenompv2_bbh_roq(self, chirp_mass):
-        trigger_values = {"chirp_mass": chirp_mass}
         (
             likelihood_args,
             likelihood_parameter_bounds,
             minimum_frequency,
             maximum_frequency,
             duration,
-        ) = gracedb._get_cbc_likelihood_args("phenompv2_bbh_roq", trigger_values)
+        ) = gracedb._choose_phenompv2_bbh_roq(chirp_mass, ignore_no_params=True)
 
         self.assertEqual(likelihood_args["waveform_approximant"], "IMRPhenomPv2")
 
