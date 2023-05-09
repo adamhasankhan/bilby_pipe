@@ -597,6 +597,72 @@ class TestLikelihoodSettings(unittest.TestCase):
         self.assertEqual(maximum_frequency, maximum_frequency_answer)
         self.assertEqual(duration, duration_answer)
 
+    @parameterized.expand([15, 7, 4.5, 3, 2])
+    def test_low_q_phenompv2_roq(self, chirp_mass):
+        (
+            likelihood_args,
+            likelihood_parameter_bounds,
+            minimum_frequency,
+            maximum_frequency,
+            duration,
+        ) = gracedb._get_cbc_likelihood_args(
+            "low_q_phenompv2_roq", {"chirp_mass": chirp_mass}
+        )
+
+        self.assertEqual(likelihood_args["waveform_approximant"], "IMRPhenomPv2")
+
+        if 21.0 > chirp_mass > 9.57:
+            duration_ans = 8
+        elif chirp_mass > 5.72:
+            duration_ans = 16
+        elif chirp_mass > 3.63:
+            duration_ans = 32
+        elif chirp_mass > 2.31:
+            duration_ans = 64
+        elif chirp_mass > 1.4:
+            duration_ans = 128
+        self.assertEqual(duration, duration_ans)
+        self.assertEqual(
+            os.path.basename(likelihood_args["roq_linear_matrix"]),
+            f"basis_{duration_ans}s.hdf5",
+        )
+        self.assertEqual(
+            os.path.basename(likelihood_args["roq_quadratic_matrix"]),
+            f"basis_{duration_ans}s.hdf5",
+        )
+
+    @parameterized.expand([100, 35, 20, 13])
+    def test_xphm_roq(self, chirp_mass):
+        (
+            likelihood_args,
+            likelihood_parameter_bounds,
+            minimum_frequency,
+            maximum_frequency,
+            duration,
+        ) = gracedb._get_cbc_likelihood_args(
+            "phenomxphm_roq", {"chirp_mass": chirp_mass}
+        )
+
+        self.assertEqual(likelihood_args["waveform_approximant"], "IMRPhenomXPHM")
+
+        if 200.0 > chirp_mass > 45:
+            duration_ans = 4
+        elif chirp_mass > 25:
+            duration_ans = 8
+        elif chirp_mass > 16:
+            duration_ans = 16
+        elif chirp_mass > 10.03:
+            duration_ans = 32
+        self.assertEqual(duration, duration_ans)
+        self.assertEqual(
+            os.path.basename(likelihood_args["roq_linear_matrix"]),
+            f"basis_{duration_ans}s.hdf5",
+        )
+        self.assertEqual(
+            os.path.basename(likelihood_args["roq_quadratic_matrix"]),
+            f"basis_{duration_ans}s.hdf5",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
