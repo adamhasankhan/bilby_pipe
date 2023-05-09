@@ -1184,7 +1184,7 @@ class Input(object):
             if "multiband" in self.likelihood_type.lower():
                 likelihood_kwargs.update(self.multiband_likelihood_kwargs)
         else:
-            raise ValueError("Unknown Likelihood class {}")
+            raise ValueError(f"Unknown Likelihood class {self.likelihood_type}")
 
         likelihood_kwargs = {
             key: likelihood_kwargs[key]
