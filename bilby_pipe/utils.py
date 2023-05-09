@@ -230,10 +230,10 @@ SAMPLER_SETTINGS = {
         "sample": "acceptance-walk",
     },
     "BilbyMCMCDefault": {
-        "nsamples": 1000,
-        "thin_by_nact": 0.2,
+        "nsamples": 5000,
+        "thin_by_nact": 0.1,
         "ntemps": 8,
-        "Tmax_from_SNR": 20,
+        "Tmax_from_SNR": 15,
         "adapt": True,
         "proposal_cycle": "gwA",
         "L1steps": 100,
