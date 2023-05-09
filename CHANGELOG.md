@@ -1,5 +1,22 @@
 # All notable changes will be documented in this file
 
+## v1.1.0 2023-28-04
+See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.1.0)
+
+### Added
+- Adding a reweighting executable (!536)
+- Add command line flags to the bash script (!538)
+- Default sampler settings for O4 (!539)
+
+### Changed
+- Bug fix to multiprocessing start method (!551)
+- Improvements to gracedb exe (!550, !547, !548, !546)
+- Set default sampler settings for O4 (!539)
+- Bug fixes for nested sampling reweighting (!540)
+- Fix edge case of naming (!537)
+- Improve the bilby-mcmc processing tool (!541)
+- Add generation node retries (!542)
+
 ## v1.0.10 2023-13-04
 See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.0.10)
 
