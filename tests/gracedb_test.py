@@ -527,6 +527,7 @@ class TestLikelihoodSettings(unittest.TestCase):
         ) = gracedb._get_cbc_likelihood_args(mode, trigger_values)
 
         args_answer = {
+            "enforce_signal_duration": False,
             "likelihood_type": "ROQGravitationalWaveTransient",
             "roq_scale_factor": 1,
         }

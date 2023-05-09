@@ -491,8 +491,6 @@ def _choose_bns_roq(chirp_mass, mode):
     # from psi. That is why decreasing its maximum to pi / 2 does not change
     # the inference results at all.
     likelihood_parameter_bounds = {"mass_ratio_min": 0.125, "psi_max": np.pi / 2}
-    # 2.31, 1.54, and 1.012 are 1.1 times the minimum chirp mass values of 64s,
-    # 128s, and 256s bases respectively.
     if mode == "lowspin_phenomd_narrowmc_roq":
         waveform_approximant = "IMRPhenomD"
         roq_dir = "/home/roq/IMRPhenomD/lowspin_narrowmc_bns"
@@ -533,7 +531,8 @@ def _choose_bns_roq(chirp_mass, mode):
         likelihood_parameter_bounds["lambda_2_max"] = 5000
 
     logger.info(f"Searching for a basis file in {roq_dir} ...")
-    if 4.0 > chirp_mass > 2.31:
+    # The chirp mass boundaries are chosen so that this passes priors.validate_prior.
+    if 4.0 > chirp_mass > 2.35:
         basis = os.path.join(roq_dir, "basis_64s.hdf5")
         likelihood_parameter_bounds["chirp_mass_min"] = 2.1
         likelihood_parameter_bounds["chirp_mass_max"] = 4.0
@@ -551,7 +550,7 @@ def _choose_bns_roq(chirp_mass, mode):
         likelihood_parameter_bounds["chirp_mass_max"] = 1.7
         maximum_frequency = 4096
         duration = 256
-    elif chirp_mass > 0.6:
+    elif chirp_mass > 0.66:
         basis = os.path.join(roq_dir, "basis_512s.hdf5")
         likelihood_parameter_bounds["chirp_mass_min"] = 0.6
         likelihood_parameter_bounds["chirp_mass_max"] = 1.1
@@ -573,6 +572,7 @@ def _choose_bns_roq(chirp_mass, mode):
             "roq_quadratic_matrix": basis,
             "roq_scale_factor": 1,
             "waveform_approximant": waveform_approximant,
+            "enforce_signal_duration": False,
         },
         likelihood_parameter_bounds,
         20,
