@@ -69,6 +69,8 @@ class AnalysisNode(Node):
         env_vars = []
         if self.request_cpus > 1:
             env_vars.append("OMP_NUM_THREADS=1")
+            # see https://git.ligo.org/computing/helpdesk/-/issues/3837#note_707110
+            env_vars.append("KMP_AFFINITY='reset'")
         if self.disable_hdf5_locking:
             env_vars.append("USE_HDF5_FILE_LOCKING=FALSE")
         if env_vars:
