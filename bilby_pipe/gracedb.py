@@ -7,8 +7,10 @@ import argparse
 import json
 import os
 import shutil
+import time
 
 import numpy as np
+from gwpy.timeseries import TimeSeries, TimeSeriesList
 
 from . import parser
 from .utils import (
@@ -865,7 +867,122 @@ def _get_default_likelihood_args(trigger_values):
     return dict(), bounds, minimum_frequency, maximum_frequency, duration
 
 
-def create_config_file(
+def attempt_gwpy_get(channel, start_time, end_time, n_attempts=5):
+    for _ in range(n_attempts):
+        try:
+            data = TimeSeries.get(channel=channel, start=start_time, end=end_time)
+            return data
+        except RuntimeError:
+            time.sleep(45)
+    return False
+
+
+def copy_and_save_data(
+    ifos,
+    start_time,
+    end_time,
+    channel_dict,
+    outdir,
+    gracedbid,
+    query_kafka=True,
+    n_attempts=5,
+    replay=False,
+):
+    """Attempt to read the strain data from internal servers and save frame files to the run directory.
+    If `query_kafka` is True, then attempt to fetch the data from `/dev/shm/kafka/` (preferred method
+    for low-latency/online analyses). If `query_kafka` is False or the data cannot be found in
+    `/dev/shm/kafka/`, this function will attempt to get the data from TimeSeries.get(), called in a loop
+    to allow for multiple attempts.
+
+    If data cannot be found for all the ifos, returns None, and data reading will be attempted by the bilby_pipe
+    data_generation stage.
+
+    Parameters
+    ----------
+    ifos: list
+        List of ifos for this trigger
+    start_time: float
+        Safe start time for data segment
+    end_time: float
+        Safe end time for data segment
+    channel_dict: dict
+        Dictionary of channel names
+    outdir: str
+        Directory to save frame files
+    gracedbid: str
+        GraceDB id of event
+    query_kafka: bool
+        Whether to attempt to copy frame files from `/dev/shm/kafka/`
+    n_attempts: int
+        Number of attempts to call TimeSeries.get() before failing to obtain data
+    replay: bool
+        Whether to try to fetch O3ReplayMDC data from the kafka directory. Only
+        relevant if query_kafka = True.
+
+    Returns
+    -------
+    data_dict: dict
+        Dictionary with {ifo: path_to_copied_frame_file}.
+        None, if data were not able to be obtained for all ifos.
+    """
+    ifo_data = dict()
+    for ifo in ifos:
+        channel = f"{ifo}:{channel_dict[ifo]}"
+        if query_kafka:
+            try:
+                logger.info(f"Querying kafka directory for {ifo} data")
+                data = read_and_concat_data_from_kafka(
+                    ifo, int(start_time), int(end_time), channel=channel, replay=replay
+                )
+            except FileNotFoundError:
+                logger.info(
+                    f"Failed to obtain {ifo} data from kafka directory. Calling TimeSeries.get"
+                )
+                data = attempt_gwpy_get(
+                    channel=channel,
+                    start_time=start_time,
+                    end_time=end_time,
+                    n_attempts=n_attempts,
+                )
+        else:
+            data = attempt_gwpy_get(
+                channel=channel,
+                start_time=start_time,
+                end_time=end_time,
+                n_attempts=n_attempts,
+            )
+
+        if data is False:
+            logger.info(f"Could not find data for {ifo} with channel name {channel}")
+            break
+        else:
+            ifo_data[ifo] = data
+
+    if all(ifo in ifo_data.keys() for ifo in ifos):
+        data_paths = dict()
+        for ifo in ifo_data.keys():
+            actual_start = ifo_data[ifo].times[0].value
+            actual_duration = ifo_data[ifo].duration.value
+            if int(actual_duration) == actual_duration:
+                actual_duration = int(actual_duration)
+            datapath = os.path.join(
+                outdir,
+                f"{ifo[0]}-{ifo}_{gracedbid}_llhoft-{actual_start}-{actual_duration}.gwf",
+            )
+            ifo_data[ifo].write(datapath)
+            data_paths[ifo] = datapath
+            logger.info(f"Written {ifo} data to {datapath}")
+        data_dict = data_paths
+    else:
+        logger.info(
+            "Not getting data in pre-generation step. Will get data in data generation stage."
+        )
+        data_dict = None
+
+    return data_dict
+
+
+def prepare_run_configurations(
     candidate,
     gracedb,
     outdir,
@@ -876,6 +993,8 @@ def create_config_file(
     cbc_likelihood_mode="phenompv2_bbh_roq",
     settings=None,
     psd_cut=0.95,
+    query_kafka=True,
+    replay=False,
 ):
     """Creates ini file from defaults and candidate contents
 
@@ -905,6 +1024,12 @@ def create_config_file(
         JSON filename containing settings to override the defaults
     psd_cut: float
         Fractional maximum frequency cutoff relative to the maximum frequency of pipeline psd
+    query_kafka: bool
+        Whether to first attempt to query the kafka directory for data before attempting a
+        call to gwpy TimeSeries.get()
+    replay: bool
+        Whether to try to fetch O3ReplayMDC data from the kafka directory. Only
+        relevant if query_kafka = True.
 
     Returns
     -------
@@ -1002,6 +1127,19 @@ def create_config_file(
             f"search_type should be either 'cbc' or 'burst', not {search_type}"
         )
 
+    start_data, end_data = (trigger_time - duration - 2, trigger_time + 4)
+
+    data_dict = copy_and_save_data(
+        ifos=ifos,
+        start_time=start_data,
+        end_time=end_data,
+        channel_dict=channel_dict,
+        outdir=outdir,
+        gracedbid=gracedb,
+        query_kafka=query_kafka,
+        replay=replay,
+    )
+
     config_dict = dict(
         label=gracedb,
         outdir=outdir,
@@ -1034,6 +1172,7 @@ def create_config_file(
         result_format="hdf5",
         reference_frame=reference_frame,
         time_reference=time_reference,
+        data_dict=data_dict,
     )
     if sampler_kwargs == "FastTest":
         config_dict["n_parallel"] = 2
@@ -1075,6 +1214,41 @@ def create_config_file(
     )
 
     return filename
+
+
+def create_config_file(
+    candidate,
+    gracedb,
+    outdir,
+    channel_dict,
+    sampler_kwargs,
+    webdir,
+    search_type="cbc",
+    cbc_likelihood_mode="phenompv2_bbh_roq",
+    settings=None,
+    psd_cut=0.95,
+    query_kafka=True,
+    replay=False,
+):
+    logger.warning(
+        "create_config_file is deprecated and will be removed in a future version."
+        "Calling prepare_run_configurations instead."
+    )
+
+    return prepare_run_configurations(
+        candidate=candidate,
+        gracedb=gracedb,
+        outdir=outdir,
+        channel_dict=channel_dict,
+        sampler_kwargs=sampler_kwargs,
+        webdir=webdir,
+        search_type=search_type,
+        cbc_likelihood_mode=cbc_likelihood_mode,
+        settings=settings,
+        psd_cut=psd_cut,
+        query_kafka=query_kafka,
+        replay=replay,
+    )
 
 
 def _get_default_duration(chirp_mass):
@@ -1275,6 +1449,28 @@ def generate_burst_prior_from_template(
     return prior_file
 
 
+def read_and_concat_data_from_kafka(ifo, start, end, channel, replay=False):
+    """Query the kafka directory for the gwf files with the desired data. Start
+    and end should be set wide enough to include the entire duration.
+    This will read in the individual gwf files and concatenate them into
+    a single gwpy timeseries"""
+    if replay:
+        kafka_directory = f"/dev/shm/kafka/{ifo}_O3ReplayMDC"
+    else:
+        kafka_directory = f"/dev/shm/kafka/{ifo}"
+    times = np.arange(start, end)
+    segments = []
+    for time_sec in times:
+        ht = TimeSeries.read(
+            f"{kafka_directory}/{ifo[0]}-{ifo}_llhoft-{time_sec}-1.gwf", channel=channel
+        )
+        segments.append(ht)
+    segmentlist = TimeSeriesList(*segments)
+    data = segmentlist.join()
+
+    return data
+
+
 def create_parser():
     parser = argparse.ArgumentParser(
         prog="bilby_pipe gracedb access",
@@ -1386,6 +1582,15 @@ def create_parser():
             " This is to avoid likelihood overflow caused by the roll-off of pipeline psd due to low-pass filter."
         ),
     )
+    parser.add_argument(
+        "--query-kafka",
+        type=bool,
+        default=True,
+        help=(
+            "when fetching the data for analysis, check first it is in kafka, and if not, then try to query ifocache."
+            "If False, query ifocache (via gwpy TimeSeries.get() ) by default."
+        ),
+    )
     return parser
 
 
@@ -1431,11 +1636,16 @@ def main(args=None, unknown_args=None):
     sampler_kwargs = args.sampler_kwargs
     channel_dict = CHANNEL_DICTS[args.channel_dict.lower()]
 
+    if args.channel_dict.lower() == "o3replay":
+        replay = True
+    else:
+        replay = False
+
     search_type = candidate["group"].lower()
     if search_type not in ["cbc", "burst"]:
         raise BilbyPipeError(f"Candidate group {candidate['group']} not recognised.")
 
-    filename = create_config_file(
+    filename = prepare_run_configurations(
         candidate=candidate,
         gracedb=gracedb,
         outdir=outdir,
@@ -1446,6 +1656,8 @@ def main(args=None, unknown_args=None):
         search_type=search_type,
         cbc_likelihood_mode=args.cbc_likelihood_mode,
         settings=args.settings,
+        query_kafka=args.query_kafka,
+        replay=replay,
     )
 
     if args.output == "ini":
