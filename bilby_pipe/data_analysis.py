@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 """ Script to perform data analysis """
-import multiprocessing
 import os
 import signal
 import sys
@@ -374,7 +373,6 @@ def create_analysis_parser():
 
 def main():
     """Data analysis main logic"""
-    multiprocessing.set_start_method("forkserver")
     args, unknown_args = parse_args(sys.argv[1:], create_analysis_parser())
     log_version_information()
     analysis = DataAnalysisInput(args, unknown_args)
@@ -385,7 +383,6 @@ def main():
 
 
 def reweight():
-    multiprocessing.set_start_method("forkserver")
     parser = create_analysis_parser()
     parser.add_argument("--result-file", type=str, default=None)
     args, unknown_args = parse_args(sys.argv[1:], parser)
