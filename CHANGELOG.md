@@ -1,5 +1,15 @@
 # All notable changes will be documented in this file
 
+## v1.1.1 2023-25-05
+See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.1.1)
+
+### Added
+- Read low-latency frame files when possible/requested for `bilby_pipe_gracedb` (!554)
+
+### Changed
+- Revert the previous switch to use `forkserver` start method (!555)
+- Set `KMP_AFFINITY='reset'` environment variable to fix parallelisation issue (!553)
+
 ## v1.1.0 2023-28-04
 See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.1.0)
 
