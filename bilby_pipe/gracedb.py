@@ -1455,14 +1455,16 @@ def read_and_concat_data_from_kafka(ifo, start, end, channel, replay=False):
     This will read in the individual gwf files and concatenate them into
     a single gwpy timeseries"""
     if replay:
-        kafka_directory = f"/dev/shm/kafka/{ifo}_O3ReplayMDC"
+        ifo_str = "{ifo}_O3ReplayMDC"
     else:
-        kafka_directory = f"/dev/shm/kafka/{ifo}"
+        ifo_str = ifo
+    kafka_directory = "/dev/shm/kafka"
     times = np.arange(start, end)
     segments = []
     for time_sec in times:
         ht = TimeSeries.read(
-            f"{kafka_directory}/{ifo[0]}-{ifo}_llhoft-{time_sec}-1.gwf", channel=channel
+            f"{kafka_directory}/{ifo_str}/{ifo[0]}-{ifo_str}_llhoft-{time_sec}-1.gwf",
+            channel=channel,
         )
         segments.append(ht)
     segmentlist = TimeSeriesList(*segments)
