@@ -177,11 +177,11 @@ nonefloat = NoneWrapper(float)
 
 DEFAULT_DISTANCE_LOOKUPS = {
     "high_mass": (1e2, 5e3),
-    "4s": (1e2, 1e4),
-    "8s": (1e2, 5e3),
-    "16s": (1e2, 4e3),
-    "32s": (1e2, 3e3),
-    "64s": (50, 2e3),
+    "4s": (1e1, 1e4),
+    "8s": (1e1, 5e3),
+    "16s": (1e1, 4e3),
+    "32s": (1e1, 3e3),
+    "64s": (5, 2e3),
     "128s": (1, 5e2),
     "128s_tidal": (1, 5e2),
     "128s_tidal_lowspin": (1, 5e2),
