@@ -724,7 +724,6 @@ def _choose_xphm_roq(chirp_mass):
             "roq_scale_factor": 1,
             "waveform_approximant": "IMRPhenomXPHM",
             "reference_frequency": 20,
-            "waveform_arguments_dict": {"PhenomXHMReleaseVersion": 122019},
             "phase_marginalization": False,
             "enforce_signal_duration": False,
         },
