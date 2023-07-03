@@ -608,7 +608,7 @@ def _choose_low_q_pv2_roq(chirp_mass):
         inverse of frequency interval of likelihood integration
     """
     likelihood_parameter_bounds = {
-        "mass_ratio_min": 0.05,
+        "mass_ratio_min": 0.06,
         "a_1_max": 0.99,
         "a_2_max": 0.99,
         "spin_template": "precessing",
