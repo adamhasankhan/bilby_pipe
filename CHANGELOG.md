@@ -1,5 +1,14 @@
 # All notable changes will be documented in this file
 
+## v1.1.2 2023-25-05
+See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.1.2)
+
+### Changed
+- Fix a typo in the online MDC frame finding (!557)
+- Update distance prior minima to avoid railing seen in online PE (!560)
+- Unpin the XHM version used for online PE (!561)
+- Raise the minimum mass ratio bound for the Pv2 prior for online PE (!562)
+
 ## v1.1.1 2023-25-05
 See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.1.1)
 
