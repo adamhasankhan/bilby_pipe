@@ -1254,30 +1254,37 @@ class Input(object):
 
     @property
     def roq_likelihood_kwargs(self):
+        kwargs = dict(roq_scale_factor=self.roq_scale_factor)
         if hasattr(self, "likelihood_roq_params"):
-            params = self.likelihood_roq_params
+            kwargs["roq_params"] = self.likelihood_roq_params
         elif self.roq_folder is not None:
-            params = np.genfromtxt(self.roq_folder + "/params.dat", names=True)
-        else:
-            params = None
+            kwargs["roq_params"] = np.genfromtxt(
+                f"{self.roq_folder}/params.dat", names=True
+            )
 
         if hasattr(self, "likelihood_roq_weights"):
-            weights = self.likelihood_roq_weights
+            kwargs["weights"] = self.likelihood_roq_weights
+        elif "weight_file" in self.meta_data:
+            kwargs["weights"] = self.meta_data["weight_file"]
+            logger.debug(f"Loading ROQ weights from {kwargs['weights']}")
+        elif self.roq_folder is not None:
+            kwargs["linear_matrix"] = np.load(f"{self.roq_folder}/B_linear.npy").T
+            kwargs["quadratic_matrix"] = np.load(f"{self.roq_folder}/B_quadratic.npy").T
         else:
-            weights = self.meta_data["weight_file"]
-            logger.debug(f"Loading ROQ weights from {weights}")
-
-        return dict(
-            weights=weights, roq_params=params, roq_scale_factor=self.roq_scale_factor
-        )
+            kwargs["linear_matrix"] = self.roq_linear_matrix
+            kwargs["quadratic_matrix"] = self.roq_quadratic_matrix
+        return kwargs
 
     @property
     def multiband_likelihood_kwargs(self):
         if hasattr(self, "likelihood_multiband_weights"):
             weights = self.likelihood_multiband_weights
-        else:
+        elif "weight_file" in self.meta_data:
             weights = self.meta_data["weight_file"]
             logger.info(f"Loading multiband weights from {weights}")
+        else:
+            weights = None
+            logger.info("No multiband weights found, these will be calculated now")
         return dict(weights=weights)
 
     @property

@@ -749,13 +749,11 @@ def create_parser(top_level=True):
     )
     likelihood_parser.add(
         "--roq-weight-format",
-        type=nonestr,
-        default=None,
+        type=str,
+        default="hdf5",
         help=(
             "File format of roq weights. This should be npz, hdf5, or json. "
-            "If not specified, it is set to npz if basis file is specified "
-            "through roq-folder, and hdf5 if through roq-linear-matrix and "
-            "roq-quadratic-matrix"
+            "If not specified, it is set to hdf5."
         ),
     )
     likelihood_parser.add(
