@@ -146,6 +146,7 @@ class DataAnalysisInput(Input):
             sampling_seed = np.random.randint(1, 1e6)
         self._sampling_seed = sampling_seed
         np.random.seed(sampling_seed)
+        bilby.core.utils.random.seed(sampling_seed)
         logger.info(f"Sampling seed set to {sampling_seed}")
 
         if not any(

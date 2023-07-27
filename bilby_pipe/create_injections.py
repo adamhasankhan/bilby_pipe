@@ -17,7 +17,6 @@ import json
 import os
 import sys
 
-import numpy as np
 import pandas as pd
 
 import bilby
@@ -276,7 +275,7 @@ class InjectionCreator(Input):
 
     def generate_injection_file(self, filepath, extension):
         """Sets the generation seed and randomly generates parameters to create inj"""
-        np.random.seed(self.generation_seed)
+        bilby.core.utils.random.seed(self.generation_seed)
         logger.info(
             f"Generating injection file {filepath} from "
             f"prior={self.prior_file}, "
