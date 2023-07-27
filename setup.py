@@ -5,11 +5,11 @@ import sys
 
 from setuptools import setup
 
-# check that python version is 3.8 or above
+# check that python version is 3.9 or above
 python_version = sys.version_info
 print("Running Python version %s.%s.%s" % python_version[:3])
 minimum_py_major = 3
-minimum_py_minor = 8
+minimum_py_minor = 9
 if python_version < (minimum_py_major, minimum_py_minor):
     sys.exit(
         f"Python < {minimum_py_major}.{minimum_py_minor} "
@@ -92,8 +92,8 @@ setup(
         ]
     },
     classifiers=[
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "License :: OSI Approved :: MIT License",
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: POSIX",
