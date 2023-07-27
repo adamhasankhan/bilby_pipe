@@ -277,7 +277,7 @@ class DataGenerationInput(Input):
             assert self.idx is not None
             generation_seed = generation_seed + self.idx
         self._generation_seed = generation_seed
-        np.random.seed(generation_seed)
+        bilby.core.utils.random.seed(generation_seed)
         logger.info(f"Generation seed set to {generation_seed}")
 
     @property
