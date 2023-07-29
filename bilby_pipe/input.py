@@ -427,40 +427,36 @@ class Input(object):
 
     @property
     def bilby_roq_frequency_domain_source_model(self):
-        if "binary_neutron_star" in self.frequency_domain_source_model:
+        if self.frequency_domain_source_model == "lal_binary_neutron_star":
             logger.debug("Using the binary_neutron_star_roq source model")
             return bilby.gw.source.binary_neutron_star_roq
-        elif "binary_black_hole" in self.frequency_domain_source_model:
+        elif self.frequency_domain_source_model == "lal_binary_black_hole":
             logger.debug("Using the binary_black_hole_roq source model")
             return bilby.gw.source.binary_black_hole_roq
         else:
-            raise BilbyPipeError("Unable to determine roq_source from source model")
+            return self.bilby_frequency_domain_source_model
 
     @property
     def bilby_relative_binning_frequency_domain_source_model(self):
-        if "binary_neutron_star" in self.frequency_domain_source_model:
+        if self.frequency_domain_source_model == "lal_binary_neutron_star":
             logger.debug("Using the binary_neutron_star_relative_binning source model")
             return bilby.gw.source.lal_binary_neutron_star_relative_binning
-        elif "binary_black_hole" in self.frequency_domain_source_model:
+        elif self.frequency_domain_source_model == "lal_binary_black_hole":
             logger.debug("Using the binary_black_hole_relative_binning source model")
             return bilby.gw.source.lal_binary_black_hole_relative_binning
         else:
-            raise BilbyPipeError(
-                "Unable to determine relative binning source from source model"
-            )
+            return self.bilby_frequency_domain_source_model
 
     @property
     def bilby_multiband_frequency_domain_source_model(self):
-        if "binary_neutron_star" in self.frequency_domain_source_model:
+        if self.frequency_domain_source_model == "lal_binary_neutron_star":
             logger.info("Using the binary_neutron_star_frequency_sequence source model")
             return bilby.gw.source.binary_neutron_star_frequency_sequence
-        elif "binary_black_hole" in self.frequency_domain_source_model:
+        elif self.frequency_domain_source_model == "lal_binary_black_hole":
             logger.info("Using the binary_black_hole_frequency_sequence source model")
             return bilby.gw.source.binary_black_hole_frequency_sequence
         else:
-            raise BilbyPipeError(
-                "Unable to determine multiband_source from source model"
-            )
+            return self.bilby_frequency_domain_source_model
 
     @property
     def frequency_domain_source_model(self):
