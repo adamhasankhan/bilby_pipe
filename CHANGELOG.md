@@ -1,5 +1,19 @@
 # All notable changes will be documented in this file
 
+## v1.2.0 2023-28-07
+See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.2.0)
+
+This release drops support for Python 3.8.
+
+### Changed
+- Don't create unnecessary ROQ weight file to reduce memory/storage usage (!552)
+- Fix a typo in the online MDC frame finding (!563)
+- Allow custom waveform models to be used with accelerated likelihoods (!564)
+- Use the new random number generation method in `Bilby` 2.1.2 (!565)
+
+### Removed
+- Drop support for Python 3.8 (!566)
+
 ## v1.1.2 2023-25-05
 See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.1.2)
 
