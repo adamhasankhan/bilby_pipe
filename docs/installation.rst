@@ -77,7 +77,8 @@ Python installation
 
       :code:`conda` is a recommended package manager which allows you to manage
       installation and maintenance of various packages in environments. For
-      help getting started, see the `LSCsoft documentation <https://lscsoft.docs.ligo.org/conda/>`_.
+      help getting started, see the `IGWN Conda Distribution documentation
+      <https://computing.docs.ligo.org/conda/>`_.
 
       For detailed help on creating and managing environments see `these help pages
       <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_.
@@ -105,7 +106,7 @@ Python installation
 
       .. code-block:: console
 
-         $ source /cvmfs/oasis.opensciencegrid.org/ligo/sw/conda/etc/profile.d/conda.sh
+         $ source /cvmfs/software.igwn.org/conda/etc/profile.d/conda.sh
          $ conda activate igwn-py39
 
      Documentation for this conda setup can be found here: https://computing.docs.ligo.org/conda/
