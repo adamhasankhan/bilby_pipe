@@ -19,9 +19,6 @@ class FinalResultNode(Node):
         self.arguments.add_flag("lightweight")
         self.arguments.add_flag("save")
 
-        if self.disable_hdf5_locking:
-            self.extra_lines.append('environment = "HDF5_USE_FILE_LOCKING=FALSE"')
-
         self.process_node()
         self.job.add_parent(parent_node.job)
 

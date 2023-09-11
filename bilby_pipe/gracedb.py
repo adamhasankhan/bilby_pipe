@@ -1172,6 +1172,7 @@ def prepare_run_configurations(
         reference_frame=reference_frame,
         time_reference=time_reference,
         data_dict=data_dict,
+        getenv=["GWDATAFIND_SERVER"],
     )
     if sampler_kwargs == "FastTest":
         config_dict["n_parallel"] = 2

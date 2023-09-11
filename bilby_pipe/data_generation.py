@@ -941,7 +941,10 @@ class DataGenerationInput(Input):
             data = gwpy.timeseries.TimeSeries.get(**kwargs).astype(**type_kwargs)
             return data
         except RuntimeError as e:
-            logger.info(f"Unable to read data for channel {channel}")
+            logger.info(
+                f"Unable to read data for channel {channel}. "
+                "You may need to set the GWDATAFIND_SERVER environment variable."
+            )
             logger.debug(f"Error message {e}")
         except ImportError:
             logger.info("Unable to read data as NDS2 is not installed")

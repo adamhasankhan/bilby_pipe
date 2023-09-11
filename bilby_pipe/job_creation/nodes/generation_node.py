@@ -70,8 +70,6 @@ class GenerationNode(Node):
             )
             self.arguments.add("outdir", os.path.relpath(self.inputs.outdir))
 
-        if self.disable_hdf5_locking:
-            self.extra_lines.append('environment = "HDF5_USE_FILE_LOCKING=FALSE"')
         self.extra_lines.extend(self.igwn_scitoken_lines)
 
         self.process_node()
