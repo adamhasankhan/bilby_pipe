@@ -65,6 +65,9 @@ def generate_dag(inputs):
             # Ensures any cached files (e.g. the distance-marginalization
             # lookup table) are only built once.
             kwargs["parent"] = generation_node_list[0]
+            # The start time is automatically set based on the trigger time
+            # and so needs to be reset after each generation node is created
+            del inputs._start_time
         generation_node = GenerationNode(inputs, **kwargs)
         generation_node_list.append(generation_node)
 

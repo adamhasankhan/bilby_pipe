@@ -31,6 +31,7 @@ from .utils import (
     get_time_prior,
     logger,
     pretty_print_dictionary,
+    resolve_filename_with_transfer_fallback,
 )
 
 
@@ -198,8 +199,8 @@ class Input(object):
         if gps_file is None:
             self._gps_file = None
             return
-        elif os.path.isfile(gps_file):
-            self._gps_file = os.path.relpath(gps_file)
+        elif filename := resolve_filename_with_transfer_fallback(gps_file):
+            self._gps_file = filename
         else:
             raise FileNotFoundError(f"Input file gps_file={gps_file} does not exist")
 
@@ -258,8 +259,8 @@ class Input(object):
         if timeslide_file is None:
             self._timeslide_file = None
             return
-        elif os.path.isfile(timeslide_file):
-            self._timeslide_file = os.path.relpath(timeslide_file)
+        elif filename := resolve_filename_with_transfer_fallback(timeslide_file):
+            self._timeslide_file = filename
         else:
             raise FileNotFoundError(
                 f"Input file timeslide_file={timeslide_file} not understood"
@@ -593,9 +594,9 @@ class Input(object):
         if injection_file is None:
             logger.debug("No injection file set")
             self._injection_file = None
-        elif os.path.isfile(injection_file):
-            self._injection_file = os.path.relpath(injection_file)
-            self.injection_df = self.read_injection_file(injection_file)
+        elif filename := resolve_filename_with_transfer_fallback(injection_file):
+            self._injection_file = os.path.relpath(filename)
+            self.injection_df = self.read_injection_file(filename)
             self.total_number_of_injections = len(self.injection_df)
             self.injection = True
         else:
@@ -824,11 +825,8 @@ class Input(object):
     def prior_file(self, prior_file):
         if prior_file is None:
             self._prior_file = None
-        elif os.path.isfile(prior_file):
-            self._prior_file = prior_file
-        elif os.path.isfile(os.path.basename(prior_file)):
-            # Allows for the prior-file to be moved to the local directory (file-transfer mechanism)
-            self._prior_file = os.path.basename(prior_file)
+        elif filename := resolve_filename_with_transfer_fallback(prior_file):
+            self._prior_file = filename
         elif prior_file in self.default_prior_files:
             self._prior_file = self.default_prior_files[prior_file]
             self.distance_marginalization_lookup_table = (
@@ -1049,11 +1047,10 @@ class Input(object):
                     self.spline_calibration_envelope_dict is not None
                     and det in self.spline_calibration_envelope_dict
                 ):
-                    logger.info(
-                        "Creating calibration prior for {} from {}".format(
-                            det, self.spline_calibration_envelope_dict[det]
-                        )
+                    fname = resolve_filename_with_transfer_fallback(
+                        self.spline_calibration_envelope_dict[det]
                     )
+                    logger.info(f"Creating calibration prior for {det} from {fname}")
                     self._calibration_prior.update(
                         bilby.gw.prior.CalibrationPriorDict.from_envelope_file(
                             self.spline_calibration_envelope_dict[det],
@@ -1543,7 +1540,8 @@ class Input(object):
 
         # Check all PSD files exist
         for det, psd_file in self.psd_dict.items():
-            if os.path.exists(psd_file):
+            if filename := resolve_filename_with_transfer_fallback(psd_file):
+                self.psd_dict[det] = filename
                 return
             elif check_if_psd_is_from_built_in(psd_file):
                 return
@@ -1587,3 +1585,100 @@ class Input(object):
                     logger.error("Cannot parse reweighting configuration")
                     raise
         self._reweighting_configuration = conf
+
+    @property
+    def data_dict(self):
+        return self._data_dict
+
+    @data_dict.setter
+    def data_dict(self, data_dict):
+        if data_dict is None and getattr(self, "transfer_files", False):
+            data = dict()
+            for det in self.detectors:
+                frames = glob.glob(f"{det[0]}*.gwf")
+                if len(frames) > 0:
+                    data[det] = frames
+                else:
+                    self._data_dict = None
+                    return
+            self._data_dict = data
+        elif data_dict is None:
+            logger.debug("data-dict set to None")
+            self._data_dict = None
+        elif isinstance(data_dict, str):
+            self._data_dict = convert_string_to_dict(data_dict, "data-dict")
+        elif isinstance(data_dict, dict):
+            self._data_dict = data_dict
+        else:
+            raise BilbyPipeError(f"Input data-dict={data_dict} not understood")
+
+    @property
+    def frame_type_dict(self):
+        return self._frame_type_dict
+
+    @frame_type_dict.setter
+    def frame_type_dict(self, frame_type_dict):
+        if frame_type_dict is not None:
+            self._frame_type_dict = convert_string_to_dict(
+                frame_type_dict, "frame-type-dict"
+            )
+        else:
+            logger.debug("frame-type-dict set to None")
+            self._frame_type_dict = None
+
+    @property
+    def psd_length(self):
+        """Integer number of durations to use for generating the PSD"""
+        return self._psd_length
+
+    @psd_length.setter
+    def psd_length(self, psd_length):
+        if isinstance(psd_length, int):
+            self._psd_length = psd_length
+            self.psd_duration = psd_length * self.duration
+
+        else:
+            raise BilbyPipeError(f"Unable to set psd_length={psd_length}")
+
+    @property
+    def psd_duration(self):
+        return self._psd_duration
+
+    @psd_duration.setter
+    def psd_duration(self, psd_duration):
+        MAXIMUM = self.psd_maximum_duration
+        if psd_duration <= MAXIMUM:
+            self._psd_duration = psd_duration
+            logger.info(
+                f"PSD duration set to {psd_duration}s, {self.psd_length}x the duration {self.duration}s"
+            )
+        else:
+            self._psd_duration = MAXIMUM
+            logger.info(
+                f"Requested PSD duration {psd_duration}={self.psd_length}x{self.duration} exceeds "
+                f"allowed maximum {MAXIMUM}. Setting psd_duration = {self.psd_duration}"
+            )
+
+    @property
+    def psd_start_time(self):
+        """The PSD start time relative to segment start time"""
+        if self._psd_start_time is not None:
+            return self._psd_start_time
+        elif self.trigger_time is not None:
+            psd_start_time = -self.psd_duration
+            logger.info(
+                f"Using default PSD start time {psd_start_time} relative to start time"
+            )
+            return psd_start_time
+        else:
+            raise BilbyPipeError("PSD start time not set")
+
+    @psd_start_time.setter
+    def psd_start_time(self, psd_start_time):
+        if psd_start_time is None:
+            self._psd_start_time = None
+        else:
+            self._psd_start_time = psd_start_time
+            logger.info(
+                f"PSD start-time set to {self._psd_start_time} relative to segment start time"
+            )

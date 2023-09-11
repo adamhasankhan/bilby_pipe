@@ -230,6 +230,26 @@ def create_parser(top_level=True):
             "dictionary should follow basic python dict syntax."
         ),
     )
+    data_gen_pars.add(
+        "--frame-type-dict",
+        type=nonestr,
+        default=None,
+        help=(
+            "Frame type to use when finding data. If not given, defaults will "
+            "be used based on the gps time using bilby_pipe.utils.default_frame_type,"
+            " e.g., {H1: H1_HOFT_C00_AR}."
+        ),
+    )
+    data_gen_pars.add(
+        "--data-find-url",
+        default="https://datafind.ligo.org",
+        help="URL to use for datafind, default is https://datafind.ligo.org to query CVMFS",
+    )
+    data_gen_pars.add(
+        "--data-find-urltype",
+        default="osdf",
+        help="URL type to use for datafind, default is osdf",
+    )
     data_type_pars = data_gen_pars.add_mutually_exclusive_group()
     data_type_pars.add(
         "--gaussian-noise",

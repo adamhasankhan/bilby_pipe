@@ -21,6 +21,7 @@ from bilby_pipe.utils import (
     get_geocent_time_with_uncertainty,
     get_version_information,
     is_a_power_of_2,
+    log_function_call,
     log_version_information,
     logger,
 )
@@ -77,6 +78,7 @@ class DataGenerationInput(Input):
 
         # Admin arguments
         self.ini = args.ini
+        self.transfer_files = args.transfer_files
 
         # Run index arguments
         self.idx = args.idx
@@ -297,73 +299,6 @@ class DataGenerationInput(Input):
         self.meta_data["injection_parameters"] = injection_parameters
 
     @property
-    def psd_length(self):
-        """Integer number of durations to use for generating the PSD"""
-        return self._psd_length
-
-    @psd_length.setter
-    def psd_length(self, psd_length):
-        if isinstance(psd_length, int):
-            self._psd_length = psd_length
-            self.psd_duration = psd_length * self.duration
-
-        else:
-            raise BilbyPipeError(f"Unable to set psd_length={psd_length}")
-
-    @property
-    def psd_duration(self):
-        return self._psd_duration
-
-    @psd_duration.setter
-    def psd_duration(self, psd_duration):
-        MAXIMUM = self.psd_maximum_duration
-        if psd_duration <= MAXIMUM:
-            self._psd_duration = psd_duration
-            logger.info(
-                "PSD duration set to {}s, {}x the duration {}s".format(
-                    psd_duration, self.psd_length, self.duration
-                )
-            )
-        else:
-            self._psd_duration = MAXIMUM
-            logger.info(
-                "Requested PSD duration {}={}x{} exceeds allowed maximum {}"
-                ". Setting psd_duration = {}".format(
-                    psd_duration,
-                    self.psd_length,
-                    self.duration,
-                    MAXIMUM,
-                    self.psd_duration,
-                )
-            )
-
-    @property
-    def psd_start_time(self):
-        """The PSD start time relative to segment start time"""
-        if self._psd_start_time is not None:
-            return self._psd_start_time
-        elif self.trigger_time is not None:
-            psd_start_time = -self.psd_duration
-            logger.info(
-                f"Using default PSD start time {psd_start_time} relative to start time"
-            )
-            return psd_start_time
-        else:
-            raise BilbyPipeError("PSD start time not set")
-
-    @psd_start_time.setter
-    def psd_start_time(self, psd_start_time):
-        if psd_start_time is None:
-            self._psd_start_time = None
-        else:
-            self._psd_start_time = psd_start_time
-            logger.info(
-                "PSD start-time set to {} relative to segment start time".format(
-                    self._psd_start_time
-                )
-            )
-
-    @property
     def parameter_conversion(self):
         if "binary_neutron_star" in self.frequency_domain_source_model:
             return bilby.gw.conversion.convert_to_lal_binary_neutron_star_parameters
@@ -371,22 +306,6 @@ class DataGenerationInput(Input):
             return bilby.gw.conversion.convert_to_lal_binary_black_hole_parameters
         else:
             return None
-
-    @property
-    def data_dict(self):
-        return self._data_dict
-
-    @data_dict.setter
-    def data_dict(self, data_dict):
-        if data_dict is None:
-            logger.debug("data-dict set to None")
-            self._data_dict = None
-        elif isinstance(data_dict, str):
-            self._data_dict = convert_string_to_dict(data_dict, "data-dict")
-        elif isinstance(data_dict, dict):
-            self._data_dict = data_dict
-        else:
-            raise BilbyPipeError(f"Input data-dict={data_dict} not understood")
 
     @property
     def channel_dict(self):
@@ -755,9 +674,11 @@ class DataGenerationInput(Input):
             data = self._gwpy_fetch_open_data(det, start_time, end_time)
 
         channel = f"{det}:{channel_type}"
-        if data is None and self.data_dict is not None:
+        if data is not None:
+            pass
+        elif self.data_dict is not None:
             data = self._gwpy_read(det, channel, start_time, end_time)
-        if data is None:
+        else:
             data = self._gwpy_get(channel, start_time, end_time)
 
         if data is None:
@@ -909,7 +830,14 @@ class DataGenerationInput(Input):
             return None
         else:
             source = self.data_dict[det]
-            format_ext = os.path.splitext(source)[1]
+            if isinstance(source, str):
+                format_ext = os.path.splitext(source)[1]
+            elif isinstance(source, list):
+                format_ext = os.path.splitext(source[0])[1]
+            else:
+                raise TypeError(
+                    f"Frames should be either string or list, not {type(source)}"
+                )
 
         # If the source contains a glob-path, e.g. *gwf, glob it first
         if "*" in source:
@@ -934,27 +862,15 @@ class DataGenerationInput(Input):
             kwargs["format"] = self.data_format
 
         try:
-            kwargs_string = ""
-            for key, val in kwargs.items():
-                if isinstance(val, str):
-                    val = f"'{val}'"
-                kwargs_string += f"{key}={val}, "
-
             if "gwf" in format_ext:
-                type_kwargs_string = ""
-                for key, val in type_kwargs.items():
-                    if isinstance(val, str):
-                        val = f"'{val}'"
-                    type_kwargs_string += f"{key}={val}, "
-                logger.info(
-                    f"Running: gwpy.timeseries.TimeSeries.read({kwargs_string}).astype({type_kwargs_string})"
+                _call = log_function_call(
+                    "gwpy.timeseries.TimeSeries.read", kwargs, log=False
                 )
+                log_function_call(f"{_call}.astype", type_kwargs)
                 data = gwpy.timeseries.TimeSeries.read(**kwargs).astype(**type_kwargs)
 
             else:
-                logger.info(
-                    f"Running: gwpy.timeseries.TimeSeries.read({kwargs_string})"
-                )
+                log_function_call("gwpy.timeseries.TimeSeries.read", kwargs)
                 data = gwpy.timeseries.TimeSeries.read(**kwargs)
 
             data = data.crop(start=start_time, end=end_time)
@@ -1002,6 +918,7 @@ class DataGenerationInput(Input):
         logger.debug("Attempt to locate data")
 
         kwargs = dict(
+            channel=channel,
             start=start_time,
             end=end_time,
             verbose=False,
@@ -1017,18 +934,11 @@ class DataGenerationInput(Input):
         if self.data_format:
             kwargs["format"] = self.data_format
 
-        msg_list = ["Calling TimeSeries.get("]
-        msg_list += [f"'{channel}', "]
-        msg_list += [f"{key}={value}, " for key, value in kwargs.items()]
-        msg_list += [").astype("]
-        msg_list += [f"{key}={value}, " for key, value in type_kwargs.items()]
-        msg_list += [")"]
-        logger.info("".join(msg_list))
+        _call = log_function_call("gwpy.timeseries.TimeSeries.get", kwargs, log=False)
+        log_function_call(f"{_call}.astype", type_kwargs)
 
         try:
-            data = gwpy.timeseries.TimeSeries.get(channel, **kwargs).astype(
-                **type_kwargs
-            )
+            data = gwpy.timeseries.TimeSeries.get(**kwargs).astype(**type_kwargs)
             return data
         except RuntimeError as e:
             logger.info(f"Unable to read data for channel {channel}")
@@ -1037,12 +947,17 @@ class DataGenerationInput(Input):
             logger.info("Unable to read data as NDS2 is not installed")
         except TypeError:
             logger.debug("Problem reading data try again without kwargs")
-            data = gwpy.timeseries.TimeSeries.get(
-                channel,
-                start_time,
-                end_time,
+            kwargs = dict(
+                channel=channel,
+                start=start_time,
+                end=end_time,
                 verbose=False,
-            ).astype(**type_kwargs)
+            )
+            _call = log_function_call(
+                "gwpy.timeseries.TimeSeries.get", kwargs, log=False
+            )
+            log_function_call(f"{_call}.astype", type_kwargs)
+            data = gwpy.timeseries.TimeSeries.get(**kwargs).astype(**type_kwargs)
             return data
 
     def _gwpy_fetch_open_data(self, det, start_time, end_time):
@@ -1063,12 +978,9 @@ class DataGenerationInput(Input):
         """
 
         logger.info("Attempting to download data from GWOSC")
-        logger.info(
-            "Calling TimeSeries.fetch_open_data('{}', start={}, end={})".format(
-                det, start_time, end_time
-            )
-        )
-        data = gwpy.timeseries.TimeSeries.fetch_open_data(det, start_time, end_time)
+        kwargs = dict(ifo=det, start=start_time, end=end_time)
+        log_function_call("gwpy.timeseries.TimeSeries.fetch_open_data", kwargs)
+        data = gwpy.timeseries.TimeSeries.fetch_open_data(**kwargs)
         return data
 
     @property
