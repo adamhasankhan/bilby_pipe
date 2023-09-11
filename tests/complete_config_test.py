@@ -50,6 +50,9 @@ class TestMainInput(unittest.TestCase):
         )
         exclude_keys.append("additional_transfer_paths")
 
+        self.assertEqual(inputs.getenv, complete_inputs.getenv)
+        exclude_keys.append("getenv")
+
         self.assertEqual(args.mode_array, complete_args.mode_array[0])
         exclude_keys.append("mode_array")
 

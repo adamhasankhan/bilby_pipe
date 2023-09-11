@@ -8,7 +8,14 @@ import bilby
 from bilby_pipe.bilbyargparser import BilbyArgParser
 
 from .main import __doc__ as usage
-from .utils import get_version_information, logger, nonefloat, noneint, nonestr
+from .utils import (
+    ENVIRNOMENT_DEFAULTS,
+    get_version_information,
+    logger,
+    nonefloat,
+    noneint,
+    nonestr,
+)
 
 
 class StoreBoolean(argparse.Action):
@@ -605,13 +612,31 @@ def create_parser(top_level=True):
         ),
     )
     submission_parser.add(
+        "--environment-variables",
+        default=None,
+        type=nonestr,
+        help=(
+            "Key value pairs for environment variables formatted as a json string, "
+            "e.g., '{'OMP_NUM_THREADS': 1, 'LAL_DATA_PATH'='/home/data'}'. These values "
+            f"take precedence over --getenv. The default values are {ENVIRNOMENT_DEFAULTS}."
+        ),
+    )
+    submission_parser.add(
+        "--getenv",
+        default=None,
+        action="append",
+        type=nonestr,
+        help="List of environment variables to copy from the current session.",
+    )
+    submission_parser.add(
         "--disable-hdf5-locking",
         action=StoreBoolean,
-        default=True,
+        default=False,
         help=(
             "If true (default), disable HDF5 locking. This can improve "
             "stability on some clusters, but may cause issues if multiple "
-            "processes are reading/writing to the same file."
+            "processes are reading/writing to the same file. "
+            "This argument is deprecated and should be passed through --environment-variables"
         ),
     )
     submission_parser.add(

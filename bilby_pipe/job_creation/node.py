@@ -6,7 +6,13 @@ from pathlib import Path
 
 import pycondor
 
-from ..utils import CHECKPOINT_EXIT_CODE, ArgumentsString, BilbyPipeError, logger
+from ..utils import (
+    CHECKPOINT_EXIT_CODE,
+    ENVIRNOMENT_DEFAULTS,
+    ArgumentsString,
+    BilbyPipeError,
+    logger,
+)
 
 
 class Node(object):
@@ -19,7 +25,6 @@ class Node(object):
         self.inputs = inputs
         self._universe = "vanilla"
         self.request_disk = self.inputs.request_disk
-        self.getenv = True
         self.notification = inputs.notification
         self.retry = retry
         self.verbose = 0
@@ -86,6 +91,10 @@ class Node(object):
             self.add_accounting()
 
         self.extra_lines.append(f"priority = {self.condor_job_priority}")
+        env = self.environment
+        self.extra_lines.append(
+            f'environment = "{" ".join([f"{k}={v}" for k, v in env.items()])}"'
+        )
         if self.inputs.email is not None:
             self.extra_lines.append(f"notify_user = {self.inputs.email}")
 
@@ -119,7 +128,6 @@ class Node(object):
             request_memory=self.request_memory,
             request_disk=self.request_disk,
             request_cpus=self.request_cpus,
-            getenv=self.getenv,
             universe=self.universe,
             initialdir=self.inputs.initialdir,
             notification=self.notification,
@@ -213,6 +221,32 @@ class Node(object):
         """Default wall-time for base-name"""
         # One hour
         return "1:00:00"
+
+    @property
+    def environment(self):
+        f"""
+        Environment variables to set in jobs.
+        This starts from {ENVIRNOMENT_DEFAULTS} and adds values from the
+        :code:`--environment-variables` and :code:`--getenv` arguments.
+        """
+        env = ENVIRNOMENT_DEFAULTS.copy()
+        for key in self.inputs.getenv:
+            value = os.environ.get(key, None)
+            if value is not None:
+                env[key] = value
+            else:
+                logger.warning(
+                    f"Variable {key} requested from getenv, "
+                    "but not found in environment."
+                )
+        env.update(self.inputs.environment_variables)
+        if self.inputs.disable_hdf5_locking:
+            logger.warning(
+                "The --disable-hdf5-locking variable is deprecated use, "
+                "--environment-variables instead."
+            )
+            env["HDF5_USE_FILE_LOCKING"] = "FALSE"
+        return env
 
 
 def _log_output_error_submit_lines(logdir, prefix):

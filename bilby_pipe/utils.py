@@ -18,6 +18,12 @@ import bilby
 
 CHECKPOINT_EXIT_CODE = 77
 
+ENVIRNOMENT_DEFAULTS = dict(
+    HDF5_USE_FILE_LOCKING="FAlSE",
+    OMP_NUM_THREADS=1,
+    OMP_PROC_BIND="false",
+)
+
 
 class tcolors:
     WARNING = "\u001b[31m"

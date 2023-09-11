@@ -26,6 +26,7 @@ from .job_creation import generate_dag
 from .parser import create_parser
 from .utils import (
     BilbyPipeError,
+    convert_string_to_dict,
     get_colored_string,
     get_command_line_arguments,
     get_outdir_name,
@@ -85,6 +86,8 @@ class MainInput(Input):
         self.scheduler_env = args.scheduler_env
         self.scheduler_analysis_time = args.scheduler_analysis_time
         self.disable_hdf5_locking = args.disable_hdf5_locking
+        self.environment_variables = args.environment_variables
+        self.getenv = args.getenv
 
         self.waveform_approximant = args.waveform_approximant
 
@@ -287,6 +290,28 @@ class MainInput(Input):
         if use_mpi:
             logger.debug(f"Turning on MPI for {self.sampler}")
         self._use_mpi = use_mpi
+
+    @property
+    def environment_variables(self):
+        return self._environment_variables
+
+    @environment_variables.setter
+    def environment_variables(self, environment_variables):
+        if environment_variables is None:
+            self._environment_variables = dict()
+        else:
+            self._environment_variables = convert_string_to_dict(environment_variables)
+
+    @property
+    def getenv(self):
+        return self._getenv
+
+    @getenv.setter
+    def getenv(self, getenv):
+        if isinstance(getenv, list):
+            self._getenv = getenv
+        if getenv is None or getenv == [None]:
+            self._getenv = list()
 
     @staticmethod
     def check_source_model(args):
