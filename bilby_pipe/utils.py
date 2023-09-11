@@ -865,5 +865,92 @@ def check_if_psd_is_from_built_in(psd_file):
     return os.path.isfile(psd_file_built_in)
 
 
+def resolve_filename_with_transfer_fallback(filename):
+    """
+    When absolute paths are transferred using HTCondor, the absolute path is
+    replaced with the basename of the file. This function checks if the file
+    exists, if not, checks if the basename exists. If the basename exists,
+    returns the basename, otherwise returns None.
+
+    Parameters
+    ----------
+    filename: str
+        The filename to check
+
+    Returns
+    -------
+    filename: str
+        The filename, or basename, if it exists, otherwise None
+    """
+    if os.path.isfile(filename):
+        return filename
+    elif os.path.isfile(os.path.basename(filename)):
+        return os.path.basename(filename)
+    return None
+
+
+def default_frame_type(det, time):
+    """Return the default frame type for a given detector and time
+
+    Parameters
+    ----------
+    det: str
+        The detector name
+    time: float
+        The GPS time
+
+    Returns
+    -------
+    frame_type: str
+        The default frame type
+
+    """
+    if time < 1156723217:
+        run = "O1"
+    elif time < 1188259218:
+        run = "O2"
+    elif time < 1282953618:
+        run == "O3"
+    elif time < 1417046418:
+        run = "O4"
+    else:
+        raise ValueError("Requested time is after O4, real data doesn't exist.")
+    FRAME_TYPES = dict(
+        H1=dict(
+            O1="H1_HOFT_C02",
+            O2="H1_HOFT_C02_CLEAN",
+            O3="H1_HOFT_C01",
+            O4="H1_HOFT_C00_AR",
+        ),
+        L1=dict(
+            O1="L1_HOFT_C02",
+            O2="L1_HOFT_C02_CLEAN",
+            O3="L1_HOFT_C01",
+            O4="L1_HOFT_C00_AR",
+        ),
+        V1=dict(
+            O2="V1O2Repro2A",
+            O3="V1O3Repro1A",
+            O4="HoftOnline",
+        ),
+    )
+    if det not in FRAME_TYPES:
+        raise ValueError(f"Detector {det} not understood")
+    return FRAME_TYPES[det][run]
+
+
+def log_function_call(function, kwargs, log=True):
+    kwargs_string = ""
+    for key, val in kwargs.items():
+        if isinstance(val, str):
+            val = f"'{val}'"
+        kwargs_string += f"{key}={val}, "
+    call_str = f"{function}({kwargs_string})"
+    if log:
+        logger.info(f"Running: {call_str}")
+    else:
+        return call_str
+
+
 setup_logger()
 logger = logging.getLogger("bilby_pipe")

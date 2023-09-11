@@ -17,6 +17,7 @@ from bilby_pipe.utils import (
     DataDump,
     log_version_information,
     logger,
+    resolve_filename_with_transfer_fallback,
 )
 
 # fmt: off
@@ -197,17 +198,14 @@ class DataAnalysisInput(Input):
 
         logger.debug("Data dump not previously loaded")
 
-        if os.path.isfile(filename):
-            pass
-        elif os.path.isfile(os.path.basename(filename)):
-            filename = os.path.basename(filename)
-        else:
+        final_filename = resolve_filename_with_transfer_fallback(filename)
+        if filename is None:
             raise FileNotFoundError(
-                "No dump data {} file found. Most likely the generation "
-                "step failed".format(filename)
+                f"No dump data {filename} file found. Most likely the generation "
+                "step failed."
             )
 
-        self._data_dump = DataDump.from_pickle(filename)
+        self._data_dump = DataDump.from_pickle(final_filename)
         self.meta_data.update(self._data_dump.meta_data)
         return self._data_dump
 
