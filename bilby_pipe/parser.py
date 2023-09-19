@@ -9,7 +9,7 @@ from bilby_pipe.bilbyargparser import BilbyArgParser
 
 from .main import __doc__ as usage
 from .utils import (
-    ENVIRNOMENT_DEFAULTS,
+    ENVIRONMENT_DEFAULTS,
     get_version_information,
     logger,
     nonefloat,
@@ -618,7 +618,7 @@ def create_parser(top_level=True):
         help=(
             "Key value pairs for environment variables formatted as a json string, "
             "e.g., '{'OMP_NUM_THREADS': 1, 'LAL_DATA_PATH'='/home/data'}'. These values "
-            f"take precedence over --getenv. The default values are {ENVIRNOMENT_DEFAULTS}."
+            f"take precedence over --getenv. The default values are {ENVIRONMENT_DEFAULTS}."
         ),
     )
     submission_parser.add(
