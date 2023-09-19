@@ -8,7 +8,7 @@ import pycondor
 
 from ..utils import (
     CHECKPOINT_EXIT_CODE,
-    ENVIRNOMENT_DEFAULTS,
+    ENVIRONMENT_DEFAULTS,
     ArgumentsString,
     BilbyPipeError,
     logger,
@@ -226,10 +226,10 @@ class Node(object):
     def environment(self):
         f"""
         Environment variables to set in jobs.
-        This starts from {ENVIRNOMENT_DEFAULTS} and adds values from the
+        This starts from {ENVIRONMENT_DEFAULTS} and adds values from the
         :code:`--environment-variables` and :code:`--getenv` arguments.
         """
-        env = ENVIRNOMENT_DEFAULTS.copy()
+        env = ENVIRONMENT_DEFAULTS.copy()
         for key in self.inputs.getenv:
             value = os.environ.get(key, None)
             if value is not None:
