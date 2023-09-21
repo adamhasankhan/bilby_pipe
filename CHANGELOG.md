@@ -1,5 +1,15 @@
 # All notable changes will be documented in this file
 
+## v1.2.1 2023-09-10
+See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.2.0)
+
+This MR contains changes required to support HTCondor >= 10.7.1 and the scitokens authentication system.
+Most significantly, environment variables can now be generically and explicitly defined.
+
+### Added
+- Switch to scitokens authentication and explicitly use gwdatafind rather than relying on gwpy (!569)
+- Change how environment variables are specified, defaults should be preserved, but users should be careful (!570)
+
 ## v1.2.0 2023-28-07
 See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.2.0)
 
