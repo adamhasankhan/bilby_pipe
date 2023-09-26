@@ -916,7 +916,7 @@ def default_frame_type(det, time):
     elif time < 1188259218:
         run = "O2"
     elif time < 1282953618:
-        run == "O3"
+        run = "O3"
     elif time < 1417046418:
         run = "O4"
     else:
