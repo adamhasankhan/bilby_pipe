@@ -1,4 +1,3 @@
-
 # stages is a reserved keyword that defines job dependencies and
 # parallelization. each stage runs in parallel but must complete
 # before the next stage begins
@@ -191,7 +190,6 @@ docs:
     - pip --cache-dir=.pip$PRIMARY_VERSION install .
 
     # Make the documentation
-    - conda install python-graphviz -y
     # Installation and clean up
     - cd docs
     - pip install -r requirements.txt
