@@ -624,9 +624,10 @@ class Input(object):
 
     @staticmethod
     def read_injection_file(injection_file):
-        if "json" in injection_file:
+        extension = os.path.splitext(injection_file)[-1]
+        if extension == ".json":
             return Input.read_json_injection_file(injection_file)
-        elif "dat" in injection_file:
+        elif extension == ".dat":
             return Input.read_dat_injection_file(injection_file)
 
     @staticmethod
