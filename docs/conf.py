@@ -1,7 +1,24 @@
 import os
 import sys
+from pathlib import Path
 
 import bilby_pipe
+
+
+def get_active_branch_name():
+    """
+    Taken from https://stackoverflow.com/a/62724213 to enable docs to build on
+    development branches
+    """
+
+    head_dir = Path(__file__).parent.parent / ".git" / "HEAD"
+    with head_dir.open("r") as f:
+        content = f.read().splitlines()
+
+    for line in content:
+        if line[0:4] == "ref:":
+            return line.partition("refs/heads/")[2]
+
 
 sys.path.insert(0, os.path.abspath("../bilby_pipe/"))
 
@@ -52,7 +69,7 @@ release = fullversion
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -84,8 +101,8 @@ numpydoc_show_class_members = False
 # Whitelist pattern for tags (set to None to ignore all tags)
 smv_tag_whitelist = r"^(1.*|0.3.12)$"
 
-# Whitelist pattern for branches (set to None to ignore all branches)
-smv_branch_whitelist = r"^master$"
+# Only include master and the current branch
+smv_branch_whitelist = f"^(master|{get_active_branch_name()})$"
 
 # Whitelist pattern for remotes (set to None to use local branches only)
 smv_remote_whitelist = r"^(origin|upstream)$"

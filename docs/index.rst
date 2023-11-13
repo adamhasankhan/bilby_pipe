@@ -12,6 +12,7 @@
    ini_file
    injections
    customisation
+   data_acquisition
    reweighting
    structure
    osg

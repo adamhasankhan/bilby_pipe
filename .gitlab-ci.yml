@@ -197,15 +197,10 @@ docs:
     - make clean
     - bilby_pipe_write_default_ini default.ini
     - bilby_pipe_gracedb --json ../examples/gracedb/G298936.json --output ini --settings ../examples/gracedb/settings.json --outdir . --cbc-likelihood-mode test
-    # Sphinx-multiversion needs to be run from the top-level
-    - cd ..
-    # Sphinx-multiversion needs to be run on the git repo itself
-    # not the detached HEAD used in the pipeline
-    - git checkout $CI_COMMIT_REF_NAME
     - git status
     - git branch
     - git tag
-    - sphinx-multiversion docs/ docs/_build/
+    - sphinx-multiversion . _build/
 
   artifacts:
     paths:
