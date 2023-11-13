@@ -233,7 +233,9 @@ class DataGenerationInput(Input):
         self.injection_dict = args.injection_dict
         self.gaussian_noise = args.gaussian_noise
         self.injection_waveform_arguments = args.injection_waveform_arguments
-
+        self.injection_frequency_domain_source_model = (
+            args.injection_frequency_domain_source_model
+        )
         # The following are all mutually exclusive methods to set the data
         if self.gaussian_noise or self.zero_noise:
             if args.injection_file is not None:
@@ -391,7 +393,7 @@ class DataGenerationInput(Input):
             duration=self.duration,
             start_time=self.start_time,
             sampling_frequency=self.sampling_frequency,
-            frequency_domain_source_model=self.bilby_frequency_domain_source_model,
+            frequency_domain_source_model=self.injection_bilby_frequency_domain_source_model,
             parameter_conversion=self.parameter_conversion,
             waveform_arguments=waveform_arguments,
         )
@@ -443,7 +445,7 @@ class DataGenerationInput(Input):
         waveform_generator = self.waveform_generator_class(
             duration=self.duration,
             sampling_frequency=self.sampling_frequency,
-            frequency_domain_source_model=self.bilby_frequency_domain_source_model,
+            frequency_domain_source_model=self.injection_bilby_frequency_domain_source_model,
             parameter_conversion=self.parameter_conversion,
             waveform_arguments=waveform_arguments,
         )
@@ -1165,6 +1167,31 @@ class DataGenerationInput(Input):
         )
         self.meta_data["weight_file"] = weight_file
         self.likelihood.save_weights(weight_file)
+
+    @property
+    def injection_frequency_domain_source_model(self):
+        """String of which frequency domain source model to use for injection"""
+        return self._injection_frequency_domain_source_model
+
+    @injection_frequency_domain_source_model.setter
+    def injection_frequency_domain_source_model(
+        self, injection_frequency_domain_source_model
+    ):
+        if injection_frequency_domain_source_model is None:
+            self._injection_frequency_domain_source_model = (
+                self.frequency_domain_source_model
+            )
+        else:
+            self._injection_frequency_domain_source_model = (
+                injection_frequency_domain_source_model
+            )
+
+    @property
+    def injection_bilby_frequency_domain_source_model(self):
+        """Frequency domain source model function to use for injecting waveform"""
+        return self.get_bilby_source_model_function(
+            self.injection_frequency_domain_source_model
+        )
 
 
 def create_generation_parser():

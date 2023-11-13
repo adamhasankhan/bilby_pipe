@@ -438,6 +438,14 @@ def create_parser(top_level=True):
         "as the `injection-waveform-approximant`.",
     )
     injection_parser.add(
+        "--injection-frequency-domain-source-model",
+        type=nonestr,
+        default=None,
+        help="Frequency domain source model to use for generating injections. "
+        "If this is None, it will default to the frequency domain source model"
+        "used for analysis.",
+    )
+    injection_parser.add(
         "--injection-waveform-arguments",
         type=nonestr,
         default=None,

@@ -124,6 +124,9 @@ class MainInput(Input):
         self.injection_dict = args.injection_dict
         self.injection_waveform_arguments = args.injection_waveform_arguments
         self.injection_waveform_approximant = args.injection_waveform_approximant
+        self.injection_frequency_domain_source_model = (
+            args.injection_frequency_domain_source_model
+        )
         self.generation_seed = args.generation_seed
 
         self.request_disk = args.request_disk
