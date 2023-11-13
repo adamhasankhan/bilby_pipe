@@ -12,6 +12,7 @@ from ..utils import (
     ArgumentsString,
     BilbyPipeError,
     logger,
+    sanitize_string_for_list,
 )
 
 
@@ -113,7 +114,6 @@ class Node(object):
                 osg_local_node_lines = [
                     "+flock_local = True",
                     '+DESIRED_Sites = "nogrid"',
-                    "should_transfer_files = NO",
                 ]
                 self.extra_lines.extend(osg_local_node_lines)
 
@@ -233,7 +233,7 @@ class Node(object):
         for key in self.inputs.getenv:
             value = os.environ.get(key, None)
             if value is not None:
-                env[key] = value
+                env[key] = sanitize_string_for_list(str(value))[0]
             else:
                 logger.warning(
                     f"Variable {key} requested from getenv, "

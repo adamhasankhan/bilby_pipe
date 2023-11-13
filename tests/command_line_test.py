@@ -32,6 +32,13 @@ class TestDagCommandLine(unittest.TestCase):
         _, unknown_args = bilby_pipe.main.parse_args(args, self.parser)
         self.assertEqual(unknown_args, expected_unknown_args)
 
+    def test_no_channel_dict_with_data_fails(self):
+        args = self.default_args + ["--gaussian-noise", "False"]
+        with self.assertRaises(bilby_pipe.utils.BilbyPipeError):
+            args = self.parser.parse_known_args(args, self.parser)
+            inputs = bilby_pipe.main.MainInput(*args)
+            bilby_pipe.main.generate_dag(inputs)
+
 
 # class TestScriptHelperCommandLine(unittest.TestCase):
 #

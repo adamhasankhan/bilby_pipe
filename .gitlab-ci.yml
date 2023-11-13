@@ -99,6 +99,7 @@ example-ini-file-builds:
   stage: test
   image: $PRIMARY_IMAGE
   script:
+    - export GWDATAFIND_SERVER=datafind.gwosc.org:80
     - source activate python$PRIMARY_VERSION
     - mkdir -p .pip$PRIMARY_VERSION
     - pip --cache-dir=.pip$PRIMARY_VERSION install --upgrade bilby
@@ -174,7 +175,7 @@ example-ini-file-gracedb:
     - source activate python$PRIMARY_VERSION
     - pip install --upgrade bilby pesummary
     - pip install .
-    - bilby_pipe_gracedb --json examples/gracedb/G298936.json --local --bilby-test-mode --cbc-likelihood-mode test --output full-submit --settings examples/gracedb/settings.json --n-parallel 1
+    - bilby_pipe_gracedb --json examples/gracedb/G298936.json --local --bilby-test-mode --cbc-likelihood-mode test --output full-submit --settings examples/gracedb/settings.json --n-parallel 1 --channel-dict gwosc --query-kafka False
     - if [[ ! -f outdir_G298936/results_page/home.html ]] ; then exit 1; else echo "Webpage exists"; fi
 
 

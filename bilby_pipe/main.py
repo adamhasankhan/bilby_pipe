@@ -60,6 +60,7 @@ class MainInput(Input):
         self.detectors = args.detectors
         self.coherence_test = args.coherence_test
         self.data_dict = args.data_dict
+        self.channel_dict = args.channel_dict
         self.frame_type_dict = args.frame_type_dict
         self.data_find_url = args.data_find_url
         self.data_find_urltype = args.data_find_urltype

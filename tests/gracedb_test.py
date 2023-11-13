@@ -15,8 +15,6 @@ from bilby_pipe import gracedb
 from bilby_pipe.bilbyargparser import BilbyConfigFileParser
 from bilby_pipe.utils import BilbyPipeError
 
-CERT_ALIAS = "X509_USER_PROXY"
-
 
 class TestGraceDB(unittest.TestCase):
     def setUp(self):
@@ -25,6 +23,8 @@ class TestGraceDB(unittest.TestCase):
         self.example_gracedb_uid = "G298936"
         self.example_gracedb_uid_outdir = f"outdir_{self.example_gracedb_uid}"
         self.cert_dummy_path = os.path.join(self.directory, "temp/certdir/")
+        self.example_json_file = f"examples/gracedb/{self.example_gracedb_uid}.json"
+        self.args = ["--json", self.example_json_file, "--channel-dict", "gwosc"]
         self.tearDown()  # make sure that temp files deleted from previous attempts
         os.makedirs(self.cert_dummy_path)
         os.makedirs(self.outdir)
@@ -37,48 +37,13 @@ class TestGraceDB(unittest.TestCase):
         if os.path.isdir(self.cert_dummy_path):
             shutil.rmtree(self.cert_dummy_path)
 
-    def test_x509userproxy(self):
-        """
-        Tests if bilby_pipe.gracedb.x509userproxy(outdir)
-        can move the user's CERT_ALIAS from the CERT_ALIAS dir to the outdir
-        """
-        # make temp cert file
-        cert_alias_path = os.path.join(self.cert_dummy_path, CERT_ALIAS)
-        temp_cert = open(cert_alias_path, "w")
-        temp_cert.write("this is a test")
-        temp_cert.close()
-
-        # set os environ cert path
-        os.environ[CERT_ALIAS] = cert_alias_path
-
-        # get new cert path
-        out = gracedb.x509userproxy(outdir=self.outdir)
-        new_cert_path = os.path.join(self.outdir, "." + CERT_ALIAS)
-
-        self.assertEqual(out, new_cert_path)
-
-    def test_x509userproxy_no_cert(self):
-        """
-        No X509_USER_PROXY present, so gracedb.x509userprox is None
-        """
-        out = gracedb.x509userproxy(outdir=self.outdir)
-        self.assertEqual(out, None)
-
-    def test_x509userproxy_no_file(self):
-        # set os environ cert path to path without cert
-        os.environ.update({CERT_ALIAS: ""})
-
-        out = gracedb.x509userproxy(outdir=self.outdir)
-        self.assertEqual(out, None)
-
     # def test_read_from_gracedb(self):
     #    uid = "G298936"
     #    gracedb_url = 'https://gracedb.ligo.org/api/'
     #    gracedb.read_from_gracedb(uid, gracedb_url, self.outdir)
 
     def test_read_from_json(self):
-        example_json_data = "examples/gracedb/G298936.json"
-        out = gracedb.read_from_json(example_json_data)
+        out = gracedb.read_from_json(self.example_json_file)
         self.assertIsInstance(out, dict)
 
     def test_read_from_json_not_a_file(self):
@@ -121,8 +86,7 @@ class TestGraceDB(unittest.TestCase):
 
     def test_create_config_file_no_chirp_mass(self):
         gracedb_uid = "G298936"
-        example_json_data = f"examples/gracedb/{gracedb_uid}.json"
-        candidate = gracedb.read_from_json(example_json_data)
+        candidate = gracedb.read_from_json(self.example_json_file)
         channel_dict = dict(
             H1="GDS-CALIB_STRAIN_CLEAN",
             L1="GDS-CALIB_STRAIN_CLEAN",
@@ -142,22 +106,17 @@ class TestGraceDB(unittest.TestCase):
             )
 
     def test_parse_args(self):
-        example_json_data = f"examples/gracedb/{self.example_gracedb_uid}.json"
         parser = gracedb.create_parser()
-        args = parser.parse_args(["--json", example_json_data])
+        args = parser.parse_args(self.args)
         self.assertEqual(args.gracedb, None)
-        self.assertEqual(args.json, example_json_data)
+        self.assertEqual(args.json, self.example_json_file)
         self.assertEqual(args.output, "full")
         self.assertEqual(args.outdir, None)
         self.assertEqual(args.gracedb_url, "https://gracedb.ligo.org/api/")
 
     def test_main(self):
-        gracedb_uid = "G298936"
-        example_json_data = f"examples/gracedb/{gracedb_uid}.json"
         parser = gracedb.create_parser()
-        args = parser.parse_args(
-            ["--json", example_json_data, "--cbc-likelihood-mode", "test"]
-        )
+        args = parser.parse_args(self.args + ["--cbc-likelihood-mode", "test"])
         gracedb.main(args)
         files = glob.glob(self.example_gracedb_uid_outdir + "/submit/*")
         print(files)
@@ -167,7 +126,6 @@ class TestGraceDB(unittest.TestCase):
     @parameterized.expand([(True,), (False,)])
     def test_phase_marginalization(self, phase_marginalization):
         gracedb_uid = "G298936"
-        example_json_data = f"examples/gracedb/{gracedb_uid}.json"
         likelihood_settings = {
             "likelihood_args": {
                 "minimum_frequency": 20,
@@ -189,7 +147,7 @@ class TestGraceDB(unittest.TestCase):
             json.dump(likelihood_settings, ff, indent=2)
         parser = gracedb.create_parser()
         args = parser.parse_args(
-            ["--json", example_json_data, "--cbc-likelihood-mode", cbc_likelihood_mode]
+            self.args + ["--cbc-likelihood-mode", cbc_likelihood_mode]
         )
         gracedb.main(args)
         (config,) = glob.glob(
