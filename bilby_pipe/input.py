@@ -336,16 +336,22 @@ class Input(object):
 
         This can be a function defined in an external package.
         """
-        if self.frequency_domain_source_model in bilby.gw.source.__dict__.keys():
-            model = self._frequency_domain_source_model
+        return self.get_bilby_source_model_function(self.frequency_domain_source_model)
+
+    def get_bilby_source_model_function(self, model_string):
+        """
+        Method to return a bilby frequency domain source model function
+        given a string.
+        """
+
+        if model_string in bilby.gw.source.__dict__.keys():
+            model = model_string
             logger.debug(f"Using the {model} source model")
             return bilby.gw.source.__dict__[model]
-        elif "." in self.frequency_domain_source_model:
-            return get_function_from_string_path(self._frequency_domain_source_model)
+        elif "." in model_string:
+            return get_function_from_string_path(model_string)
         else:
-            raise BilbyPipeError(
-                f"No source model {self._frequency_domain_source_model} found."
-            )
+            raise BilbyPipeError(f"No source model {model_string} found.")
 
     @property
     def reference_frequency(self):
