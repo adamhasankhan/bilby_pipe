@@ -1,6 +1,6 @@
 import os
 
-from ...utils import DataDump, default_frame_type, log_function_call, logger
+from ...utils import BilbyPipeError, DataDump, log_function_call, logger
 from ..node import Node
 
 
@@ -41,9 +41,11 @@ class GenerationNode(Node):
         if self.inputs.timeslide_file is not None:
             self.arguments.add("timeslide-file", self.inputs.timeslide_file)
 
+        frame_files, success = self.resolve_frame_files
+        need_scitokens = not success
+
         if self.inputs.transfer_files or self.inputs.osg:
             input_files_to_transfer = list()
-            input_files_to_transfer.extend(self.resolve_frame_files)
             for attr in [
                 "complete_ini_file",
                 "prior_file",
@@ -56,12 +58,18 @@ class GenerationNode(Node):
             for value in [
                 self.inputs.psd_dict,
                 self.inputs.spline_calibration_envelope_dict,
+                frame_files,
             ]:
                 input_files_to_transfer.extend(self.extract_paths_from_dict(value))
             input_files_to_transfer.extend(self.inputs.additional_transfer_paths)
+
             for ii, fname in enumerate(input_files_to_transfer):
-                if fname.startswith(f"{self.inputs.data_find_urltype}://"):
+                if fname.startswith("osdf://") and self._file_needs_authentication(
+                    fname
+                ):
+                    need_scitokens = True
                     input_files_to_transfer[ii] = f"igwn+{fname}"
+
             self.extra_lines.extend(
                 self._condor_file_transfer_lines(
                     input_files_to_transfer,
@@ -70,7 +78,20 @@ class GenerationNode(Node):
             )
             self.arguments.add("outdir", os.path.relpath(self.inputs.outdir))
 
-        self.extra_lines.extend(self.igwn_scitoken_lines)
+        elif new_frames := [
+            fname
+            for fname in self.extract_paths_from_dict(frame_files)
+            if fname.startswith(self.inputs.data_find_urltype)
+        ]:
+            logger.warning(
+                "The following frame files were identified by gwdatafind for this analysis. "
+                "These frames may not be found by the data generation stage as file "
+                "transfer is not being used. You should either set transfer-files=True or "
+                "pass these frame files to the data-dict option. You may need to "
+                f"remove a prefix, e.g., file://localhost.\n\t{new_frames}"
+            )
+        if need_scitokens:
+            self.extra_lines.extend(self.igwn_scitoken_lines)
 
         self.process_node()
         if parent:
@@ -86,58 +107,89 @@ class GenerationNode(Node):
 
         Returns:
         --------
-        list: list of frame filepaths
+        output: list
+            list of frame filepaths
+        success: bool
+            True if frame files are resolved successfully for all detectors
         """
         from gwdatafind import find_urls
+        from gwpy.io.datafind import find_best_frametype
         from requests.exceptions import HTTPError
+
+        success = True
+        if self.inputs.gaussian_noise or self.inputs.zero_noise:
+            return list(), success
+        elif self.inputs.channel_dict is None:
+            raise BilbyPipeError(
+                "channel-dict must be provided if not using gaussian-noise or zero-noise"
+            )
 
         data = dict()
         if self.inputs.frame_type_dict is not None:
             data = self.inputs.frame_type_dict
         if self.inputs.data_dict is not None:
             data.update(self.inputs.data_dict)
-        output = list()
+        output = dict()
         for det in self.inputs.detectors:
-            if det not in data:
-                try:
-                    data[det] = default_frame_type(det, self.trigger_time)
-                except ValueError:
-                    raise ValueError(
-                        f"Detector {det} not found in frame_type_dict or data_dict "
-                        "cannot resolve frame files."
-                    )
-            if isinstance(data[det], list):
-                output.extend(data[det])
-            elif os.path.exists(data[det]):
-                output.append(data[det])
+            if (
+                self.inputs.channel_dict is not None
+                and self.inputs.channel_dict[det] == "GWOSC"
+            ):
+                logger.info(f"Skipping datafind for {det} as GWOSC data is used.")
+            elif isinstance(data.get(det, None), list):
+                output[det] = data[det]
+            elif os.path.exists(data.get(det, "/not/a/real/file")):
+                output[det] = [data[det]]
             else:
                 start_time = self.inputs.start_time
                 end_time = self.inputs.start_time + self.inputs.duration
-                if self.inputs.psd_dict is None or not all(
-                    det in self.inputs.psd_dict for det in self.inputs.detectors
+                if (
+                    self.inputs.psd_dict is None
+                    or self.inputs.psd_dict.get(det, None) is None
                 ):
                     start_time -= self.inputs.psd_duration
+                if det not in data:
+                    channel_name = self.inputs.channel_dict[det]
+                    if not channel_name.startswith(f"{det}:"):
+                        channel_name = f"{det}:{channel_name}"
+                    frame_type = find_best_frametype(
+                        channel_name,
+                        start_time,
+                        end_time,
+                        host=self.inputs.data_find_url,
+                    )
+                else:
+                    frame_type = data[det]
                 kwargs = dict(
                     site=det[0],
-                    frametype=data[det],
                     gpsstart=start_time,
                     gpsend=end_time,
                     urltype=self.inputs.data_find_urltype,
                     host=self.inputs.data_find_url,
+                    on_gaps="error",
+                    frametype=frame_type,
                 )
                 log_function_call("gwdatafind.find_urls", kwargs)
                 try:
-                    output.extend(find_urls(**kwargs))
-                except HTTPError:
-                    logger.warning(f"Failed to resolve frame files for detector {det}")
-        return output
+                    output[det] = find_urls(**kwargs)
+                    logger.info(f"Found frame files with {frame_type}")
+                except (HTTPError, RuntimeError):
+                    logger.warning(
+                        f"Failed to resolve frame files for detector {det}, the generation "
+                        "job will attempt with gwpy.get."
+                    )
+                    success = False
+        return output, success
 
     @staticmethod
     def extract_paths_from_dict(input):
         output = list()
         if isinstance(input, dict):
             for value in input.values():
-                output.append(value)
+                if isinstance(value, str):
+                    output.append(value)
+                elif isinstance(value, list):
+                    output.extend(value)
         return output
 
     @property
@@ -181,6 +233,20 @@ class GenerationNode(Node):
     def data_dump_file(self):
         return DataDump.get_filename(self.inputs.data_directory, self.label)
 
+    def _file_needs_authentication(self, fname):
+        """
+        Check if a file needs authentication to be accessed, currently the only
+        repositories that need authentication are ligo.osgstorage.org and
+        *.storage.igwn.org.
+
+        Parameters
+        ----------
+        fname: str
+            The file name to check
+        """
+        proprietary_paths = ["igwn", "frames"]
+        return any(path in fname for path in proprietary_paths)
+
     @property
     def igwn_scitoken_lines(self):
         permissions = list()
@@ -190,6 +256,8 @@ class GenerationNode(Node):
             permissions.append("read:/virgo")
         if "K1" in self.inputs.detectors:
             permissions.append("read:/kagra")
+        if not (self.inputs.transfer_files or self.inputs.osg):
+            permissions.append("gwdatafind.read")
         return [
             "use_oauth_services = igwn",
             f"igwn_oauth_permissions = {' '.join(permissions)}",

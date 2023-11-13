@@ -243,7 +243,7 @@ def create_parser(top_level=True):
         default=None,
         help=(
             "Frame type to use when finding data. If not given, defaults will "
-            "be used based on the gps time using bilby_pipe.utils.default_frame_type,"
+            "be used based on the gps time using bilby_pipe.utils.default_frame_types,"
             " e.g., {H1: H1_HOFT_C00_AR}."
         ),
     )

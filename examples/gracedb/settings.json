@@ -6,5 +6,6 @@
     "check_point_plot": true,
     "check_point_delta_t": 1800,
     "print_method": "interval-10"
-  }
+  },
+  "sampling_frequency": 4096
 }

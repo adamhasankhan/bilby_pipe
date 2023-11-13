@@ -663,6 +663,7 @@ class TestInput(unittest.TestCase):
     def test_psd_setting_from_built_in(self):
         inputs = bilby_pipe.main.Input(None, None)
         inputs.detectors = ["H1"]
+        inputs.gaussian_noise = True
         inputs.psd_dict = "{H1:aLIGO_ZERO_DET_high_P_psd.txt}"
         inputs._validate_psd_dict()
 

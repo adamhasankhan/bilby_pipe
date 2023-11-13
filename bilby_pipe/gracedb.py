@@ -6,13 +6,13 @@ CIT cluster, e.g. the ROQ and calibration directories are in there usual place
 import argparse
 import json
 import os
-import shutil
 import time
 
 import numpy as np
 from gwpy.timeseries import TimeSeries, TimeSeriesList
 
 from . import parser
+from .parser import StoreBoolean
 from .utils import (
     DEFAULT_DISTANCE_LOOKUPS,
     BilbyPipeError,
@@ -40,45 +40,8 @@ CHANNEL_DICTS = dict(
         L1="GDS-CALIB_STRAIN_INJ1_O3Replay",
         V1="Hrec_hoft_16384Hz_INJ1_O3Replay",
     ),
+    gwosc={det: "GWOSC-STRAIN" for det in ["H1", "L1", "V1"]},
 )
-
-
-def x509userproxy(outdir):
-    """Copies X509_USER_PROXY certificate from user's os.environ and
-    places it inside the outdir, if the X509_USER_PROXY exists.
-
-    Parameters
-    ----------
-    outdir: str
-        Output directory where X509_USER_PROXY certificate is copied to.
-
-    Returns
-    -------
-    x509userproxy: str, None
-        New path to X509_USER_PROXY certification file
-
-        None if X509_USER_PROXY certificate does not exist, or if
-        the X509_USER_PROXY cannot be copied.
-    """
-    x509userproxy = None
-    cert_alias = "X509_USER_PROXY"
-    try:
-        cert_path = os.environ[cert_alias]
-        new_cert_path = os.path.join(outdir, "." + os.path.basename(cert_path))
-        shutil.copyfile(src=cert_path, dst=new_cert_path)
-        x509userproxy = new_cert_path
-    except FileNotFoundError as e:
-        logger.warning(
-            "Environment variable X509_USER_PROXY does not point to a file. "
-            f"Error while copying file: {e}. "
-            "Try running `$ ligo-proxy-init albert.einstein`"
-        )
-    except KeyError:
-        logger.warning(
-            "Environment variable X509_USER_PROXY not set"
-            " Try running `$ ligo-proxy-init albert.einstein`"
-        )
-    return x509userproxy
 
 
 def read_from_gracedb(gracedb, gracedb_url, outdir):
@@ -110,8 +73,7 @@ def read_from_gracedb(gracedb, gracedb_url, outdir):
 
     logger.info(f"Connecting to {gracedb_url}")
     try:
-        # TODO: do we need this x509 proxy I'm fairly sure my local jobs aren't using it
-        client = GraceDb(cred=x509userproxy(outdir), service_url=gracedb_url)
+        client = GraceDb(service_url=gracedb_url)
     except IOError:
         logger.warning("Failed to connect to GraceDB")
         raise
@@ -934,15 +896,31 @@ def copy_and_save_data(
                     ifo, int(start_time), int(end_time), channel=channel, replay=replay
                 )
             except FileNotFoundError:
-                logger.info(
-                    f"Failed to obtain {ifo} data from kafka directory. Calling TimeSeries.get"
-                )
-                data = attempt_gwpy_get(
-                    channel=channel,
-                    start_time=start_time,
-                    end_time=end_time,
-                    n_attempts=n_attempts,
-                )
+                if channel.endswith("GWOSC-STRAIN"):
+                    logger.info(
+                        "Failed to load kafka data, calling TimeSeries.fetch_open_data"
+                    )
+                    data = TimeSeries.fetch_open_data(
+                        ifo=ifo, start=int(start_time), end=int(end_time)
+                    )
+                    data.name = channel
+                    data.channel = channel
+                else:
+                    logger.info(
+                        f"Failed to obtain {ifo} data from kafka directory. Calling TimeSeries.get"
+                    )
+                    data = attempt_gwpy_get(
+                        channel=channel,
+                        start_time=start_time,
+                        end_time=end_time,
+                        n_attempts=n_attempts,
+                    )
+        elif channel.endswith("GWOSC-STRAIN"):
+            data = TimeSeries.fetch_open_data(
+                ifo=ifo, start=int(start_time), end=int(end_time)
+            )
+            data.name = channel
+            data.channel = channel
         else:
             data = attempt_gwpy_get(
                 channel=channel,
@@ -1126,19 +1104,6 @@ def prepare_run_configurations(
             f"search_type should be either 'cbc' or 'burst', not {search_type}"
         )
 
-    start_data, end_data = (trigger_time - duration - 2, trigger_time + 4)
-
-    data_dict = copy_and_save_data(
-        ifos=ifos,
-        start_time=start_data,
-        end_time=end_data,
-        channel_dict=channel_dict,
-        outdir=outdir,
-        gracedbid=gracedb,
-        query_kafka=query_kafka,
-        replay=replay,
-    )
-
     config_dict = dict(
         label=gracedb,
         outdir=outdir,
@@ -1171,8 +1136,6 @@ def prepare_run_configurations(
         result_format="hdf5",
         reference_frame=reference_frame,
         time_reference=time_reference,
-        data_dict=data_dict,
-        getenv=["GWDATAFIND_SERVER"],
     )
     if sampler_kwargs == "FastTest":
         config_dict["n_parallel"] = 2
@@ -1192,6 +1155,25 @@ def prepare_run_configurations(
                     f"maximum_frequency is reduced to {psd_maximum_frequency} "
                     "due to the limination of pipeline psd"
                 )
+    else:
+        psd_dict = dict()
+
+    start_data, end_data = (trigger_time - duration - 2, trigger_time + 4)
+
+    if not all(ifo in psd_dict for ifo in ifos):
+        start_data -= min(1024, 32 * duration)
+
+    data_dict = copy_and_save_data(
+        ifos=ifos,
+        start_time=start_data,
+        end_time=end_data,
+        channel_dict=channel_dict,
+        outdir=outdir,
+        gracedbid=gracedb,
+        query_kafka=query_kafka,
+        replay=replay,
+    )
+    config_dict["data_dict"] = data_dict
 
     config_dict.update(extra_config_arguments)
 
@@ -1533,9 +1515,12 @@ def create_parser():
         choices=list(CHANNEL_DICTS.keys()),
         help=(
             "Channel dictionary. \n"
-            " online   : use for main GraceDB page events (default)\n"
+            " online   : use for main GraceDB page events from the current observing run "
+            "(default)\n"
             " o2replay : use for playground GraceDB page events\n"
             " o3replay : use for playground GraceDB page events\n"
+            " gwosc    : use for events where the strain data is publicly "
+            "available, e.g., previous observing runs\n"
         ),
     )
     parser.add_argument(
@@ -1586,7 +1571,7 @@ def create_parser():
     )
     parser.add_argument(
         "--query-kafka",
-        type=bool,
+        action=StoreBoolean,
         default=True,
         help=(
             "when fetching the data for analysis, check first it is in kafka, and if not, then try to query ifocache."

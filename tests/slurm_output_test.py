@@ -16,6 +16,7 @@ class TestSlurm(unittest.TestCase):
             self.outdir,
             "--scheduler",
             "slurm",
+            "--gaussian-noise",
         ]
         self.parser = bilby_pipe.main.create_parser()
         self.args = self.parser.parse_args(self.known_args_list)

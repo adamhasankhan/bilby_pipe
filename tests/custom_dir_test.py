@@ -29,6 +29,7 @@ class TestCustomDir(unittest.TestCase):
             "accounting = accounting.group",
             "submit=True",
             "trigger-time=0",
+            "gaussian-noise = True",
         ]
         lines = starting_lines + extra_lines
         for ll in lines:

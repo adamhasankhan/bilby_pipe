@@ -106,6 +106,7 @@ class DataGenerationInput(Input):
         self.data_format = args.data_format
         self.allow_tape = args.allow_tape
         self.tukey_roll_off = args.tukey_roll_off
+        self.gaussian_noise = args.gaussian_noise
         self.zero_noise = args.zero_noise
         self.resampling_method = args.resampling_method
 
@@ -149,11 +150,10 @@ class DataGenerationInput(Input):
         # PSD
         self.psd_maximum_duration = args.psd_maximum_duration
         self.psd_dict = args.psd_dict
-        if self.psd_dict is None:
-            self.psd_length = args.psd_length
-            self.psd_fractional_overlap = args.psd_fractional_overlap
-            self.psd_start_time = args.psd_start_time
-            self.psd_method = args.psd_method
+        self.psd_length = args.psd_length
+        self.psd_fractional_overlap = args.psd_fractional_overlap
+        self.psd_start_time = args.psd_start_time
+        self.psd_method = args.psd_method
 
         # Calibration
         self.calibration_model = args.calibration_model
@@ -231,7 +231,6 @@ class DataGenerationInput(Input):
         self.injection_numbers = args.injection_numbers
         self.injection_file = args.injection_file
         self.injection_dict = args.injection_dict
-        self.gaussian_noise = args.gaussian_noise
         self.injection_waveform_arguments = args.injection_waveform_arguments
 
         # The following are all mutually exclusive methods to set the data
@@ -306,18 +305,6 @@ class DataGenerationInput(Input):
             return bilby.gw.conversion.convert_to_lal_binary_black_hole_parameters
         else:
             return None
-
-    @property
-    def channel_dict(self):
-        return self._channel_dict
-
-    @channel_dict.setter
-    def channel_dict(self, channel_dict):
-        if channel_dict is not None:
-            self._channel_dict = convert_string_to_dict(channel_dict, "channel-dict")
-        else:
-            logger.debug("channel-dict set to None")
-            self._channel_dict = None
 
     def get_channel_type(self, det):
         """Help method to read the channel_dict and print useful messages"""
@@ -491,7 +478,14 @@ class DataGenerationInput(Input):
         return signal_and_data
 
     def _set_psd_from_file(self, ifo):
+        """
+        Set the PSD if specified in the `psd_dict`. If the value is `None` leave the
+        PSD as is.
+        """
         psd_file = self.psd_dict[ifo.name]
+        if psd_file is None:
+            logger.debug(f"Using default PSD for {ifo.name}")
+            return
         logger.info(f"Setting {ifo.name} PSD from file {psd_file}")
         ifo.power_spectral_density = (
             PowerSpectralDensity.from_power_spectral_density_file(psd_file=psd_file)
@@ -513,7 +507,7 @@ class DataGenerationInput(Input):
             ifo = bilby.gw.detector.get_empty_interferometer(det)
             ifo.strain_data.roll_off = roll_off
 
-            if self.psd_dict is not None and det in self.psd_dict:
+            if self.psd_dict is not None and self.psd_dict.get(det, None) is not None:
                 psd_data = None
                 self._set_psd_from_file(ifo)
             else:
@@ -676,7 +670,7 @@ class DataGenerationInput(Input):
         channel = f"{det}:{channel_type}"
         if data is not None:
             pass
-        elif self.data_dict is not None:
+        elif self.data_dict is not None and det in self.data_dict:
             data = self._gwpy_read(det, channel, start_time, end_time)
         else:
             data = self._gwpy_get(channel, start_time, end_time)

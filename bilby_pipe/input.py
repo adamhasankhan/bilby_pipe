@@ -1534,18 +1534,24 @@ class Input(object):
             self._psd_dict = None
 
     def _validate_psd_dict(self):
-        # Check all detectors are listed
+        """
+        Verify that all detectors are listed in the PSD dict and that they
+        correspond to resolvable PSDs. Note that `None` is a special case that
+        indicates the default PSD should be used.
+        """
         for det in self.detectors:
             if det not in self.psd_dict:
                 raise BilbyPipeError(f"Detector {det} not listed in the psd-dict")
 
-        # Check all PSD files exist
         for det, psd_file in self.psd_dict.items():
-            if filename := resolve_filename_with_transfer_fallback(psd_file):
+            if psd_file is None:
+                continue
+            elif psd_file == "None":
+                self.psd_dict[det] = None
+            elif filename := resolve_filename_with_transfer_fallback(psd_file):
                 self.psd_dict[det] = filename
-                return
             elif check_if_psd_is_from_built_in(psd_file):
-                return
+                continue
             else:
                 raise BilbyPipeError(
                     f"PSD file {psd_file} for detector {det} does not exist"
@@ -1593,25 +1599,38 @@ class Input(object):
 
     @data_dict.setter
     def data_dict(self, data_dict):
-        if data_dict is None and getattr(self, "transfer_files", False):
+        if isinstance(data_dict, str):
+            data_dict = convert_string_to_dict(data_dict, "data-dict")
+        if getattr(self, "transfer_files", False):
             data = dict()
+            if data_dict is not None:
+                data.update(data_dict)
             for det in self.detectors:
+                if det in data:
+                    continue
                 frames = glob.glob(f"{det[0]}*.gwf")
                 if len(frames) > 0:
                     data[det] = frames
-                else:
-                    self._data_dict = None
-                    return
             self._data_dict = data
         elif data_dict is None:
             logger.debug("data-dict set to None")
             self._data_dict = None
-        elif isinstance(data_dict, str):
-            self._data_dict = convert_string_to_dict(data_dict, "data-dict")
         elif isinstance(data_dict, dict):
             self._data_dict = data_dict
         else:
             raise BilbyPipeError(f"Input data-dict={data_dict} not understood")
+
+    @property
+    def channel_dict(self):
+        return self._channel_dict
+
+    @channel_dict.setter
+    def channel_dict(self, channel_dict):
+        if channel_dict is not None:
+            self._channel_dict = convert_string_to_dict(channel_dict, "channel-dict")
+        else:
+            logger.debug("channel-dict set to None")
+            self._channel_dict = None
 
     @property
     def frame_type_dict(self):

@@ -66,8 +66,10 @@ def generate_dag(inputs):
             # lookup table) are only built once.
             kwargs["parent"] = generation_node_list[0]
             # The start time is automatically set based on the trigger time
+            # when working with real data
             # and so needs to be reset after each generation node is created
-            del inputs._start_time
+            if hasattr(inputs, "_start_time"):
+                del inputs._start_time
         generation_node = GenerationNode(inputs, **kwargs)
         generation_node_list.append(generation_node)
 

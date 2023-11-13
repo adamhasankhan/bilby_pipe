@@ -27,7 +27,9 @@ class Dag(object):
 
     def setup_pycondor_dag(self):
         self.pycondor_dag = pycondor.Dagman(
-            name=self.dag_name, submit=self.submit_directory
+            name=self.dag_name,
+            submit=self.submit_directory,
+            extra_lines=["ENV GET HTGETTOKENOPTS"],
         )
 
     def build(self):
