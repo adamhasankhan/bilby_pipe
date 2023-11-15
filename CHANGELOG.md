@@ -1,7 +1,27 @@
 # All notable changes will be documented in this file
 
+## v1.3.0 2023-11-13
+See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.3.0)
+
+This release makes some significant changes to the internals of how data generation happens.
+More details can be found in the [online docs](https://docs.ligo.org/lscsoft/bilby_pipe/master).
+In general, when analyzing publicly available data, specifying, e.g., `channel-dict={H1: GWOSC}` will find the relevant data.
+
+### Added
+- Pass `HTGETTOKENOPTS` in dag file to enable robot/reduced scope credentials.
+- Allow `bilby_pipe_gracedb` to query open data from `GWOSC`.
+
+### Changes
+- Don't require scitokens when they aren't needed by the job.
+- `bilby_pipe_gracedb` will now grab enough data to create a PSD when not available from `GraceDb`.
+- Fix passing environment variables through the config file.
+
+### Removed
+- No longer explicitly pass x509 credentials to gracedb. Users should make sure relevant scitoken authentication is set up.
+- Remove function to find th default frame type and use gwpy version instead.
+
 ## v1.2.1 2023-09-10
-See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.2.0)
+See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.2.1)
 
 This MR contains changes required to support HTCondor >= 10.7.1 and the scitokens authentication system.
 Most significantly, environment variables can now be generically and explicitly defined.
