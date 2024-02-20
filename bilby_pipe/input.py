@@ -1197,14 +1197,16 @@ class Input(object):
         )
 
         if likelihood_kwargs.get("update_fiducial_parameters", False):
-            for key in self.calibration_prior:
-                self.search_priors[key] = self.calibration_prior[key].rescale(0.5)
+            if self.calibration_prior is not None:
+                for key in self.calibration_prior:
+                    self.search_priors[key] = self.calibration_prior[key].rescale(0.5)
 
         likelihood = Likelihood(**likelihood_kwargs)
 
         if likelihood_kwargs.get("update_fiducial_parameters", False):
-            for key in self.calibration_prior:
-                self.search_priors[key] = self.calibration_prior[key]
+            if self.calibration_prior is not None:
+                for key in self.calibration_prior:
+                    self.search_priors[key] = self.calibration_prior[key]
 
         # If requested, use a zero likelihood: for testing purposes
         if self.likelihood_type == "zero":
