@@ -652,43 +652,50 @@ def _choose_xphm_roq(chirp_mass):
         "spin_template": "precessing",
     }
     roq_dir = "/home/roq/IMRPhenomXPHM"
-    if 200.0 > chirp_mass > 45:
-        basis = os.path.join(roq_dir, "basis_4s.hdf5")
-        likelihood_parameter_bounds["chirp_mass_min"] = 29.9
-        likelihood_parameter_bounds["chirp_mass_max"] = 199.9
-        duration = 4
-    elif chirp_mass > 25:
-        basis = os.path.join(roq_dir, "basis_8s.hdf5")
+    if chirp_mass > 25:
+        likelihood_args = {
+            "likelihood_type": "GravitationalWaveTransient",
+            "waveform_approximant": "IMRPhenomXPHM",
+            "reference_frequency": 20,
+            "phase_marginalization": False,
+            "enforce_signal_duration": False,
+            "time_marginalization": True,
+            "jitter_time": True,
+        }
         likelihood_parameter_bounds["chirp_mass_min"] = 18.8
-        likelihood_parameter_bounds["chirp_mass_max"] = 62.8
+        likelihood_parameter_bounds["chirp_mass_max"] = 200
         duration = 8
-    elif chirp_mass > 16:
-        basis = os.path.join(roq_dir, "basis_16s.hdf5")
-        likelihood_parameter_bounds["chirp_mass_min"] = 12.8
-        likelihood_parameter_bounds["chirp_mass_max"] = 31.8
-        duration = 16
-    elif chirp_mass > 10.03:
-        basis = os.path.join(roq_dir, "basis_32s.hdf5")
-        likelihood_parameter_bounds["chirp_mass_min"] = 10.03
-        likelihood_parameter_bounds["chirp_mass_max"] = 19.04
-        duration = 32
     else:
-        raise ValueError(
-            f"No IMRPhenomXPHM basis has been found for chirp_mass={chirp_mass}!"
-        )
-    logger.info(f"The selected ROQ basis file is {basis}.")
-
-    return (
-        {
+        likelihood_args = {
             "likelihood_type": "ROQGravitationalWaveTransient",
-            "roq_linear_matrix": basis,
-            "roq_quadratic_matrix": basis,
             "roq_scale_factor": 1,
             "waveform_approximant": "IMRPhenomXPHM",
             "reference_frequency": 20,
             "phase_marginalization": False,
             "enforce_signal_duration": False,
-        },
+        }
+        if chirp_mass > 16:
+            basis = os.path.join(roq_dir, "basis_16s.hdf5")
+            likelihood_args["roq_linear_matrix"] = basis
+            likelihood_args["roq_quadratic_matrix"] = basis
+            likelihood_parameter_bounds["chirp_mass_min"] = 12.8
+            likelihood_parameter_bounds["chirp_mass_max"] = 31.8
+            duration = 16
+        elif chirp_mass > 10.03:
+            basis = os.path.join(roq_dir, "basis_32s.hdf5")
+            likelihood_args["roq_linear_matrix"] = basis
+            likelihood_args["roq_quadratic_matrix"] = basis
+            likelihood_parameter_bounds["chirp_mass_min"] = 10.03
+            likelihood_parameter_bounds["chirp_mass_max"] = 19.04
+            duration = 32
+        else:
+            raise ValueError(
+                f"No IMRPhenomXPHM basis has been found for chirp_mass={chirp_mass}!"
+            )
+        logger.info(f"The selected ROQ basis file is {basis}.")
+
+    return (
+        likelihood_args,
         likelihood_parameter_bounds,
         20,
         4096,

@@ -603,23 +603,22 @@ class TestLikelihoodSettings(unittest.TestCase):
 
         self.assertEqual(likelihood_args["waveform_approximant"], "IMRPhenomXPHM")
 
-        if 200.0 > chirp_mass > 45:
-            duration_ans = 4
-        elif chirp_mass > 25:
-            duration_ans = 8
-        elif chirp_mass > 16:
-            duration_ans = 16
-        elif chirp_mass > 10.03:
-            duration_ans = 32
-        self.assertEqual(duration, duration_ans)
-        self.assertEqual(
-            os.path.basename(likelihood_args["roq_linear_matrix"]),
-            f"basis_{duration_ans}s.hdf5",
-        )
-        self.assertEqual(
-            os.path.basename(likelihood_args["roq_quadratic_matrix"]),
-            f"basis_{duration_ans}s.hdf5",
-        )
+        if chirp_mass > 25:
+            self.assertEqual(duration, 8)
+        else:
+            if chirp_mass > 16:
+                duration_ans = 16
+            elif chirp_mass > 10.03:
+                duration_ans = 32
+            self.assertEqual(
+                os.path.basename(likelihood_args["roq_linear_matrix"]),
+                f"basis_{duration_ans}s.hdf5",
+            )
+            self.assertEqual(
+                os.path.basename(likelihood_args["roq_quadratic_matrix"]),
+                f"basis_{duration_ans}s.hdf5",
+            )
+            self.assertEqual(duration, duration_ans)
 
 
 if __name__ == "__main__":
