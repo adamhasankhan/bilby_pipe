@@ -97,6 +97,54 @@ def read_from_gracedb(gracedb, gracedb_url, outdir):
     return event
 
 
+def download_bayestar_skymap(gracedb, gracedb_url, outdir):
+    """
+    Download bayestar skymap from GraceDB
+
+    Parameters
+    ----------
+    gracedb: str
+        GraceDB id of event
+    gracedb_url: str
+        Service url for GraceDB events
+        GraceDB 'https://gracedb.ligo.org/api/' (default)
+        GraceDB-playground 'https://gracedb-playground.ligo.org/api/'
+    outdir: str
+        Output directory
+
+    Returns
+    -------
+    skymap_file: str
+        Name of downloaded fits file
+
+    """
+    from urllib.error import HTTPError
+
+    from ligo.gracedb.rest import GraceDb
+
+    test_connection()
+
+    logger.info(f"Connecting to {gracedb_url}")
+    try:
+        client = GraceDb(service_url=gracedb_url)
+    except IOError:
+        logger.warning("Failed to connect to GraceDB")
+        raise
+    logger.info(f"Requesting bayestar.multiorder.fits for {gracedb}")
+    try:
+        data = client.files(gracedb, filename="bayestar.multiorder.fits")
+        skymap_file = f"{outdir}/bayestar.multiorder.fits"
+        with open(skymap_file, "wb") as ff:
+            ff.write(data.data)
+    except HTTPError:
+        logger.warning(
+            "Failed to download bayestar.multiorder.fits. Distance maximum "
+            "will be set to the default value."
+        )
+        skymap_file = None
+    return skymap_file
+
+
 def extract_psds_from_xml(coinc_file, ifos, outdir="."):
     from gwpy.frequencyseries import FrequencySeries
 
@@ -283,6 +331,34 @@ def _read_burst_candidate(candidate):
     trigger_time = candidate["gpstime"]
     ifos = candidate["extra_attributes"]["MultiBurst"]["ifos"].split()
     return central_frequency, superevent, trigger_time, ifos
+
+
+def _read_distance_upper_bound_from_fits(filename, level=0.95):
+    """Read skymap fits file and return the credible upper bound of distance.
+    If ligo.skymap is not installed, this returns None.
+
+    Parameters
+    ----------
+    filename: str
+    level: float
+
+    Returns
+    -------
+    upper_bound: float
+
+    """
+    try:
+        from ligo.skymap.distance import marginal_ppf
+        from ligo.skymap.io import read_sky_map
+    except ImportError:
+        logger.warning(
+            "You do not have ligo.skymap installed. The distance prior maximum will "
+            "be set to the default value."
+        )
+        return None
+
+    (prob, mu, sigma, norm), metadata = read_sky_map(filename, distances=True)
+    return marginal_ppf(level, prob, mu, sigma, norm)
 
 
 def _get_cbc_likelihood_args(mode, trigger_values):
@@ -979,6 +1055,7 @@ def prepare_run_configurations(
     psd_cut=0.95,
     query_kafka=True,
     replay=False,
+    recommended_distance_max=None,
 ):
     """Creates ini file from defaults and candidate contents
 
@@ -1014,6 +1091,9 @@ def prepare_run_configurations(
     replay: bool
         Whether to try to fetch O3ReplayMDC data from the kafka directory. Only
         relevant if query_kafka = True.
+    recommended_distance_max: float
+        Recommended prior maximum of luminosity distance in unit of Mpc. If it
+        is None, the maximum falls back to the default value.
 
     Returns
     -------
@@ -1056,6 +1136,7 @@ def prepare_run_configurations(
             outdir,
             fast_test=(sampler_kwargs == "FastTest"),
             phase_marginalization=likelihood_args.get("phase_marginalization", True),
+            recommended_distance_max=recommended_distance_max,
         )
 
         calibration_model, calib_dict = calibration_dict_lookup(trigger_time, ifos)
@@ -1299,6 +1380,7 @@ def generate_cbc_prior_from_template(
     outdir,
     fast_test=False,
     phase_marginalization=True,
+    recommended_distance_max=None,
 ):
     """Generate a cbc prior file from a template and write it to file. This
     returns the paths to the prior file and the corresponding distance look-up
@@ -1311,6 +1393,7 @@ def generate_cbc_prior_from_template(
     outdir: str
     fast_test: bool (optional, default is False)
     phase_marginalization: bool (optional, default is True)
+    recommended_distance_max: float (default: None)
 
     Returns
     -------
@@ -1351,6 +1434,13 @@ def generate_cbc_prior_from_template(
     distance_bounds, lookup_table = _get_distance_lookup(
         chirp_mass, phase_marginalization=phase_marginalization
     )
+    d_min, d_max = distance_bounds
+    if recommended_distance_max is not None and d_max < recommended_distance_max:
+        d_max *= np.ceil(recommended_distance_max / d_max)
+        distance_bounds = (d_min, d_max)
+        lookup_table = os.path.join(
+            outdir, f"distance-marginalization-lookup-{int(d_max)}.npz"
+        )
 
     if fast_test:
         template = os.path.join(
@@ -1475,6 +1565,25 @@ def create_parser():
         "--psd-file",
         type=str,
         help="Path to ligolw-xml file containing the PSDs for the interferometers.",
+    )
+    parser.add_argument(
+        "--skymap-file",
+        type=str,
+        default=None,
+        help=(
+            "Path to fits file containing distance PDF. This is used to set \n"
+            "prior bound of distance"
+        ),
+    )
+    parser.add_argument(
+        "--disable-skymap-download",
+        action="store_true",
+        default=False,
+        help=(
+            "If no arguments are passed to --skymap-file, skymap is downloaded \n"
+            "from GraceDB to determine the prior maximum of distance. This \n"
+            "option can disable it to use the default distance maximum values."
+        ),
     )
     parser.add_argument(
         "--convert-to-flat-in-component-mass",
@@ -1622,6 +1731,21 @@ def main(args=None, unknown_args=None):
     else:
         raise BilbyPipeError("Either gracedb ID or json file must be provided.")
 
+    if args.skymap_file is not None:
+        skymap_file = args.skymap_file
+    elif not args.disable_skymap_download and args.gracedb:
+        skymap_file = download_bayestar_skymap(gracedb, gracedb_url, outdir)
+    else:
+        skymap_file = None
+    if skymap_file is not None:
+        recommended_distance_max = _read_distance_upper_bound_from_fits(
+            skymap_file, level=0.95
+        )
+        if recommended_distance_max is not None:
+            recommended_distance_max *= 2
+    else:
+        recommended_distance_max = None
+
     if args.webdir is not None:
         webdir = args.webdir
     else:
@@ -1652,6 +1776,7 @@ def main(args=None, unknown_args=None):
         settings=args.settings,
         query_kafka=args.query_kafka,
         replay=replay,
+        recommended_distance_max=recommended_distance_max,
     )
 
     if args.output == "ini":
