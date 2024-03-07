@@ -169,14 +169,12 @@ example-ini-file-pesummary:
 example-ini-file-gracedb:
   stage: test
   image: $PRIMARY_IMAGE
-  only:
-    - schedules
   script:
     - source activate python$PRIMARY_VERSION
     - pip install --upgrade bilby pesummary
     - pip install .
     - bilby_pipe_gracedb --json examples/gracedb/G298936.json --local --bilby-test-mode --cbc-likelihood-mode test --output full-submit --settings examples/gracedb/settings.json --n-parallel 1 --channel-dict gwosc --query-kafka False
-    - if [[ ! -f outdir_G298936/results_page/home.html ]] ; then exit 1; else echo "Webpage exists"; fi
+    - if [[ ! -f outdir_G298936/final_result/G298936_data0_1187529256-5179033_analysis_H1L1_result.hdf5 ]] ; then exit 1; else echo "Final result exists"; fi
 
 
 # ------------------- Docs stage -------------------------------------------
@@ -196,7 +194,7 @@ docs:
     - pip install -r requirements.txt
     - make clean
     - bilby_pipe_write_default_ini default.ini
-    - bilby_pipe_gracedb --json ../examples/gracedb/G298936.json --output ini --settings ../examples/gracedb/settings.json --outdir . --cbc-likelihood-mode test
+    - bilby_pipe_gracedb --json ../examples/gracedb/G298936.json --output ini --settings ../examples/gracedb/settings.json --outdir . --cbc-likelihood-mode test --channel-dict gwosc --query-kafka False
     - git status
     - git branch
     - git tag
