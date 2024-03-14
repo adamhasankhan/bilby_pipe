@@ -195,8 +195,69 @@ def read_from_json(json_file):
     return candidate
 
 
-def calibration_lookup(trigger_time, detector):
-    """Lookup function for the relevant calibration file
+def calibration_lookup_o4(trigger_time, detector):
+    """
+    Lookup function for the relevant calibration file for O4 data
+
+    Assumes that it is running on CIT where the calibration files are stored
+    under /home/cal/public_html/archive for the LIGO instruments and a uniform
+    in magnitude, time, and phase calibration envelope for Virgo.
+
+    We search the available estimates in reverse chronological order and
+    take the closest available estimate to the specified trigger time.
+    We only look for v0 calibration uncertainty and may not be the best
+    estimate for offline analyses.
+
+    Parameters
+    ----------
+    trigger_time: float
+        The trigger time of interest
+    detector: str [H1, L1, V1]
+        Detector string
+
+    Returns
+    -------
+    filepath: str
+        The path to the relevant calibration envelope file. If no calibration
+        file can be determined, None is returned.
+
+    """
+    if detector == "V1":
+        # FIXME: update path if Virgo provides a new uncertainty
+        return (
+            "/home/cbc/pe/O3/calibrationenvelopes/Virgo/"
+            "V_O3a_calibrationUncertaintyEnvelope_"
+            "magnitude5percent_phase35milliradians10microseconds.txt"
+        )
+
+    base = f"/home/cal/public_html/archive/{detector}/uncertainty/v0"
+    epochs = [int(epoch) for epoch in os.listdir(base) if epoch.isnumeric()]
+    epochs.sort(reverse=True)
+
+    previous = np.inf
+    for epoch in epochs:
+        times = [int(str(epoch) + tt) for tt in os.listdir(f"{base}/{epoch}")]
+        times.sort(reverse=True)
+        for tt in times:
+            if trigger_time > tt:
+                if abs(trigger_time - tt) > abs(trigger_time - previous):
+                    tt = previous
+                end = int(tt % 1e6)
+                calib_file = (
+                    f"{base}/{epoch}/{end}/calibration_uncertainty_{detector}_{tt}.txt"
+                )
+                return os.path.abspath(calib_file)
+            previous = tt
+
+    raise BilbyPipeError(
+        "Requested trigger time prior to earliest calibration file, you may need to "
+        "use the calibration_lookup_o3."
+    )
+
+
+def calibration_lookup_o3(trigger_time, detector):
+    """
+    Lookup function for the relevant calibration file for O3 data
 
     Assumes that it is running on CIT where the calibration files are stored
     under /home/cbc/pe/O3/calibrationenvelopes
@@ -215,7 +276,6 @@ def calibration_lookup(trigger_time, detector):
         file can be determined, None is returned.
 
     """
-    # FIXME: point to updated calibration envelopes
     base = "/home/cbc/pe/O3/calibrationenvelopes"
     CALENVS_LOOKUP = dict(
         H1=os.path.join(base, "LIGO_Hanford/H_CalEnvs.txt"),
@@ -248,6 +308,34 @@ def calibration_lookup(trigger_time, detector):
     return os.path.abspath(calib_file)
 
 
+def calibration_lookup(trigger_time, detector):
+    """
+    Lookup function for the relevant calibration file.
+    This is a wrapper to the O3 and O4 specific functions.
+
+    Parameters
+    ----------
+    trigger_time: float
+        The trigger time of interest
+    detector: str [H1, L1, V1]
+        Detector string
+
+    Returns
+    -------
+    filepath: str
+        The path to the relevant calibration envelope file. If no calibration
+        file can be determined, None is returned.
+
+    """
+    if trigger_time > 1275004818:  # June 1, 2020
+        func = calibration_lookup_o4
+    elif trigger_time > 1198800018:  # January 1, 2018
+        func = calibration_lookup_o3
+    else:
+        raise BilbyPipeError("Calibration lookup function not implemented for O1/O2")
+    return func(trigger_time, detector)
+
+
 def calibration_dict_lookup(trigger_time, detectors):
     """Dictionary lookup function for the relevant calibration files
 
@@ -264,7 +352,6 @@ def calibration_dict_lookup(trigger_time, detectors):
         Calibration model string and dictionary of paths to the relevant
         calibration envelope file.
     """
-
     try:
         calibration_dict = {
             det: calibration_lookup(trigger_time, det) for det in detectors
