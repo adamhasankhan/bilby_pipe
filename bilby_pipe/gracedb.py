@@ -523,8 +523,7 @@ def _choose_phenompv2_bbh_roq(chirp_mass, ignore_no_params=False):
     likelihood_parameter_bounds = {"spin_template": "precessing"}
     if chirp_mass > 35:
         likelihood_args["likelihood_type"] = "GravitationalWaveTransient"
-        likelihood_args["time_marginalization"] = True
-        likelihood_args["jitter_time"] = True
+        likelihood_args["time_marginalization"] = False
         likelihood_parameter_bounds["chirp_mass_min"] = 25
         likelihood_parameter_bounds["chirp_mass_max"] = 200
         likelihood_parameter_bounds["mass_ratio_min"] = 0.125
@@ -822,8 +821,7 @@ def _choose_xphm_roq(chirp_mass):
             "reference_frequency": 20,
             "phase_marginalization": False,
             "enforce_signal_duration": False,
-            "time_marginalization": True,
-            "jitter_time": True,
+            "time_marginalization": False,
         }
         likelihood_parameter_bounds["chirp_mass_min"] = 18.8
         likelihood_parameter_bounds["chirp_mass_max"] = 200
