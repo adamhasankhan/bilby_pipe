@@ -1,5 +1,16 @@
 # All notable changes will be documented in this file
 
+## v1.3.1 2024-03-15
+See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.3.1)
+
+This is a release with minor updates to the online running configuration for the ongoing observing run.
+
+### Changes
+- Merge the 4s and 8s chirp mass bins to reduce prior railing (!590).
+- Automatically set the distance prior bounds using Bayestar skymaps when available (!588).
+- Update the logic for choosing calibration envelopes (!568).
+- Make sure the start and end times for online frames consistent across methods (!595).
+
 ## v1.3.0 2023-11-13
 See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.3.0)
 
