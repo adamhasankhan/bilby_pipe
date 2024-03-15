@@ -1055,13 +1055,15 @@ def copy_and_save_data(
         None, if data were not able to be obtained for all ifos.
     """
     ifo_data = dict()
+    start_time = int(start_time)
+    end_time = int(end_time)
     for ifo in ifos:
         channel = f"{ifo}:{channel_dict[ifo]}"
         if query_kafka:
             try:
                 logger.info(f"Querying kafka directory for {ifo} data")
                 data = read_and_concat_data_from_kafka(
-                    ifo, int(start_time), int(end_time), channel=channel, replay=replay
+                    ifo, start_time, end_time, channel=channel, replay=replay
                 )
             except FileNotFoundError:
                 if channel.endswith("GWOSC-STRAIN"):
@@ -1069,7 +1071,7 @@ def copy_and_save_data(
                         "Failed to load kafka data, calling TimeSeries.fetch_open_data"
                     )
                     data = TimeSeries.fetch_open_data(
-                        ifo=ifo, start=int(start_time), end=int(end_time)
+                        ifo=ifo, start=start_time, end=end_time
                     )
                     data.name = channel
                     data.channel = channel
@@ -1084,9 +1086,7 @@ def copy_and_save_data(
                         n_attempts=n_attempts,
                     )
         elif channel.endswith("GWOSC-STRAIN"):
-            data = TimeSeries.fetch_open_data(
-                ifo=ifo, start=int(start_time), end=int(end_time)
-            )
+            data = TimeSeries.fetch_open_data(ifo=ifo, start=start_time, end=end_time)
             data.name = channel
             data.channel = channel
         else:
