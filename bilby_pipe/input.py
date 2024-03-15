@@ -1295,7 +1295,7 @@ class Input(object):
     def parameter_conversion(self):
         cf = self.conversion_function
 
-        _lookups = dict(noconvert=None)
+        _lookups = dict(noconvert=bilby.gw.conversion.identity_map_conversion)
 
         if isinstance(cf, str) and cf.lower() in _lookups:
             logger.info(f"Using conversion function {cf} from lookups")
