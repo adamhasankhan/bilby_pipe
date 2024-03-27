@@ -57,6 +57,7 @@ class MainInput(Input):
         self.accounting = args.accounting
         self.accounting_user = args.accounting_user
         self.sampler = args.sampler
+        self.sampling_seed = args.sampling_seed
         self.detectors = args.detectors
         self.coherence_test = args.coherence_test
         self.data_dict = args.data_dict

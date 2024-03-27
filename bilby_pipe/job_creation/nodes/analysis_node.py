@@ -64,6 +64,11 @@ class AnalysisNode(Node):
         self.arguments.add("label", self.label)
         self.arguments.add("data-dump-file", generation_node.data_dump_file)
         self.arguments.add("sampler", sampler)
+        if self.parallel_idx and self.inputs.sampling_seed:
+            self.arguments.add(
+                "sampling-seed",
+                str(int(self.inputs.sampling_seed) + int(self.parallel_idx[3:])),
+            )
 
         self.extra_lines.extend(self._checkpoint_submit_lines())
 
@@ -140,6 +145,15 @@ def touch_checkpoint_files(directory, label, sampler, result_format="hdf5"):
         check_directory_exists_and_if_not_mkdir(directory=dirname)
         filenames.append(dirname)
         subdirectories = ["proposal", "diagnostics"]
+        for sd in subdirectories:
+            subdir = os.path.join(dirname, sd)
+            check_directory_exists_and_if_not_mkdir(subdir)
+            filenames.append(dirname)
+    elif sampler.lower() == "inessai":
+        dirname = f"{directory}/{label}_nessai"
+        check_directory_exists_and_if_not_mkdir(directory=dirname)
+        filenames.append(dirname)
+        subdirectories = ["levels"]
         for sd in subdirectories:
             subdir = os.path.join(dirname, sd)
             check_directory_exists_and_if_not_mkdir(subdir)
