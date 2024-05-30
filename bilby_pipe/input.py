@@ -652,7 +652,7 @@ class Input(object):
 
     @staticmethod
     def read_dat_injection_file(injection_file):
-        return pd.read_csv(injection_file, delim_whitespace=True)
+        return pd.read_csv(injection_file, sep=r"\s+")
 
     @property
     def spline_calibration_envelope_dict(self):
