@@ -242,11 +242,12 @@ def calibration_lookup_o4(trigger_time, detector):
             if trigger_time > tt:
                 if abs(trigger_time - tt) > abs(trigger_time - previous):
                     tt = previous
-                end = int(tt % 1e6)
+                end = str(tt)[-6:]
                 calib_file = (
                     f"{base}/{epoch}/{end}/calibration_uncertainty_{detector}_{tt}.txt"
                 )
-                return os.path.abspath(calib_file)
+                if os.path.exists(calib_file):
+                    return os.path.abspath(calib_file)
             previous = tt
 
     raise BilbyPipeError(
