@@ -1,5 +1,15 @@
 # All notable changes will be documented in this file
 
+## v1.3.2 2024-05-31
+See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.3.2)
+
+This is a bugfix release primarily to address an issue with resolving calibration envelopes for online PE.
+
+### Changes
+- Make sure the sampling seed is set to a different value for each parallel analysis (this doesn't directly impact default running conditions) (!587)
+- Address a pandas deprecation warning (!601)
+- Fix the logic for finding calibration files (!602) 
+
 ## v1.3.1 2024-03-15
 See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.3.1)
 
