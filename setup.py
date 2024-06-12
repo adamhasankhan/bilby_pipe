@@ -60,7 +60,7 @@ setup(
         "tqdm",
         "corner",
         "dynesty>=1.0.0",
-        "pesummary>=0.13.10",
+        "pesummary>=1.3.1",
         "seaborn",
         "jinja2",
         "astropy",
