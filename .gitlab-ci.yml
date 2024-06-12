@@ -162,7 +162,6 @@ example-ini-file-pesummary:
     - source activate python$PRIMARY_VERSION
     - pip install --upgrade bilby pesummary seaborn>=0.11
     - pip install .
-    - pip install pycbc
     - cd tests/
     - bilby_pipe test_pesummary.ini --local --bilby-test-mode
     - exit
