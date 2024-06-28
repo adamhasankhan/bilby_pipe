@@ -1,5 +1,21 @@
 # All notable changes will be documented in this file
 
+## v1.4.0 2024-06-28
+See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.4.0)
+
+This release addresses new authentication methods for accessing proprietary LVK data (!607).
+See the [LVK computing docs](https://computing.docs.ligo.org/guide/htcondor/credentials/) for details.
+
+### Added
+- Specify whether to run data generation jobs via the IGWN pool or the local cluster
+
+### Changes
+- Use the `GWDATAFIND_SERVER` environment variable when set.
+- Support the local and IGWN scitoken issuer models with HTCondor.
+
+### Deprecated
+- The `local-generation` argument is deprecated in favour of `generation-pool=local`.
+
 ## v1.3.2 2024-05-31
 See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.3.2)
 
