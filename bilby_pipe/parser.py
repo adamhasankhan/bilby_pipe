@@ -249,8 +249,14 @@ def create_parser(top_level=True):
     )
     data_gen_pars.add(
         "--data-find-url",
-        default="https://datafind.ligo.org",
-        help="URL to use for datafind, default is https://datafind.ligo.org to query CVMFS",
+        default="https://datafind.igwn.org",
+        help=(
+            "URL to use for datafind. This happens during the initial attempt "
+            "to locate frames by :code:`bilby_pipe` or by "
+            ":code:`bilby_pipe_generation`. For the former case, the default value "
+            "is overridden by the GWDATAFIND_SERVER environment variable. For the "
+            "latter case, this value is used unless specified in --env or --getenv."
+        ),
     )
     data_gen_pars.add(
         "--data-find-urltype",
@@ -479,11 +485,22 @@ def create_parser(top_level=True):
     submission_parser.add(
         "--local-generation",
         action="store_true",
+        help="DEPRECATED: use --generation-pool local to reproduce this.",
+    )
+    submission_parser.add(
+        "--generation-pool",
+        default="local-pool",
+        choices=["local", "local-pool", "igwn-pool"],
         help=(
-            "Run the data generation job locally. This may be useful for "
-            "running on a cluster where the compute nodes do not have "
-            "internet access. For HTCondor, this is done using the local "
-            "universe, for slurm, the jobs will be run at run-time"
+            "Where to run the data generation job. Options are [local-pool, "
+            "local, igwn-pool]. If local-pool, the data generation job is "
+            "submitted to the local HTCondor pool. If local, the data "
+            "generation job is run on the submit node. If igwn-pool, the "
+            "data generation job is submitted to the IGWN HTCondor pool (osg)"
+            " if the submit node has access to the IGWN pool. In general, "
+            "the igwn-pool should be used when possible, but some large files, "
+            "e.g., ROQ bases may not be available via CVMFS and so the local-pool "
+            "should be used. (default: local-pool)"
         ),
     )
     submission_parser.add(
@@ -687,6 +704,21 @@ def create_parser(top_level=True):
             " with analysis-executable. Note, if this is not provided any"
             " new arguments to analysis-executable will raise a warning, but"
             " they will be passed to the executable directly."
+        ),
+    )
+    submission_parser.add(
+        "--scitoken-issuer",
+        default=None,
+        type=nonestr,
+        choices=[None, "None", "igwn", "local"],
+        help=(
+            "The issuer of the scitoken to use for accessing IGWN proprietary "
+            "data/services. If not given, this is automatically set based on "
+            "the machine being used. This should only be set if you are planning "
+            "to submit from a different machine to the one you are running on. "
+            "The allowed options are :code:`igwn` and :code:`local`. "
+            "For more details see "
+            "https://computing.docs.ligo.org/guide/htcondor/credentials."
         ),
     )
 

@@ -1294,7 +1294,7 @@ def prepare_run_configurations(
         sampler="dynesty",
         sampler_kwargs=sampler_kwargs,
         webdir=webdir,
-        local_generation=False,
+        generation_pool="local-pool",
         local_plot=False,
         transfer_files=False,
         create_summary=False,
