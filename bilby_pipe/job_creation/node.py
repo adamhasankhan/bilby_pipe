@@ -104,22 +104,21 @@ class Node(object):
             self.requirements.append(f"((TARGET.{self.inputs.queue} =?= True))")
 
         if self.universe != "local" and self.inputs.osg:
-            if self.run_node_on_osg:
+            sites = self.inputs.desired_sites
+            if self.run_node_on_osg and sites != "nogrid":
                 _osg_lines, _osg_reqs = self._osg_submit_options(
                     self.executable, has_ligo_frames=False
                 )
                 self.extra_lines.extend(_osg_lines)
-                self.requirements.append(_osg_reqs)
+                self.requirements.extend(_osg_reqs)
             else:
-                osg_local_node_lines = [
-                    "+flock_local = True",
-                    '+DESIRED_Sites = "nogrid"',
-                ]
-                self.extra_lines.extend(osg_local_node_lines)
-
-        if self.run_node_on_osg and self.inputs.desired_sites is not None:
-            self.extra_lines.extend([f'+DESIRED_Sites = "{self.inputs.desired_sites}"'])
-            self.requirements.append("IS_GLIDEIN=?=True")
+                sites = "nogrid"
+            if sites == "nogrid":
+                self.extra_lines.append("MY.flock_local = True")
+                self.extra_lines.append('MY.DESIRED_Sites = "nogrid"')
+            elif sites is not None:
+                self.extra_lines.append(f'MY.DESIRED_Sites = "{sites}"')
+                self.requirements.append("IS_GLIDEIN=?=True")
 
         self.job = pycondor.Job(
             name=job_name,
@@ -214,7 +213,7 @@ class Node(object):
             repo = executable.split(os.path.sep, 3)[2]
             requirements.append(f"(HAS_CVMFS_{re.sub('[.-]', '_', repo)}=?=True)")
 
-        return lines, " && ".join(requirements)
+        return lines, requirements
 
     @property
     def slurm_walltime(self):
@@ -246,6 +245,9 @@ class Node(object):
                 "--environment-variables instead."
             )
             env["HDF5_USE_FILE_LOCKING"] = "FALSE"
+
+        if "GWDATAFIND_SERVER" not in env:
+            env["GWDATAFIND_SERVER"] = self.inputs.data_find_url
         return env
 
 

@@ -277,6 +277,21 @@ class TestBilbyConfigFileParser(unittest.TestCase):
         self.assertEqual(expected_prior, prior)
         self.assertEqual(unknown_args, [])
 
+    def test_scitoken_issuer_fails_for_unknown_value(self):
+        self.write_tempory_ini_file([])
+        args_list = [self.test_ini_filename, "--scitoken-issuer", "test"]
+        with self.assertRaises(SystemExit):
+            parse_args(args_list, self.parser)
+
+    def test_scitoken_issuer_allowed_values(self):
+        self.write_tempory_ini_file([])
+        values = ["None", "igwn", "local"]
+        expected = [None, "igwn", "local"]
+        for value, exp in zip(values, expected):
+            args_list = [self.test_ini_filename, "--scitoken-issuer", value]
+            args = parse_args(args_list, self.parser)[0]
+            assert args.scitoken_issuer == exp
+
 
 if __name__ == "__main__":
     unittest.main()

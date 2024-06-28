@@ -25,6 +25,13 @@ class GenerationNode(Node):
         """
 
         super().__init__(inputs, retry=3)
+        if not inputs.osg and inputs.generation_pool == "igwn-pool":
+            raise BilbyPipeError(
+                "Generation job requested to use the igwn-pool "
+                "(OSG, --generation-pool=igwn-pool), but --osg=False"
+            )
+        else:
+            self.run_node_on_osg = inputs.generation_pool == "igwn-pool"
         self.inputs = inputs
         self.trigger_time = trigger_time
         self.inputs.trigger_time = trigger_time
@@ -68,7 +75,8 @@ class GenerationNode(Node):
                     fname
                 ):
                     need_scitokens = True
-                    input_files_to_transfer[ii] = f"igwn+{fname}"
+                    prefix = self.authenticated_file_prefix
+                    input_files_to_transfer[ii] = f"{prefix}{fname}"
 
             self.extra_lines.extend(
                 self._condor_file_transfer_lines(
@@ -91,7 +99,7 @@ class GenerationNode(Node):
                 f"remove a prefix, e.g., file://localhost.\n\t{new_frames}"
             )
         if need_scitokens:
-            self.extra_lines.extend(self.igwn_scitoken_lines)
+            self.extra_lines.extend(self.scitoken_lines)
 
         self.process_node()
         if parent:
@@ -148,6 +156,9 @@ class GenerationNode(Node):
                     or self.inputs.psd_dict.get(det, None) is None
                 ):
                     start_time -= self.inputs.psd_duration
+                datafind_server = os.environ.get(
+                    "GWDATAFIND_SERVER", self.inputs.data_find_url
+                )
                 if det not in data:
                     channel_name = self.inputs.channel_dict[det]
                     if not channel_name.startswith(f"{det}:"):
@@ -156,7 +167,7 @@ class GenerationNode(Node):
                         channel_name,
                         start_time,
                         end_time,
-                        host=self.inputs.data_find_url,
+                        host=datafind_server,
                     )
                 else:
                     frame_type = data[det]
@@ -165,7 +176,7 @@ class GenerationNode(Node):
                     gpsstart=start_time,
                     gpsend=end_time,
                     urltype=self.inputs.data_find_urltype,
-                    host=self.inputs.data_find_url,
+                    host=datafind_server,
                     on_gaps="error",
                     frametype=frame_type,
                 )
@@ -248,17 +259,62 @@ class GenerationNode(Node):
         return any(path in fname for path in proprietary_paths)
 
     @property
-    def igwn_scitoken_lines(self):
-        permissions = list()
-        if any(det in self.inputs.detectors for det in ["H1", "L1"]):
-            permissions.append("read:/ligo")
-        if "V1" in self.inputs.detectors:
-            permissions.append("read:/virgo")
-        if "K1" in self.inputs.detectors:
-            permissions.append("read:/kagra")
-        if not (self.inputs.transfer_files or self.inputs.osg):
-            permissions.append("gwdatafind.read")
-        return [
-            "use_oauth_services = igwn",
-            f"igwn_oauth_permissions = {' '.join(permissions)}",
-        ]
+    def scitoken_lines(self):
+        """
+        Additional lines needed for the submit file to enable access to
+        proprietary files/services. Note that we do not support scoped tokens.
+        This is determined by the method used to issue the scitokens. For more details
+        see `here <https://computing.docs.ligo.org/guide/htcondor/credentials>`_.
+        """
+        issuer = self.scitoken_issuer
+        if issuer is None:
+            return []
+        else:
+            return [f"use_oauth_services = {issuer}"]
+
+    @property
+    def authenticated_file_prefix(self):
+        """
+        Return the prefix to add to files that need authentication. This is
+        determined by the method used to issue the scitokens. For more details see
+        `here <https://computing.docs.ligo.org/guide/htcondor/credentials>`.
+        """
+        if self.scitoken_issuer in [None, "scitokens"]:
+            return ""
+        else:
+            return "igwn+"
+
+    @property
+    def scitoken_issuer(self):
+        """
+        Return the issuer to use for scitokens. This is determined by the :code:`--scitoken-issuer`
+        argument or the version :code:`HTCondor` running on the current machine. For more details
+        see `here <https://computing.docs.ligo.org/guide/htcondor/credentials>`_.
+        """
+        if self.inputs.scheduler.lower() != "condor":
+            return None
+        elif (
+            self.inputs.scitoken_issuer == "local"
+            or _is_htcondor_scitoken_local_issuer()
+        ):
+            return "scitokens"
+        else:
+            return "igwn"
+
+
+def _is_htcondor_scitoken_local_issuer():
+    """
+    Test whether the machine being used is configured to use a local issuer
+    or not. See `here <https://git.ligo.org/lscsoft/bilby_pipe/-/issues/304#note_1033251>`_
+    for where this logic comes from.
+    """
+    try:
+        from htcondor import param
+    except ModuleNotFoundError:
+        logger.warning(
+            "HTCondor python bindings are not installed, assuming local "
+            "issuer for scitokens if using HTCondor."
+        )
+        return True
+
+    return param.get("LOCAL_CREDMON_ISSUER", None) is not None

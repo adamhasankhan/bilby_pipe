@@ -40,7 +40,9 @@ There are four methods that can be used to read data from frame files that proce
 - using :code:`gwpy.timeseries.TimeSeries.get` during the data generation job. This method uses the
   :code:`channel-dict` option and is the legacy method for finding data. If data reading from the above
   methods fails this will be used as the fallback option. It is not recommended to use this method unless
-  the data are not available using the other methods. 
+  the data are not available using the other methods.
+  If you are using this method, you should make sure that the :code:`GWDATAFIND_SERVER` environment variable
+  is passed using the :code:`environment-variables` argument.
 
 .. note::
 
@@ -66,17 +68,43 @@ Authentication
 --------------
 
 Data finding is done using the :code:`scitokens` method.
-We recommend that users consult `this page <https://computing.docs.ligo.org/guide/auth/scitokens/>`_ for
-additional instructions.
+We recommend that users consult this page on
+`scitokens <https://computing.docs.ligo.org/guide/auth/scitokens/>`_ and this one on
+`HTCondor interactions <https://computing.docs.ligo.org/guide/htcondor/credentials/#scitokens>`_
+for additional instructions.
 In order to read proprietary frame files, the user must have a valid scitoken for the detector the
 data comes from.
-The first time submitting a job via `HTCondor` using scitoken authentication, the user should run
-:code:`condor_vault_storer -v "igwn"` and follow the prompts to configure the credentials.
-After this, it should be sufficient to create a kerberos token using :code:`kinit`.
-More fine grained control over the generated token can be done by defining the :code:`HTGETTOKENOPTS`
-environment variable.
-This is especially useful when using robot authentication using the :code:`--role` and :code:`--credkey`
-options.
+The method for accessing these frames depends on the access point being used.
+You can figure out which method is being used as follows:
+
+.. tabs::
+
+  .. tab:: IGWN/vault-issuer
+
+    .. code-block:: bash
+
+      $ condor_config_val LOCAL_CREDMON_ISSUER
+      Not defined: LOCAL_CREDMON_ISSUER
+
+    The first time submitting a job via :code:`HTCondor` using scitoken authentication, the user
+    should run :code:`condor_vault_storer -v "igwn"` and follow the prompts to configure the credentials.
+    After this, it should be sufficient to create a kerberos token using :code:`kinit`.
+    More fine grained control over the generated token can be done by defining the :code:`HTGETTOKENOPTS`
+    environment variable.
+    This is especially useful when using robot authentication using the :code:`--role` and :code:`--credkey`
+    options.
+
+  .. tab:: IGWN/local-issuer
+
+    .. code-block:: bash
+
+      $ condor_config_val LOCAL_CREDMON_ISSUER
+      https://osdf.igwn.org/cit
+
+    In this case, there are no additional steps that are needed.
+
+If you are planning to submit the job from a different machine to the one where you run :code:`bilby_pipe`,
+you can use the :code:`--scitoken-issuer` argument set to either :code:`igwn` or :code:`local`.
 
 When do I need to authenticate?
 -------------------------------

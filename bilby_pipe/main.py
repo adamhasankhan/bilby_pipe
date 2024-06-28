@@ -50,6 +50,7 @@ class MainInput(Input):
         self.submit = args.submit
         self.condor_job_priority = args.condor_job_priority
         self.create_summary = args.create_summary
+        self.scitoken_issuer = args.scitoken_issuer
 
         self.outdir = args.outdir
         self.label = args.label
@@ -105,6 +106,7 @@ class MainInput(Input):
         self.enforce_signal_duration = args.enforce_signal_duration
 
         self.run_local = args.local
+        self.generation_pool = args.generation_pool
         self.local_generation = args.local_generation
         self.local_plot = args.local_plot
 
@@ -429,6 +431,19 @@ class MainInput(Input):
             logger.debug(
                 f"Setting n_simulation={self.n_simulation} to match injections"
             )
+
+    @property
+    def local_generation(self):
+        return self.generation_pool == "local"
+
+    @local_generation.setter
+    def local_generation(self, local_generation):
+        if local_generation:
+            logger.warning(
+                "The local-generation argument is deprecated. "
+                "Use generation-pool=local instead."
+            )
+            self.generation_pool = "local"
 
 
 def write_complete_config_file(parser, args, inputs, input_cls=MainInput):
