@@ -842,7 +842,7 @@ class DataGenerationInput(Input):
             logger.info(f"Setting source={source}")
 
         if "gwf" in format_ext:
-            kwargs = dict(source=source, channel=channel, format="gwf.lalframe")
+            kwargs = dict(source=source, channel=channel)
             type_kwargs = dict(dtype=dtype, subok=True, copy=False)
         elif "hdf5" in format_ext:
             kwargs = dict(source=source, start=start_time, end=end_time, format="hdf5")
