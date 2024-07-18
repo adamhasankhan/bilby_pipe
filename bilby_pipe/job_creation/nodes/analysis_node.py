@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from ...utils import check_directory_exists_and_if_not_mkdir, logger
+from ...utils import check_directory_exists_and_if_not_mkdir
 from ..node import Node
 
 
@@ -107,8 +107,10 @@ def touch_checkpoint_files(directory, label, sampler, result_format="hdf5"):
     """
     Figure out the pathnames required to recover from a checkpoint.
 
-    These may change due to upstream changes in Bilby.
+    Uses the :code:`get_expected_outputs` method for the corresponding sampler
+    class.
     """
+    from bilby.core.sampler import get_sampler_class
 
     def touch_pickle_file(filename):
         import dill
@@ -117,65 +119,30 @@ def touch_checkpoint_files(directory, label, sampler, result_format="hdf5"):
             with open(filename, "wb") as ff:
                 dill.dump(dict(), ff)
 
-    abbreviations = dict(
-        ptmcmcsampler="ptmcmc_temp",
-        pymultinest="pm",
-        ultranest="ultra",
-    )
+    def touch_file(filename):
+        open(filename, "a").close()
 
     check_directory_exists_and_if_not_mkdir(directory=directory)
     result_file = Path(directory) / f"{label}_result.{result_format}"
     result_file.touch()
     filenames = [str(result_file)]
-    if sampler.lower() == "dynesty":
-        for kind in ["resume", "dynesty"]:
-            filename = f"{directory}/{label}_{kind}.pickle"
-            touch_pickle_file(filename)
-            filenames.append(filename)
-    elif sampler.lower() == "bilby_mcmc":
-        filename = f"{directory}/{label}_resume.pickle"
-        touch_pickle_file(filename)
-        filenames.append(filename)
-    elif sampler.lower == "ptemcee":
-        filename = f"{directory}/{label}_checkpoint_resume.pickle"
-        touch_pickle_file(filename)
-        filenames.append(filename)
-    elif sampler.lower() == "nessai":
-        dirname = f"{directory}/{label}_nessai"
-        check_directory_exists_and_if_not_mkdir(directory=dirname)
-        filenames.append(dirname)
-        subdirectories = ["proposal", "diagnostics"]
-        for sd in subdirectories:
-            subdir = os.path.join(dirname, sd)
-            check_directory_exists_and_if_not_mkdir(subdir)
-            filenames.append(dirname)
-    elif sampler.lower() == "inessai":
-        dirname = f"{directory}/{label}_nessai"
-        check_directory_exists_and_if_not_mkdir(directory=dirname)
-        filenames.append(dirname)
-        subdirectories = ["levels"]
-        for sd in subdirectories:
-            subdir = os.path.join(dirname, sd)
-            check_directory_exists_and_if_not_mkdir(subdir)
-            filenames.append(dirname)
 
-    elif sampler.lower() in [
-        "cpnest",
-        "emcee",
-        "kombine",
-        "ultranest",
-        "ptmcmcsampler",
-        "pymultinest",
-        "zeus",
-    ]:
-        name = abbreviations.get(sampler.lower(), sampler.lower())
-        dirname = f"{directory}/{name}_{label}"
+    sampler_filenames, sampler_directories = get_sampler_class(
+        sampler.lower()
+    ).get_expected_outputs(
+        outdir=directory,
+        label=label,
+    )
+
+    for filename in sampler_filenames:
+        if filename.endswith((".pkl", ".pickle")):
+            touch_pickle_file(filename)
+        else:
+            touch_file(filename)
+    filenames += sampler_filenames
+
+    for dirname in sampler_directories:
         check_directory_exists_and_if_not_mkdir(directory=dirname)
-        filenames.append(dirname)
-    elif sampler.lower() == "pypolychord":
-        dirname = f"{directory}/chains"
-        check_directory_exists_and_if_not_mkdir(directory=dirname)
-        filenames.append(dirname)
-    else:
-        logger.warning(f"Unable to predict resume files for {sampler}")
+    filenames += sampler_directories
+
     return filenames
