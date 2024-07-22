@@ -1380,7 +1380,7 @@ class Input(object):
     def parameter_generation(self):
         gf = self.generation_function
 
-        _lookups = dict(noconvert=None)
+        _lookups = dict(noconvert=bilby.gw.conversion.identity_map_generation)
 
         if isinstance(gf, str) and gf.lower() in _lookups:
             logger.info(f"Using generation function {gf} from lookups")
