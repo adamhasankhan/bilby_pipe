@@ -203,11 +203,6 @@ def calibration_lookup_o4(trigger_time, detector):
     under /home/cal/public_html/archive for the LIGO instruments and a uniform
     in magnitude, time, and phase calibration envelope for Virgo.
 
-    We search the available estimates in reverse chronological order and
-    take the closest available estimate to the specified trigger time.
-    We only look for v0 calibration uncertainty and may not be the best
-    estimate for offline analyses.
-
     Parameters
     ----------
     trigger_time: float
@@ -221,6 +216,15 @@ def calibration_lookup_o4(trigger_time, detector):
         The path to the relevant calibration envelope file. If no calibration
         file can be determined, None is returned.
 
+    Notes
+    -----
+    We search the available estimates in reverse chronological order and
+    take the closest available estimate prior to the specified trigger time.
+    We only look for v0 calibration uncertainty and may not be the best
+    estimate for offline analyses.
+
+    The calibration archive sometimes contains directories for epochs that
+    don't contain a usable uncertainty and so those directories are ignored.
     """
     if detector == "V1":
         # FIXME: update path if Virgo provides a new uncertainty
@@ -234,21 +238,17 @@ def calibration_lookup_o4(trigger_time, detector):
     epochs = [int(epoch) for epoch in os.listdir(base) if epoch.isnumeric()]
     epochs.sort(reverse=True)
 
-    previous = np.inf
     for epoch in epochs:
         times = [int(str(epoch) + tt) for tt in os.listdir(f"{base}/{epoch}")]
         times.sort(reverse=True)
         for tt in times:
             if trigger_time > tt:
-                if abs(trigger_time - tt) > abs(trigger_time - previous):
-                    tt = previous
                 end = str(tt)[-6:]
                 calib_file = (
                     f"{base}/{epoch}/{end}/calibration_uncertainty_{detector}_{tt}.txt"
                 )
                 if os.path.exists(calib_file):
                     return os.path.abspath(calib_file)
-            previous = tt
 
     raise BilbyPipeError(
         "Requested trigger time prior to earliest calibration file, you may need to "
