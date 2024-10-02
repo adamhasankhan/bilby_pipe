@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 """
-This a command line tool to prepare bilby results for use with ligo skymap
+This a command line tool to prepare bilby results for use with ligo skymap.
+
+We extract the sky location, distance, time, source-frame masses and aligned spins
+to an HDF5 file.
 """
 import argparse
 import os
@@ -13,15 +16,22 @@ from bilby.core.result import read_in_result
 from .utils import logger
 
 
-def get_args():
+def create_parser():
     parser = argparse.ArgumentParser(
-        prog="bilby_pipe_to_ligo_skymap_samples", description=__doc__
+        prog="bilby_pipe_to_ligo_skymap_samples",
+        description=__doc__,
+        formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_arg("input_file", type=str, help="The bilby file to convert")
     parser.add_arg("-o", "--out", type=str, help="The output hdf5 filename")
     parser.add_arg(
         "-n", "--nsamples", type=int, help="The maximum number of samples", default=None
     )
+    return parser
+
+
+def get_args():
+    parser = create_parser()
     args = parser.parse_args()
     return args
 

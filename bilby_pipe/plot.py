@@ -34,7 +34,10 @@ def create_parser():
         A parser with all the default options already added
 
     """
-    parser = BilbyArgParser(ignore_unknown_config_file_keys=True)
+    parser = BilbyArgParser(
+        description=":code:`bilby_pipe` plotting utilities",
+        ignore_unknown_config_file_keys=True,
+    )
     parser.add("--result", type=str, required=True, help="The result file")
     parser.add("--calibration", action="store_true", help="Generate calibration plot")
     parser.add("--corner", action="store_true", help="Generate corner plots")

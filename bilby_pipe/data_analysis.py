@@ -365,14 +365,17 @@ class DataAnalysisInput(Input):
         )
 
 
-def create_analysis_parser():
+def create_analysis_parser(usage=__doc__):
     """Data analysis parser creation"""
-    return create_parser(top_level=False)
+    return create_parser(top_level=False, usage=usage)
 
 
 def main():
     """Data analysis main logic"""
-    args, unknown_args = parse_args(sys.argv[1:], create_analysis_parser())
+    args, unknown_args = parse_args(
+        sys.argv[1:],
+        create_analysis_parser(usage=__doc__),
+    )
     log_version_information()
     analysis = DataAnalysisInput(args, unknown_args)
     analysis.run_sampler()
@@ -381,9 +384,44 @@ def main():
     logger.info("Run completed")
 
 
+def create_reweighting_parser():
+    usage = r"""
+    Reweight an existing result file using different likelihood/prior settings.
+    This executable accepts all of the same arguments as bilby_pipe_analysis in addition to
+    a --result-file argument to explicitly specify the path to the result file.
+    The arguments including the config file passed to bilby_pipe_analysis for the original
+    analysis should be passed to this executable (indicated by [options] below), however,
+    the output directory/label can be overwritten on the command line.
+
+    For example to reweight from an analysis that used the relative binning/ROQ likelihood
+    to the regular gravitational-wave transient to validate the approximation used during
+    sampling one can do the following.
+
+    .. code-block:: console
+
+        $ REWEIGHTING_CONFIGURATION='{"likelihood-type": "bilby.gw.likelihood.GravitationalWaveTransient"}'
+        $ bilby_pipe_reweight_result ini [options]\
+                --reweight-nested-samples False\
+                --reweighting-configuration $REWEIGHTING_CONFIGURATION\
+                --result-file path/to/original/result.hdf5\
+                --outdir new/output/directory
+
+    """
+    parser = create_parser(top_level=False, usage=usage)
+    parser.add_argument(
+        "--result-file",
+        type=str,
+        default=None,
+        help=(
+            "Original result file to reweight, by default this will construct "
+            "the filename from the outdir/label"
+        ),
+    )
+    return parser
+
+
 def reweight():
-    parser = create_analysis_parser()
-    parser.add_argument("--result-file", type=str, default=None)
+    parser = create_reweighting_parser()
     args, unknown_args = parse_args(sys.argv[1:], parser)
 
     log_version_information()

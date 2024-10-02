@@ -2,19 +2,7 @@
 Code overview
 =============
 
-User interface
---------------
-
-`Installing <installation.txt>`_ the :code:`bilby_pipe` module provides the
-user with five command line programs:
-
-1. `bilby_pipe <main.txt>`_
-2. `bilby_pipe_generation <data_generation.txt>`_
-3. `bilby_pipe_analysis <data_analysis.txt>`_
-4. `bilby_pipe_create_injection_file <create_injections.txt>`_
-5. `bilby_pipe_gracedb <gracedb.txt>`_
-
-For most users, only the first or fifth of these will be used in practise.
+Most users will only interact with the `command-line executable <user-interface>`_.
 In this document, we'll give a brief overview of how these are used internally
 to help developers orient themselves with the project.
 
@@ -38,7 +26,7 @@ sub-modules as visualised here:
 each submodule (e.g., :code:`bilby_pipe.utils`) serves a different purpose.
 On this page, we'll give a short description of the general code structure.
 Specific details for different modules can then be found by following the
-links in the `Submodules API`_.
+links in the API reference section.
 
 Workflow
 --------
@@ -143,16 +131,3 @@ feature, run the following commands from the :code:`bilby_pipe` directory:
 For a detailed discussion of why we use :code:`flake8` and :code:`black`, you
 be wish to `read this article
 <https://www.mattlayman.com/blog/2018/python-code-black/>`_.
-
-
-Submodules API
---------------
-.. toctree::
-   :maxdepth: 2
-
-   main
-   data_generation
-   data_analysis
-   create_injections
-   gracedb
-   utils

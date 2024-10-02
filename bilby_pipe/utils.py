@@ -148,8 +148,8 @@ class NoneWrapper(object):
 
     This is needed to properly read None from ini files.
 
-    Example
-    -------
+    Examples
+    --------
     >>> nonestr = NoneWrapper(str)
     >>> nonestr("None")
     None
@@ -533,8 +533,8 @@ def convert_string_to_list(string):
 
     See tests/utils_test for tested behaviour.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     string: str
         The input string to convert
 

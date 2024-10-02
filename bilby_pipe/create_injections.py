@@ -11,6 +11,34 @@ If a geocent_time prior is given in the file, this will be used to create the
 time prior. Otherwise, the trigger-time & deltaT or gps-time and deltaT options
 are used (see below).
 
+As an example, this file
+specifies a prior for precessing black hole binary systems
+
+.. code-block:: python
+
+   mass_1 = Uniform(name='mass_1', minimum=10, maximum=80)
+   mass_2 = Uniform(name='mass_2', minimum=10, maximum=80)
+   mass_ratio =  Constraint(name='mass_ratio', minimum=0.125, maximum=1)
+   a_1 = Uniform(name='a_1', minimum=0, maximum=0.99)
+   a_2 = Uniform(name='a_2', minimum=0, maximum=0.99)
+   tilt_1 = Sine(name='tilt_1')
+   tilt_2 = Sine(name='tilt_2')
+   phi_12 = Uniform(name='phi_12', minimum=0, maximum=2 * np.pi)
+   phi_jl = Uniform(name='phi_jl', minimum=0, maximum=2 * np.pi)
+   luminosity_distance = PowerLaw(alpha=2, name='luminosity_distance', minimum=50, maximum=2000)
+   dec = Cosine(name='dec')
+   ra = Uniform(name='ra', minimum=0, maximum=2 * np.pi)
+   theta_jn = Sine(name='theta_jn')
+   psi =  Uniform(name='psi', minimum=0, maximum=np.pi)
+   phase =  Uniform(name='phase', minimum=0, maximum=2 * np.pi)
+
+Naming this file :code:`bbh.prior` and running
+
+.. code-block:: console
+
+   $ bilby_pipe_create_injection_file bbh.prior --n-injection 100 --generation-seed 1234 -f injections.json
+
+Will produce a file :code:`injections.json` containing 100 random draws from the prior.
 """
 import argparse
 import json
@@ -50,7 +78,9 @@ def create_parser():
 
     """
     parser = argparse.ArgumentParser(
-        prog="bilby_pipe_create_injection_file", description=__doc__
+        prog="bilby_pipe_create_injection_file",
+        description=__doc__,
+        formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_arg(
         "prior_file",

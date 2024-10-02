@@ -1,9 +1,8 @@
-
 .. automodule:: bilby_pipe
-    :members:
+   :no-index:
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: Contents:
 
    installation
@@ -14,5 +13,12 @@
    customisation
    data_acquisition
    reweighting
-   structure
    osg
+   structure
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Reference:
+
+   executables
+   API Reference <autoapi/bilby_pipe/index>

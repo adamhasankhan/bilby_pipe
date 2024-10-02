@@ -31,8 +31,8 @@ the importance sampling directly to the nested samples. This can lead to larger
 reweighting efficiency as the nested samples probe the tails of the posterior
 more deeply. To enable this, set `reweight-nested-samples=True`.
 
-Example
--------
+Example using the configuration file
+------------------------------------
 
 In this example, we perform the initial analysis with the "relative binning"
 method and a waveform without higher-order emission modes (:code:`IMRPhenomXAS`)
@@ -50,3 +50,13 @@ To change the waveform approximant, we just specify the new model.
 
 .. literalinclude:: ../examples/reweighting/reweight.json
     :language: json
+
+
+Example for a completed analysis
+--------------------------------
+
+It is also possible to reweight a result for an analysis that has fully
+completed without having to modify the configuration. In this case you
+can use the :code:`bilby_pipe_reweight_result`
+`executable <executables/reweighting>`_.
+

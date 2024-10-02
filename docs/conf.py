@@ -11,16 +11,26 @@ extensions = [
     "numpydoc",
     "sphinx.ext.graphviz",
     "nbsphinx",
-    "sphinx.ext.autosummary",
-    # "sphinx.ext.autosectionlabel",
     "sphinx.ext.viewcode",
     "sphinxarg.ext",
     "sphinx_tabs.tabs",
     "sphinx_multiversion",
+    "sphinx_copybutton",
+    "autoapi.extension",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
+
+# settings for autoapi generation
+autoapi_dirs = ["../bilby_pipe"]
+autoapi_template_dir = "_templates"
+autoapi_ignore = ["*generate_distance_lookups*"]
+
+# copybutton settings
+copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
+copybutton_prompt_is_regexp = True
+copybutton_only_copy_prompt_lines = False
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -85,7 +95,7 @@ numpydoc_show_class_members = False
 smv_tag_whitelist = r"^(v1.*|1.*|0.3.12)$"
 
 # Only include master and the current branch
-smv_branch_whitelist = r"^(master|" + os.environ["CI_COMMIT_REF_NAME"] + r")$"
+smv_branch_whitelist = r"^(master|" + os.environ.get("CI_COMMIT_REF_NAME", "") + r")$"
 
 # Whitelist pattern for remotes (set to None to use local branches only)
 smv_remote_whitelist = r"^(origin|upstream)$"

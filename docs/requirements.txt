@@ -8,3 +8,5 @@ sphinx-argparse
 sphinx-tabs
 graphviz
 sphinx-multiversion
+sphinx-copybutton
+sphinx-autoapi

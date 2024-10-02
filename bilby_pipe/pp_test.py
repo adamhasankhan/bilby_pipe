@@ -1,5 +1,11 @@
 #!/usr/bin/env python
-""" Tool to analyse a set of runs for parameter-parameter plots """
+"""Analyse a set of runs for parameter-parameter plots
+
+`Percent-percent (pp) <https://en.wikipedia.org/wiki/P%E2%80%93P_plot>`_
+plots are commonly used to assess the performance of stochastic samplers.
+This module provides utilities to make pp-plots from a set of
+:code`bilby_pipe` results.
+"""
 
 import argparse
 import glob
@@ -26,8 +32,9 @@ mpl.rcParams.update(mpl.rcParamsDefault)
 
 def create_parser():
     parser = argparse.ArgumentParser(
-        prog="bilby_pipe PP test",
-        usage="Generates a pp plot from a directory containing a set of results",
+        prog="bilby_pipe_pp_test",
+        description="Generates a pp plot from a directory containing a set of results",
+        formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument("directory", help="Path to the result files")
     parser.add_argument(

@@ -17,9 +17,7 @@ class HyphenStr(str):
 
 
 class BilbyArgParser(configargparse.ArgParser):
-    """
-    The main entry point for command-line parsing
-    """
+    """The main entry point for command-line parsing"""
 
     numbers = dict()
     comments = dict()
@@ -30,25 +28,23 @@ class BilbyArgParser(configargparse.ArgParser):
         args=None,
         namespace=None,
         config_file_contents=None,
-        env_vars=os.environ,
+        env_vars=None,
         **kwargs,
     ):
-        """Supports all the same args as the ArgumentParser.parse_args(..),
+        """
+        Supports all the same args as the ArgumentParser.parse_args(..),
         as well as the following additional args.
 
         Parameters
         ----------
-        args: None, str, List[str]
-             List of strings to parse. The default is taken from sys.argv
-             Can also be a string "-x -y bla"
-
+        args: (None, str, List[str])
+            List of strings to parse. The default is taken from sys.argv
+            Can also be a string :code:`"-x -y bla"`
         namespace: argparse.Namespace
             The Namespace object that will be returned by parse_args().
-
         config_file_contents: None
             Present because inherited from abstract method. The config_file_contents
             are read from the config_file passed in the args.
-
         env_vars: dict
             Dictionary of environment variables
 
@@ -56,11 +52,13 @@ class BilbyArgParser(configargparse.ArgParser):
         -------
         namespace: argparse.Namespace
             An object to take the attributes parsed.
-
         unknown_args: List[str]
             List of the args unrecognised by the parser
 
         """
+        if env_vars is None:
+            env_vars = os.environ
+
         namespace, unknown_args = super(BilbyArgParser, self).parse_known_args(
             args=self._preprocess_args(args),
             namespace=namespace,

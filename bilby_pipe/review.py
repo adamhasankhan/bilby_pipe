@@ -1,7 +1,13 @@
-""" Tools for running the bilby review
+"""Tools for running the bilby review
 
 Select from the options below to create an ini file which can be submitted using
-bilby_pipe. Alternatively, use the --submit option to also submit the job
+bilby_pipe. Alternatively, use the :code:`--submit` option to also submit the job.
+
+.. note::
+    These were the primary review tests performed until LIGO-Virgo-KAGRA's third
+    observing run.
+
+    More recent review tests used `this data <https://git.ligo.org/colm.talbot/pe_review>`_.
 
 """
 import argparse
@@ -295,8 +301,12 @@ def pp_test(args):
     return filename
 
 
-def get_args():
-    parser = argparse.ArgumentParser(prog="bilby_pipe review script", usage=__doc__)
+def create_parser():
+    parser = argparse.ArgumentParser(
+        prog="bilby_pipe_review",
+        description=__doc__,
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
 
     parser.add_argument(
         "--submit", action="store_true", help="Build and submit the job"
@@ -401,8 +411,11 @@ def get_args():
         default=1010,
         help=("The seed used for generation: reproducible injections, default 1010"),
     )
+    return parser
 
-    return parser.parse_args()
+
+def get_args():
+    return create_parser().parse_args()
 
 
 def main():

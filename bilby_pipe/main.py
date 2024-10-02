@@ -1,18 +1,9 @@
 #!/usr/bin/env python
 """
-bilby_pipe is a command line tools for taking user input (as command line
-arguments or an ini file) and creating DAG files for submitting bilby parameter
-estimation jobs. To get started, write an ini file `config.ini` and run
-
-$ bilby_pipe config.ini
-
-Instruction for how to submit the job are printed in a log message. You can
-also specify extra arguments from the command line, e.g.
-
-$ bilby_pipe config.ini --submit
-
-will build and submit the job.
+This module provides the code for the top-level interface for
+:code:`bilby_pipe` executable.
 """
+
 import importlib
 import json
 import os
@@ -505,9 +496,31 @@ def write_complete_config_file(parser, args, inputs, input_cls=MainInput):
         logger.info(f"To see full configuration, check {inputs.complete_ini_file}")
 
 
+def create_main_parser():
+    _bilby_pipe_doc = """
+    bilby_pipe is a command line tools for taking user input (as command line
+    arguments or an ini file) and creating DAG files for submitting bilby parameter
+    estimation jobs. To get started, write an ini file `config.ini` and run
+
+    .. code-block:: console
+
+        $ bilby_pipe config.ini
+
+    Instruction for how to submit the job are printed in a log message. You can
+    also specify extra arguments from the command line, e.g.
+
+    .. code-block:: console
+
+        $ bilby_pipe config.ini --submit
+
+    will build and submit the job.
+    """
+    return create_parser(top_level=True, usage=_bilby_pipe_doc)
+
+
 def main():
     """Top-level interface for bilby_pipe"""
-    parser = create_parser(top_level=True)
+    parser = create_main_parser()
     args, unknown_args = parse_args(get_command_line_arguments(), parser)
 
     if args.analysis_executable_parser is not None:

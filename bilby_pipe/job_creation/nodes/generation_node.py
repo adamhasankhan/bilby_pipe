@@ -9,8 +9,8 @@ class GenerationNode(Node):
         """
         Node for data generation jobs
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         inputs: bilby_pipe.main.MainInput
             The user-defined inputs
         trigger_time: float
@@ -113,8 +113,8 @@ class GenerationNode(Node):
         return the filepath(s), otherwise use gwdatafind to
         resolve the frame files using the provided frame type.
 
-        Returns:
-        --------
+        Returns
+        -------
         output: list
             list of frame filepaths
         success: bool
@@ -247,8 +247,8 @@ class GenerationNode(Node):
     def _file_needs_authentication(self, fname):
         """
         Check if a file needs authentication to be accessed, currently the only
-        repositories that need authentication are ligo.osgstorage.org and
-        *.storage.igwn.org.
+        repositories that need authentication are :code:`ligo.osgstorage.org` and
+        :code:`*.storage.igwn.org`.
 
         Parameters
         ----------
