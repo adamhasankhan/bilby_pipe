@@ -1,7 +1,6 @@
 .coverage
 build/
 dist/
-docs/_*
 bilby_pipe.egg-info/
 MANIFEST
 *.pyc

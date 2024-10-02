@@ -7,7 +7,6 @@ import configargparse
 import bilby
 from bilby_pipe.bilbyargparser import BilbyArgParser
 
-from .main import __doc__ as usage
 from .utils import (
     ENVIRONMENT_DEFAULTS,
     get_version_information,
@@ -36,7 +35,7 @@ class StoreBoolean(argparse.Action):
             setattr(namespace, self.dest, False)
 
 
-def create_parser(top_level=True):
+def create_parser(top_level=True, usage=None):
     """Creates the BilbyArgParser for bilby_pipe
 
     Parameters
@@ -53,10 +52,11 @@ def create_parser(top_level=True):
     """
 
     parser = BilbyArgParser(
-        usage=usage,
+        usage="%(prog)s ini [options]",
+        description=usage,
         ignore_unknown_config_file_keys=False,
         allow_abbrev=False,
-        formatter_class=configargparse.ArgumentDefaultsHelpFormatter,
+        formatter_class=configargparse.ArgumentDefaultsRawHelpFormatter,
     )
     parser.add("ini", type=str, is_config_file=True, help="Configuration ini file")
     parser.add("-v", "--verbose", action="store_true", help="Verbose output")
@@ -1275,7 +1275,9 @@ def main():
         logger.info("Example usage: $ bilby_pipe_write_default_ini config.ini")
         sys.exit()
     else:
-        parser = create_parser()
+        parser = create_parser(
+            usage="Write a config file with all of the current defaults"
+        )
         logger.info(f"Default config file written to {os.path.abspath(filename)}")
         parser.write_to_file(
             filename=filename, overwrite=True, include_description=True

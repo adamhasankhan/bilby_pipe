@@ -4,10 +4,12 @@ This executable will process an ongoing bilby_mcmc analyses to produce a
 combined result. The executable is assumed to be run from the submit
 directory (e.g., where the .ini file is) and on the submit machine.
 
-Note: if your analysis uses HTCondor file transfer (transfer-files=True), the
-resume files required for processing will not exist on the submit machine until
-the job has completed. You will need to use bilby_pipe_htcondor_sync to first
-sync the files to the submit machine, then run bilby_pipe_process_bilby_mcmc.
+.. note::
+    If your analysis uses HTCondor file transfer (:code:`transfer-files=True`), the
+    resume files required for processing will not exist on the submit machine until
+    the job has completed. You will need to use :code:`bilby_pipe_htcondor_sync`
+    to first sync the files to the submit machine, then run
+    :code:`bilby_pipe_process_bilby_mcmc`.
 
 """
 
@@ -163,8 +165,10 @@ def update_convergence_inputs(args, ptsampler):
     return ptsampler
 
 
-def get_args():
-    parser = argparse.ArgumentParser(description=__doc__)
+def create_parser():
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawTextHelpFormatter
+    )
     parser.add_argument(
         "directory",
         type=str,
@@ -239,7 +243,11 @@ def get_args():
         type=int,
         help=("The minimum number of independent samples per chain."),
     )
+    return parser
 
+
+def get_args():
+    parser = create_parser()
     return parser.parse_args()
 
 

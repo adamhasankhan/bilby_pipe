@@ -1,7 +1,14 @@
-""" Tool for running online bilby PE using GraceDB events
+"""
+The :code:`bilby_pipe_gracedb` command line program provides a method
+to generate ini files for a GraceDB event. This ini file can then be
+used as the input for the other bilby_pipe modules.
+
+In addition to reading the data from gracedb, it will attempt to copy
+the PSD/strain data files to the local machine.
 
 The functionality of much of these utility assumes the user is running on the
-CIT cluster, e.g. the ROQ and calibration directories are in there usual place
+CIT cluster, e.g. the ROQ and calibration directories are in their usual place.
+
 """
 import argparse
 import json
@@ -899,8 +906,8 @@ def _get_cbc_likelihood_args_from_json(filename, trigger_values):
     duration: float
         inverse of frequency interval of likelihood integration
 
-    Example
-    -------
+    Examples
+    --------
     >>> import json
     >>> from bilby_pipe.gracedb import _get_cbc_likelihood_args_from_json
     >>> settings = {
@@ -1640,8 +1647,8 @@ def read_and_concat_data_from_kafka(ifo, start, end, channel, replay=False):
 
 def create_parser():
     parser = argparse.ArgumentParser(
-        prog="bilby_pipe gracedb access",
-        usage=__doc__,
+        description=__doc__,
+        usage="%(prog)s [options]",
         formatter_class=argparse.RawTextHelpFormatter,
     )
     group1 = parser.add_mutually_exclusive_group(required=True)

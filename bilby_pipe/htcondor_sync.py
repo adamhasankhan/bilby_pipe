@@ -158,12 +158,19 @@ def rsync_via_spool(cluster_id, outdir, verbose=False):
 methods = [rsync_via_ssh, rsync_via_spool]
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+def create_parser():
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawTextHelpFormatter
+    )
     parser.add_argument("outdir", help="The bilby_pipe directory to sync")
     parser.add_argument(
         "--verbose", action="store_true", help="Print explicit error messages"
     )
+    return parser
+
+
+def main():
+    parser = create_parser()
     args = parser.parse_args()
     args.outdir = args.outdir.rstrip("/")
     cluster_id_list = get_cluster_id_list(args.outdir)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
-This a command line tool to convert XML injection files
-
+This a command line tool to convert LIGO LW XML injection files to a format
+expected by :code:`bilby_pipe`.
 """
 import argparse
 import json
@@ -17,7 +17,7 @@ import bilby
 try:
     import ligo.lw  # noqa F401
 except ImportError:
-    raise ImportError("You do not have ligo.lw install: $ pip install python-liw-lw")
+    raise ImportError("You do not have ligo.lw install: $ pip install python-ligo-lw")
 
 
 def xml_to_dataframe(prior_file, reference_frequency, convert_negative_ra=False):
@@ -93,9 +93,11 @@ def xml_to_dataframe(prior_file, reference_frequency, convert_negative_ra=False)
     return injection_values
 
 
-def main():
+def create_parser():
     parser = argparse.ArgumentParser(
-        prog="bilby_pipe_xml_converter", description=__doc__
+        prog="bilby_pipe_xml_converter",
+        description=__doc__,
+        formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_arg("xml_file", type=str, default=None, help="The xml file to convert")
     parser.add_arg(
@@ -119,7 +121,11 @@ def main():
         action="store_true",
         required=False,
     )
+    return parser
 
+
+def main():
+    parser = create_parser()
     args = parser.parse_args()
     injection_values = xml_to_dataframe(
         args.xml_file, args.reference_frequency, args.convert_negative_ra

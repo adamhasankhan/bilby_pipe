@@ -850,7 +850,7 @@ class Input(object):
 
         Note, this is not the bilby prior (see self.priors for that), this is
         a key-val dictionary where the val's are strings which are converting
-        into bilby priors in `_get_prior
+        into bilby priors in :func:`_get_priors`
         """
         return self._prior_dict
 
