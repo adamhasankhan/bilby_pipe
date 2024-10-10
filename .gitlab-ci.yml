@@ -158,8 +158,8 @@ example-ini-file-pesummary:
   stage: test
   image: $PRIMARY_IMAGE
   script:
-    - conda install python-ldas-tools-framecpp>=3  # HACK FIX IN THE BUILDS
     - source activate python$PRIMARY_VERSION
+    - conda install python-ldas-tools-framecpp>=3  # HACK FIX IN THE BUILDS
     - pip install --upgrade bilby pesummary seaborn>=0.11
     - pip install .
     - cd tests/
