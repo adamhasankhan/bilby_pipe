@@ -88,7 +88,7 @@ class Node(object):
             _log_output_error_submit_lines(self.log_directory, job_name)
         )
 
-        if self.inputs.scheduler.lower() == "condor":
+        if self.inputs.scheduler.lower() == "condor" and not self.inputs.run_local:
             self.add_accounting()
 
         self.extra_lines.append(f"priority = {self.condor_job_priority}")
