@@ -8,8 +8,8 @@ A package for automating transient gravitational wave parameter estimation
 -  `Installation
    instructions <https://lscsoft.docs.ligo.org/bilby_pipe/master/installation.html>`__
 -  `Documentation <https://lscsoft.docs.ligo.org/bilby_pipe/master/index.html>`__
--  `Issue tracker <https://git.ligo.org/lscsoft/bilby/issues>`__
--  See the `bilby page <https://git.ligo.org/lscsoft/bilby>`__ for help channels.
+-  `Issue tracker <https://git.ligo.org/lscsoft/bilby_pipe/issues>`__
+-  See the `bilby page <https://github.com/bilby-dev/bilby>`__ for help channels.
 
 
 .. |pipeline status| image:: https://git.ligo.org/lscsoft/bilby_pipe/badges/master/pipeline.svg

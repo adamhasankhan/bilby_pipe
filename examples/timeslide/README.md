@@ -1,7 +1,7 @@
 # Timeslide example with GW150914
 
 - [GW150914 GraceDB entry](https://gracedb.ligo.org/events/G184098)
-- [GW150914 Bilby analysis setup](https://git.ligo.org/lscsoft/bilby/blob/master/examples/gw_examples/data_examples/GW150914_advanced.py)
+- [GW150914 Bilby analysis setup](https://github.com/bilby-dev/bilby/blob/main/examples/gw_examples/data_examples/GW150914.py)
 
 ## Using timeslides 
 To use timeslides, a `gps-time-file` and `timeslide-file` are required. For example, condsider `timeshift_GW150914.ini`.

@@ -1,7 +1,10 @@
 """
-:code:`bilby_pipe` is a :code:`python3` tool for automating the
-process of running `bilby <https://git.ligo.org/lscsoft/bilby>`_
-for gravitational parameter estimation on computing clusters.
+bilby_pipe
+==========
+
+bilby_pipe is a python3 tool for automating the process of running `bilby
+<https://bilby-dev.github.io/bilby>`_ for gravitational-wave parameter
+estimation on computing clusters.
 
 """
 
