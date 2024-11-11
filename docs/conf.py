@@ -1,6 +1,9 @@
 import os
 import sys
 
+# Needed to avoid circular import issue
+import asimov  # noqa
+
 import bilby_pipe
 
 sys.path.insert(0, os.path.abspath("../bilby_pipe/"))
