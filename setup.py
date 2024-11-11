@@ -31,7 +31,7 @@ long_description = get_long_description()
 MAIN = "bilby_pipe"
 JOB_CREATION = f"{MAIN}.job_creation"
 NODES = f"{JOB_CREATION}.nodes"
-
+ASIMOV = f"{MAIN}.asimov"
 
 setup(
     name="bilby_pipe",
@@ -44,8 +44,8 @@ setup(
     author="Gregory Ashton, Isobel Romero-Shaw, Colm Talbot, Charlie Hoy, Shanika Galaudage",
     author_email="gregory.ashton@ligo.org",
     license="MIT",
-    package_data={"bilby_pipe": ["data_files/*"]},
-    packages=[MAIN, JOB_CREATION, NODES],
+    package_data={"bilby_pipe": ["data_files/*", "asimov/*.ini"]},
+    packages=[MAIN, JOB_CREATION, NODES, ASIMOV],
     install_requires=[
         "future",
         "pycondor>=0.6",
@@ -67,6 +67,7 @@ setup(
         "plotly",
         "python-ligo-lw>=1.8.0",
     ],
+    extras_require={"asimov": ["asimov<0.6"]},
     python_requires=f">={minimum_py_major}.{minimum_py_minor}",
     entry_points={
         "console_scripts": [
@@ -89,7 +90,10 @@ setup(
             "bilby_pipe_htcondor_sync=bilby_pipe.htcondor_sync:main",
             "bilby_pipe_to_ligo_skymap_samples=bilby_pipe.ligo_skymap:main",
             "bilby_pipe_reweight_result=bilby_pipe.data_analysis:reweight",
-        ]
+        ],
+        "asimov.pipelines": [
+            "bilbyonline=bilby_pipe.asimov.online:BilbyOnline",
+        ],
     },
     classifiers=[
         "Programming Language :: Python :: 3.9",

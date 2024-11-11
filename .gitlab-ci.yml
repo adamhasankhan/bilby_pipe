@@ -75,8 +75,10 @@ unit-tests:
     - mkdir -p .pip$PY_VERSION
     - pip install --upgrade pip
     - pip --cache-dir=.pip$PY_VERSION install --upgrade bilby
-    - pip --cache-dir=.pip$PY_VERSION install .
+    - pip --cache-dir=.pip$PY_VERSION install .[asimov]
     - test -z ${CONDA_PREFIX} && pip list installed || conda list
+    - git config --global user.name "test"
+    - git config --global user.email "test@test.com"
 
     # Run tests
     - pytest --cov=bilby_pipe --durations 10
@@ -192,6 +194,7 @@ docs:
     # Installation and clean up
     - cd docs
     - pip install -r requirements.txt
+    - pip install asimov
     - make clean
     - bilby_pipe_write_default_ini default.ini
     - bilby_pipe_gracedb --json ../examples/gracedb/G298936.json --output ini --settings ../examples/gracedb/settings.json --outdir . --cbc-likelihood-mode test --channel-dict gwosc --query-kafka False
