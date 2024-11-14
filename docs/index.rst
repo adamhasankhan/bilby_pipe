@@ -14,6 +14,7 @@
    data_acquisition
    reweighting
    osg
+   asimov
    structure
 
 .. toctree::
@@ -22,3 +23,4 @@
 
    executables
    API Reference <autoapi/bilby_pipe/index>
+>>>>>>> docs/index.rst

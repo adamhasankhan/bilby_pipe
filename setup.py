@@ -92,6 +92,7 @@ setup(
             "bilby_pipe_reweight_result=bilby_pipe.data_analysis:reweight",
         ],
         "asimov.pipelines": [
+            "bilby_native=bilby_pipe.asimov.asimov:Bilby",
             "bilbyonline=bilby_pipe.asimov.online:BilbyOnline",
         ],
     },
