@@ -80,6 +80,10 @@ unit-tests:
     - git config --global user.name "test"
     - git config --global user.email "test@test.com"
 
+    # Necessary to ensure Asimov plugin tests complete successfully
+    - git config --global user.name "Bilby Pipe CI"
+    - git config --global user.email "bilby_pipe@testing.ci"
+
     # Run tests
     - pytest --cov=bilby_pipe --durations 10
   after_script:
@@ -188,7 +192,8 @@ docs:
   script:
     - source activate python$PRIMARY_VERSION
     - mkdir -p .pip$PRIMARY_VERSION
-    - pip --cache-dir=.pip$PRIMARY_VERSION install .
+    - pip --cache-dir=.pip$PRIMARY_VERSION install .[asimov]
+    - pip install asimov
 
     # Make the documentation
     # Installation and clean up
