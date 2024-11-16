@@ -10,13 +10,13 @@ stages:
 
 cache:
   paths:
-    - .pip39
     - .pip310
+    - .pip311
 
 .parallel: &parallel
   parallel:
     matrix:
-      - PY_VERSION: [39, 310]
+      - PY_VERSION: [310, 311]
 
 variables:
   PRIMARY_VERSION: 310
