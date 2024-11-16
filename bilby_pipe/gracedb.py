@@ -1249,6 +1249,7 @@ def prepare_run_configurations(
             plot_trace=True,
             plot_data=True,
             calibration_model=calibration_model,
+            calibration_correction_type="data",
             spline_calibration_envelope_dict=calib_dict,
             spline_calibration_nodes=spline_calibration_nodes,
         )

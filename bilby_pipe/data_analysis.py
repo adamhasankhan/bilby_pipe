@@ -103,6 +103,7 @@ class DataAnalysisInput(Input):
 
         # Calibration
         self.calibration_model = args.calibration_model
+        self.calibration_correction_type = args.calibration_correction_type
         self.spline_calibration_envelope_dict = args.spline_calibration_envelope_dict
         self.spline_calibration_amplitude_uncertainty_dict = (
             args.spline_calibration_amplitude_uncertainty_dict

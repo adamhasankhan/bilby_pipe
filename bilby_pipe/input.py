@@ -1066,6 +1066,7 @@ class Input(object):
                             n_nodes=self.spline_calibration_nodes,
                             label=det,
                             boundary=self.calibration_prior_boundary,
+                            correction_type=self.calibration_correction_type,
                         )
                     )
                 elif (
