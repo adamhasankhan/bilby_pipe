@@ -38,29 +38,31 @@ class SubmitSLURM(object):
         Translate dag content to SLURM script
         """
 
-        with open(self.slurm_master_bash, "w") as f:
-            # reformat slurm options
-            if self.scheduler_args is not None:
-                slurm_args = " ".join(
-                    [f"--{arg}" for arg in self.scheduler_args.split()]
-                )
-            else:
-                slurm_args = ""
+        slurm_args_master = {
+            "mem": "1G",
+            "nodes": 1,
+            "ntasks-per-node": 1,
+            "time": "00:10:00",
+            "output": f"{self.submit_dir}/{self.label}_master_slurm.out",
+            "error": f"{self.submit_dir}/{self.label}_master_slurm.err",
+            "job-name": f"{self.label}_master",
+        }
 
+        # reformat slurm options
+        if self.scheduler_args is not None:
+            slurm_args_custom = {
+                arg.split("=")[0]: arg.split("=")[1]
+                for arg in self.scheduler_args.split()
+            }
+            slurm_args_master.update(slurm_args_custom)
+        else:
+            slurm_args_custom = {}
+
+        with open(self.slurm_master_bash, "w") as f:
             f.write("#!/bin/bash\n")
 
-            for arg in slurm_args.split():
-                f.write(f"#SBATCH {arg}\n")
-
-            f.write("#SBATCH --time=00:10:00\n")
-
-            # write output to standard file
-            f.write(
-                f"#SBATCH --output={self.submit_dir}/{self.label}_master_slurm.out\n"
-            )
-            f.write(
-                f"#SBATCH --error={self.submit_dir}/{self.label}_master_slurm.err\n"
-            )
+            for key, val in slurm_args_master.items():
+                f.write(f"#SBATCH --{key}={val}\n")
 
             if self.scheduler_module:
                 for module in self.scheduler_module:
@@ -79,17 +81,25 @@ class SubmitSLURM(object):
             job_dict = dict(zip(job_names, jids))
 
             for node, indx in zip(self.dag.nodes, jids):
-                # Generate the real slurm arguments from the dag node and the parsed slurm args
-                job_slurm_args = slurm_args
-                job_slurm_args += " --nodes=1"
-                job_slurm_args += f" --ntasks-per-node={node.request_cpus}"
-                job_slurm_args += (
-                    f" --mem={int(float(node.request_memory.rstrip('GB')))}G"
-                )
-                job_slurm_args += f" --time={node.slurm_walltime}"
-                job_slurm_args += f" --job-name={node.name}"
+                # get output file path from dag and use for slurm
+                output_file = self._output_name_from_dag(node.extra_lines)
 
-                submit_str = f"\njid{indx}=($(sbatch {job_slurm_args} "
+                # Generate the real slurm arguments from the dag node and the parsed slurm args
+                job_slurm_args = {
+                    "mem": f"{int(float(node.request_memory.rstrip('GB')))}G",
+                    "nodes": 1,
+                    "ntasks-per-node": node.request_cpus,
+                    "time": node.slurm_walltime,
+                    "output": output_file,
+                    "error": output_file.replace(".out", ".err"),
+                    "job-name": node.name,
+                }
+                job_slurm_args.update(slurm_args_custom)
+
+                # build the submit string for this node
+                submit_str = f"\njid{indx}=($(sbatch"
+                for key, val in job_slurm_args.items():
+                    submit_str += f" --{key}={val}"
 
                 # get list of all parents associated with job
                 parents = [job.name for job in node.parents]
@@ -97,15 +107,10 @@ class SubmitSLURM(object):
                 if len(parents) > 0:
                     # only run subsequent jobs after parent has
                     # *successfully* completed
-                    submit_str += "--dependency=afterok"
+                    submit_str += " --dependency=afterok"
 
                     for parent in parents:
                         submit_str += f":${{jid{job_dict[parent]}[-1]}}"
-                # get output file path from dag and use for slurm
-                output_file = self._output_name_from_dag(node.extra_lines)
-
-                submit_str += f" --output={output_file}"
-                submit_str += f" --error={output_file.replace('.out', '.err')}"
 
                 job_script = self._write_individual_processes(
                     node.name, node.executable, node.args[0].arg
