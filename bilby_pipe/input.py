@@ -45,6 +45,7 @@ class Input(object):
         self.known_args = args
         self.unknown_args = unknown_args
 
+        self.container = getattr(self.known_args, "container", None)
         self.conda_env = getattr(self.known_args, "conda_env", None)
 
     @property
@@ -1060,7 +1061,7 @@ class Input(object):
                     logger.info(f"Creating calibration prior for {det} from {fname}")
                     self._calibration_prior.update(
                         bilby.gw.prior.CalibrationPriorDict.from_envelope_file(
-                            self.spline_calibration_envelope_dict[det],
+                            fname,
                             minimum_frequency=self.minimum_frequency_dict[det],
                             maximum_frequency=self.maximum_frequency_dict[det],
                             n_nodes=self.spline_calibration_nodes,
@@ -1506,6 +1507,9 @@ class Input(object):
         ) is not None:
             self._conda_env = conda_env
             self._conda_path = _conda_path
+        elif self.container is not None:
+            self._conda_env = conda_env
+            self._conda_path = conda_env
         else:
             raise BilbyPipeError(
                 f"conda_env={conda_env} not recognised as an environment"

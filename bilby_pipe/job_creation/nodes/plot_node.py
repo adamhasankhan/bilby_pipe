@@ -1,19 +1,38 @@
-from ...utils import logger
+import os
+
+from ...utils import DataDump, logger
 from ..node import Node
 
 
 class PlotNode(Node):
+    run_node_on_osg = True
+
     def __init__(self, inputs, merged_node, dag):
         super().__init__(inputs)
         self.dag = dag
         self.job_name = merged_node.job_name + "_plot"
         self.label = merged_node.job_name + "_plot"
         self.request_cpus = 1
+
+        if self.inputs.transfer_files or self.inputs.osg:
+            input_files_to_transfer = [
+                self._relative_topdir(merged_node.result_file, self.inputs.initialdir),
+                self._relative_topdir(self.data_dump_file, self.inputs.initialdir),
+            ] + inputs.additional_transfer_paths
+            self.extra_lines.extend(
+                self._condor_file_transfer_lines(
+                    input_files_to_transfer,
+                    [self._relative_topdir(self.inputs.outdir, self.inputs.initialdir)],
+                )
+            )
+            if self.transfer_container:
+                input_files_to_transfer.append(self.inputs.container)
+
         self.setup_arguments(
             add_ini=False, add_unknown_args=False, add_command_line_args=False
         )
-        self.arguments.add("result", merged_node.result_file)
-        self.arguments.add("outdir", self.inputs.result_directory)
+        self.arguments.add("result", os.path.relpath(merged_node.result_file))
+        self.arguments.add("outdir", os.path.relpath(self.inputs.result_directory))
         for plot_type in ["calibration", "corner", "marginal", "skymap", "waveform"]:
             if getattr(inputs, f"plot_{plot_type}", False):
                 self.arguments.add_flag(plot_type)
@@ -21,6 +40,10 @@ class PlotNode(Node):
 
         self.process_node()
         self.job.add_parent(merged_node.job)
+
+    @property
+    def data_dump_file(self):
+        return DataDump.get_filename(self.inputs.data_directory, self.label)
 
     @property
     def executable(self):

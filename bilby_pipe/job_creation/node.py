@@ -52,10 +52,19 @@ class Node(object):
 
     def _get_executable_path(self, exe_name):
         if self.inputs._conda_path is not None:
-            exe_name = f"{self.inputs._conda_path}/bin/{exe_name}"
+            if self.inputs._conda_path not in exe_name:
+                return os.path.join(
+                    self.inputs._conda_path,
+                    "bin",
+                    exe_name,
+                )
+            else:
+                return exe_name
 
         exe = shutil.which(exe_name)
-        if exe is not None:
+        if self.inputs.container is not None:
+            return exe_name
+        elif exe is not None:
             return exe
         else:
             raise OSError(f"{exe_name} not installed on this system, unable to proceed")
@@ -119,6 +128,11 @@ class Node(object):
             elif sites is not None:
                 self.extra_lines.append(f'MY.DESIRED_Sites = "{sites}"')
                 self.requirements.append("IS_GLIDEIN=?=True")
+
+        if self.inputs.container is not None:
+            self.extra_lines.append(f'MY.SingularityImage = "{self.inputs.container}"')
+            self.extra_lines.append("transfer_executable = False")
+            self.requirements.append("(HAS_SINGULARITY=?=True)")
 
         self.job = pycondor.Job(
             name=job_name,
@@ -249,6 +263,30 @@ class Node(object):
         if "GWDATAFIND_SERVER" not in env:
             env["GWDATAFIND_SERVER"] = self.inputs.data_find_url
         return env
+
+    @property
+    def transfer_container(self):
+        """
+        Whether a singularity container should be transferred to the job
+        """
+        return (
+            self.inputs.container is not None
+            and os.path.exists(self.inputs.container)
+            and not self.inputs.container.startswith(
+                "/cvmfs/singularity.opensciencegrid.org"
+            )
+        )
+
+    @staticmethod
+    def extract_paths_from_dict(input):
+        output = list()
+        if isinstance(input, dict):
+            for value in input.values():
+                if isinstance(value, str):
+                    output.append(value)
+                elif isinstance(value, list):
+                    output.extend(value)
+        return output
 
 
 def _log_output_error_submit_lines(logdir, prefix):

@@ -42,6 +42,7 @@ class MainInput(Input):
         self.condor_job_priority = args.condor_job_priority
         self.create_summary = args.create_summary
         self.scitoken_issuer = args.scitoken_issuer
+        self.container = args.container
 
         self.outdir = args.outdir
         self.label = args.label

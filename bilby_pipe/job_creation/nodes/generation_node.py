@@ -61,7 +61,10 @@ class GenerationNode(Node):
                 "timeslide_file",
             ]:
                 if (value := getattr(self.inputs, attr)) is not None:
-                    input_files_to_transfer.append(str(value))
+                    # input_files_to_transfer.append(str(value))
+                    input_files_to_transfer.append(os.path.abspath(str(value)))
+            if self.transfer_container:
+                input_files_to_transfer.append(self.inputs.container)
             for value in [
                 self.inputs.psd_dict,
                 self.inputs.spline_calibration_envelope_dict,
@@ -191,17 +194,6 @@ class GenerationNode(Node):
                     )
                     success = False
         return output, success
-
-    @staticmethod
-    def extract_paths_from_dict(input):
-        output = list()
-        if isinstance(input, dict):
-            for value in input.values():
-                if isinstance(value, str):
-                    output.append(value)
-                elif isinstance(value, list):
-                    output.extend(value)
-        return output
 
     @property
     def executable(self):

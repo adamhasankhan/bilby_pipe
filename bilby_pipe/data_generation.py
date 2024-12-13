@@ -24,6 +24,7 @@ from bilby_pipe.utils import (
     log_function_call,
     log_version_information,
     logger,
+    resolve_filename_with_transfer_fallback,
 )
 
 # fmt: off
@@ -1010,8 +1011,13 @@ class DataGenerationInput(Input):
                 self.spline_calibration_envelope_dict is not None
                 and det in self.spline_calibration_envelope_dict
             ):
+                original = self.spline_calibration_envelope_dict[det]
+                fname = resolve_filename_with_transfer_fallback(original)
+                if fname is None:
+                    raise ValueError(f"Failed to find calibration file {original}.")
+
                 ifo.calibration_model = model.from_envelope_file(
-                    self.spline_calibration_envelope_dict[det],
+                    fname,
                     frequency_array=ifo.frequency_array[ifo.frequency_mask],
                     n_nodes=self.spline_calibration_nodes,
                     label=det,

@@ -1,8 +1,12 @@
+import os
+
 from ...utils import BilbyPipeError, logger
 from ..node import Node
 
 
 class PESummaryNode(Node):
+    run_node_on_osg = True
+
     def __init__(self, inputs, merged_node_list, generation_node_list, dag):
         super().__init__(inputs)
         self.dag = dag
@@ -13,6 +17,35 @@ class PESummaryNode(Node):
         result_files = [merged_node.result_file for merged_node in merged_node_list]
         labels = [merged_node.label for merged_node in merged_node_list]
 
+        if self.inputs.transfer_files or self.inputs.osg:
+            input_files_to_transfer = [
+                self._relative_topdir(fname, self.inputs.initialdir)
+                for fname in result_files
+            ] + inputs.additional_transfer_paths
+            files = [self.inputs.complete_ini_file]
+            if len(generation_node_list) == 1:
+                files.append(generation_node_list[0].data_dump_file)
+            input_files_to_transfer.extend(
+                [
+                    self._relative_topdir(fname, self.inputs.initialdir)
+                    for fname in files
+                ]
+            )
+            for value in [
+                self.inputs.psd_dict,
+                self.inputs.spline_calibration_envelope_dict,
+            ]:
+                input_files_to_transfer.extend(self.extract_paths_from_dict(value))
+
+            self.extra_lines.extend(
+                self._condor_file_transfer_lines(
+                    input_files_to_transfer,
+                    [self._relative_topdir(self.inputs.webdir, self.inputs.initialdir)],
+                )
+            )
+            if self.transfer_container:
+                input_files_to_transfer.append(self.inputs.container)
+
         self.setup_arguments(
             add_ini=False, add_unknown_args=False, add_command_line_args=False
         )
@@ -22,6 +55,7 @@ class PESummaryNode(Node):
         self.arguments.add(
             "config", " ".join([self.inputs.complete_ini_file] * n_results)
         )
+        result_files = [os.path.relpath(fname) for fname in result_files]
         self.arguments.add("samples", f"{' '.join(result_files)}")
 
         # Using append here as summary pages doesn't take a full name for approximant
@@ -29,7 +63,9 @@ class PESummaryNode(Node):
         self.arguments.append(" ".join([self.inputs.waveform_approximant] * n_results))
 
         if len(generation_node_list) == 1:
-            self.arguments.add("gwdata", generation_node_list[0].data_dump_file)
+            self.arguments.add(
+                "gwdata", os.path.relpath(generation_node_list[0].data_dump_file)
+            )
         elif len(generation_node_list) > 1:
             logger.info(
                 "Not adding --gwdata to PESummary job as there are multiple files"
