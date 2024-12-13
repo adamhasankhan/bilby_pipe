@@ -51,6 +51,8 @@ class AnalysisNode(Node):
                 )
                 + inputs.additional_transfer_paths
             )
+            if self.transfer_container:
+                input_files_to_transfer.append(self.inputs.container)
             self.extra_lines.extend(
                 self._condor_file_transfer_lines(
                     input_files_to_transfer,

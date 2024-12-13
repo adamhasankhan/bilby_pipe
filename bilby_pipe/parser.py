@@ -730,6 +730,17 @@ def create_parser(top_level=True, usage=None):
             "https://computing.docs.ligo.org/guide/htcondor/credentials."
         ),
     )
+    submission_parser.add(
+        "--container",
+        default=None,
+        type=nonestr,
+        help=(
+            "(Optional) singularity image to use, see "
+            "https://computing.docs.ligo.org/guide/htcondor/software "
+            "and https://computing.docs.ligo.org/guide/dhtc/containers "
+            "for more details."
+        ),
+    )
 
     likelihood_parser = parser.add_argument_group(
         title="Likelihood arguments",
