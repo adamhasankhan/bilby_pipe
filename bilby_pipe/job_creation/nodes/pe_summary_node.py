@@ -37,6 +37,12 @@ class PESummaryNode(Node):
             ]:
                 input_files_to_transfer.extend(self.extract_paths_from_dict(value))
 
+            input_files_to_transfer, need_scitokens = self.job_needs_authentication(
+                input_files_to_transfer
+            )
+            if need_scitokens:
+                self.extra_lines.extend(self.scitoken_lines)
+
             self.extra_lines.extend(
                 self._condor_file_transfer_lines(
                     input_files_to_transfer,

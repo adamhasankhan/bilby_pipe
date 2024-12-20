@@ -73,13 +73,10 @@ class GenerationNode(Node):
                 input_files_to_transfer.extend(self.extract_paths_from_dict(value))
             input_files_to_transfer.extend(self.inputs.additional_transfer_paths)
 
-            for ii, fname in enumerate(input_files_to_transfer):
-                if fname.startswith("osdf://") and self._file_needs_authentication(
-                    fname
-                ):
-                    need_scitokens = True
-                    prefix = self.authenticated_file_prefix
-                    input_files_to_transfer[ii] = f"{prefix}{fname}"
+            input_files_to_transfer, need_auth = self.job_needs_authentication(
+                input_files_to_transfer
+            )
+            need_scitokens = need_scitokens or need_auth
 
             self.extra_lines.extend(
                 self._condor_file_transfer_lines(
@@ -235,78 +232,3 @@ class GenerationNode(Node):
     @property
     def data_dump_file(self):
         return DataDump.get_filename(self.inputs.data_directory, self.label)
-
-    def _file_needs_authentication(self, fname):
-        """
-        Check if a file needs authentication to be accessed, currently the only
-        repositories that need authentication are :code:`ligo.osgstorage.org` and
-        :code:`*.storage.igwn.org`.
-
-        Parameters
-        ----------
-        fname: str
-            The file name to check
-        """
-        proprietary_paths = ["igwn", "frames"]
-        return any(path in fname for path in proprietary_paths)
-
-    @property
-    def scitoken_lines(self):
-        """
-        Additional lines needed for the submit file to enable access to
-        proprietary files/services. Note that we do not support scoped tokens.
-        This is determined by the method used to issue the scitokens. For more details
-        see `here <https://computing.docs.ligo.org/guide/htcondor/credentials>`_.
-        """
-        issuer = self.scitoken_issuer
-        if issuer is None:
-            return []
-        else:
-            return [f"use_oauth_services = {issuer}"]
-
-    @property
-    def authenticated_file_prefix(self):
-        """
-        Return the prefix to add to files that need authentication. This is
-        determined by the method used to issue the scitokens. For more details see
-        `here <https://computing.docs.ligo.org/guide/htcondor/credentials>`.
-        """
-        if self.scitoken_issuer in [None, "scitokens"]:
-            return ""
-        else:
-            return "igwn+"
-
-    @property
-    def scitoken_issuer(self):
-        """
-        Return the issuer to use for scitokens. This is determined by the :code:`--scitoken-issuer`
-        argument or the version :code:`HTCondor` running on the current machine. For more details
-        see `here <https://computing.docs.ligo.org/guide/htcondor/credentials>`_.
-        """
-        if self.inputs.scheduler.lower() != "condor":
-            return None
-        elif (
-            self.inputs.scitoken_issuer == "local"
-            or _is_htcondor_scitoken_local_issuer()
-        ):
-            return "scitokens"
-        else:
-            return "igwn"
-
-
-def _is_htcondor_scitoken_local_issuer():
-    """
-    Test whether the machine being used is configured to use a local issuer
-    or not. See `here <https://git.ligo.org/lscsoft/bilby_pipe/-/issues/304#note_1033251>`_
-    for where this logic comes from.
-    """
-    try:
-        from htcondor import param
-    except ModuleNotFoundError:
-        logger.warning(
-            "HTCondor python bindings are not installed, assuming local "
-            "issuer for scitokens if using HTCondor."
-        )
-        return True
-
-    return param.get("LOCAL_CREDMON_ISSUER", None) is not None

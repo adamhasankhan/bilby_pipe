@@ -24,6 +24,12 @@ class PostProcessSingleResultsNode(Node):
                     input_files_to_transfer.append(
                         self._relative_topdir(arg, self.inputs.initialdir)
                     )
+            input_files_to_transfer, need_scitokens = self.job_needs_authentication(
+                input_files_to_transfer
+            )
+            if need_scitokens:
+                self.extra_lines.extend(self.scitoken_lines)
+
             self.extra_lines.extend(
                 self._condor_file_transfer_lines(
                     input_files_to_transfer,
