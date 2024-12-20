@@ -19,6 +19,12 @@ class PlotNode(Node):
                 self._relative_topdir(merged_node.result_file, self.inputs.initialdir),
                 self._relative_topdir(self.data_dump_file, self.inputs.initialdir),
             ] + inputs.additional_transfer_paths
+            input_files_to_transfer, need_scitokens = self.job_needs_authentication(
+                input_files_to_transfer
+            )
+            if need_scitokens:
+                self.extra_lines.extend(self.scitoken_lines)
+
             self.extra_lines.extend(
                 self._condor_file_transfer_lines(
                     input_files_to_transfer,

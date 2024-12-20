@@ -18,7 +18,7 @@ class MergeNode(Node):
             input_files_to_transfer = [
                 self._relative_topdir(pn.result_file, self.inputs.initialdir)
                 for pn in parallel_node_list
-            ] + inputs.additional_transfer_paths
+            ]
             self.extra_lines.extend(
                 self._condor_file_transfer_lines(
                     input_files_to_transfer,

@@ -15,7 +15,7 @@ class FinalResultNode(Node):
         if self.inputs.transfer_files or self.inputs.osg:
             input_files_to_transfer = [
                 self._relative_topdir(parent_node.result_file, self.inputs.initialdir)
-            ] + inputs.additional_transfer_paths
+            ]
             self.extra_lines.extend(
                 self._condor_file_transfer_lines(
                     input_files_to_transfer,
