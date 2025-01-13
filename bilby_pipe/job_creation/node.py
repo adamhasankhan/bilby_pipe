@@ -125,7 +125,9 @@ class Node(object):
             if sites == "nogrid":
                 self.extra_lines.append("MY.flock_local = True")
                 self.extra_lines.append('MY.DESIRED_Sites = "nogrid"')
-            elif sites is not None:
+            # FIXME: find a more permanent solution to allow desired sites to
+            # be passed to merge jobs
+            elif sites is not None and self.__class__.__name__ == "AnalysisNode":
                 self.extra_lines.append(f'MY.DESIRED_Sites = "{sites}"')
                 self.requirements.append("IS_GLIDEIN=?=True")
 
