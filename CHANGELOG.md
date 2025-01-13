@@ -1,5 +1,28 @@
 # All notable changes will be documented in this file
 
+## v1.5.0
+
+See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=all&milestone_title=1.5.0)
+
+This is a feature release that includes a new features, improvements to existing functionality and minor bug fixes.
+
+### Added
+
+- Add calibration type argument
+- Add `asimov` plugin (previously implemented in `asimov` directly)
+- Add support for online-style runs using `bilby_pipe_gracedb` via `asimov`
+- Add SciToken authentication for non-generation jobs
+- Add support for Singularity containers
+
+### Changed
+
+- Use `get_expected_outputs` for getting sampler outputs
+- Improve handing of `slurm` arguments
+
+### Fixed
+
+- Remove preference for `lalframe` when loading frames
+
 ## v1.4.0 2024-06-28
 See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=merged&milestone_title=1.4.0)
 
