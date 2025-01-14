@@ -36,7 +36,7 @@ Making a release on GitLab
 To make a new release of bilby_pipe, first ensure the changelog is up-to-date.
 Once this is done, follow these steps:
 
-1. Navigate to the ```Releases`` page <https://git.ligo.org/lscsoft/bilby_pipe/-/releases>`_
+1. Navigate to https://git.ligo.org/lscsoft/bilby_pipe/-/releases
 2. Click ``New release``
 3. Specify the tag (e.g., v1.5.0). This should either be an existing tag or you can create new tag. If creating a new tag, ensure the `master` branch is selected.
 4. (Optional) Select the corresponding milestone
