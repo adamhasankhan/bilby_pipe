@@ -16,6 +16,7 @@
    osg
    asimov
    structure
+   contributing
 
 .. toctree::
    :maxdepth: 1
