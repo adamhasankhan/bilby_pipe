@@ -1338,10 +1338,14 @@ class Input(object):
                 waveform_arguments["frequency_nodes_linear"] = freq_nodes_linear
                 waveform_arguments["frequency_nodes_quadratic"] = freq_nodes_quadratic
 
+            _ = waveform_arguments.pop("minimum_frequency", None)
+            _ = waveform_arguments.pop("maximum_frequency", None)
             fdsm = self.bilby_roq_frequency_domain_source_model
         elif "relative" in self.likelihood_type.lower():
             fdsm = self.bilby_relative_binning_frequency_domain_source_model
         elif self.is_likelihood_multiband:
+            _ = waveform_arguments.pop("minimum_frequency", None)
+            _ = waveform_arguments.pop("maximum_frequency", None)
             fdsm = self.bilby_multiband_frequency_domain_source_model
         else:
             fdsm = self.bilby_frequency_domain_source_model
