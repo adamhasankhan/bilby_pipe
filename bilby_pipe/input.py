@@ -19,6 +19,7 @@ import bilby
 
 from . import utils
 from .utils import (
+    CALIBRATION_CORRECTION_TYPE_LOOKUP,
     SAMPLER_SETTINGS,
     BilbyPipeError,
     BilbyPipeInternalError,
@@ -656,6 +657,41 @@ class Input(object):
         return pd.read_csv(injection_file, sep=r"\s+")
 
     @property
+    def calibration_correction_type(self):
+        return self._calibration_correction_type_dict
+
+    @calibration_correction_type.setter
+    def calibration_correction_type(self, calibration_correction_type):
+        if calibration_correction_type is None:
+            logger.warning(
+                "calibration_correction_type=None is passed. Assuming "
+                "calibration_correction_type='data' for H1, L1, K1, and 'template' for V1"
+            )
+            self._calibration_correction_type_dict = {
+                det: CALIBRATION_CORRECTION_TYPE_LOOKUP[det] for det in self.detectors
+            }
+        elif (
+            calibration_correction_type == "data"
+            or calibration_correction_type == "template"
+        ):
+            logger.info(
+                "Assuming the same calibration correction type "
+                f"{calibration_correction_type} for all detectors"
+            )
+            self._calibration_correction_type_dict = {
+                det: calibration_correction_type for det in self.detectors
+            }
+        elif calibration_correction_type is not None:
+            try:
+                self._calibration_correction_type_dict = convert_string_to_dict(
+                    calibration_correction_type, "calibration-correction-type"
+                )
+            except Exception as e:
+                raise BilbyPipeError(
+                    f"{calibration_correction_type} not understood, failed with exception {e}"
+                )
+
+    @property
     def spline_calibration_envelope_dict(self):
         return self._spline_calibration_envelope_dict
 
@@ -1067,7 +1103,7 @@ class Input(object):
                             n_nodes=self.spline_calibration_nodes,
                             label=det,
                             boundary=self.calibration_prior_boundary,
-                            correction_type=self.calibration_correction_type,
+                            correction_type=self.calibration_correction_type[det],
                         )
                     )
                 elif (

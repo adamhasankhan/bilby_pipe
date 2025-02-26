@@ -81,8 +81,11 @@ def create_parser(top_level=True, usage=None):
     calibration_parser.add(
         "--calibration-correction-type",
         type=nonestr,
-        default="data",
-        help="Type of calibration correction: can be either `data` or `template`."
+        default=None,
+        help="Allowed calibration correction types are `data` and `template`."
+        "Can either be a dictionary of correction types for each detector"
+        " or a string indicating a single correction type applied to all detectors"
+        " If `None` is passed, {H1:data, L1:data, V1:template, K1:data} is assumed"
         " See https://bilby-dev.github.io/bilby/api/bilby.gw.detector.calibration.html "
         "for more information.",
     )
