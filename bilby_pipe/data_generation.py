@@ -1022,7 +1022,7 @@ class DataGenerationInput(Input):
                     n_nodes=self.spline_calibration_nodes,
                     label=det,
                     n_curves=1000,
-                    correction_type=self.calibration_correction_type,
+                    correction_type=self.calibration_correction_type[det],
                 )
             elif (
                 det in self.spline_calibration_amplitude_uncertainty_dict

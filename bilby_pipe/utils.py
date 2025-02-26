@@ -250,6 +250,13 @@ SAMPLER_SETTINGS = {
     },
 }
 
+CALIBRATION_CORRECTION_TYPE_LOOKUP = {
+    "H1": "data",
+    "L1": "data",
+    "V1": "template",
+    "K1": "data",
+}
+
 
 def get_command_line_arguments():
     """Helper function to return the list of command line arguments"""
