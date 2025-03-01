@@ -13,6 +13,7 @@ from importlib import import_module
 
 import numpy as np
 import pandas as pd
+from astropy.cosmology import cosmology_equal
 from gwosc.datasets import event_gps
 
 import bilby
@@ -27,6 +28,7 @@ from .utils import (
     convert_string_to_dict,
     convert_string_to_list,
     convert_string_to_tuple,
+    get_and_set_cosmology,
     get_colored_string,
     get_function_from_string_path,
     get_time_prior,
@@ -38,6 +40,8 @@ from .utils import (
 
 class Input(object):
     """Superclass of input handlers"""
+
+    _cosmology = None
 
     def __init__(self, args, unknown_args, print_msg=True):
         if print_msg:
@@ -52,6 +56,18 @@ class Input(object):
     @property
     def complete_ini_file(self):
         return f"{self.outdir}/{self.label}_config_complete.ini"
+
+    @property
+    def cosmology(self):
+        if self._cosmology is None:
+            self._cosmology = get_and_set_cosmology()
+            logger.warning(f"No cosmology set, using default: {self._cosmology}")
+        return self._cosmology
+
+    @cosmology.setter
+    def cosmology(self, cosmology):
+        logger.debug(f"Setting cosmology to {cosmology}")
+        self._cosmology = get_and_set_cosmology(cosmology)
 
     @property
     def idx(self):
@@ -993,6 +1009,18 @@ class Input(object):
                     minimum_frequency=self.minimum_frequency,
                     error=True,
                     warning=False,
+                )
+            try:
+                self._priors.check_valid_cosmology()
+            except AttributeError:
+                logger.warning("Could not check if prior uses a valid cosmology.")
+            if self._priors.cosmology and not cosmology_equal(
+                self.cosmology, self._priors.cosmology, allow_equivalent=True
+            ):
+                raise ValueError(
+                    "Cosmology in prior does not match the global cosmology: \n"
+                    f"Prior: {self._priors.cosmology}\n"
+                    f"Global: {self.cosmology}"
                 )
         return self._priors
 

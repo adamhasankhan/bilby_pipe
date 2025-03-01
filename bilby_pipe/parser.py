@@ -1272,6 +1272,22 @@ def create_parser(top_level=True, usage=None):
         ),
     )
 
+    # Constants arguments
+    global_settings_parser = parser.add_argument_group(
+        title="Global settings",
+        description="Settings for global configuration",
+    )
+    global_settings_parser.add(
+        "--cosmology",
+        default="Planck15",
+        type=str,
+        help=(
+            "The name of the cosmology to use. "
+            "Defaults to Planck15, see "
+            ":external:py:func:`bilby.gw.cosmology.get_available_cosmologies` "
+            "for a list of the available cosmologies."
+        ),
+    )
     return parser
 
 

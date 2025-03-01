@@ -20,6 +20,7 @@ extensions = [
     "sphinx_multiversion",
     "sphinx_copybutton",
     "autoapi.extension",
+    "sphinx.ext.intersphinx",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -108,3 +109,8 @@ smv_outputdir_format = "{ref.name}"
 
 # Determines whether remote or local git branches/tags are preferred if their output dirs conflict
 smv_prefer_remote_refs = False
+
+# intersphinx configuration
+intersphinx_mapping = {
+    "bilby": ("https://bilby-dev.github.io/bilby/", None),
+}

@@ -915,5 +915,19 @@ def log_function_call(function, kwargs, log=True):
         return call_str
 
 
+def get_and_set_cosmology(cosmology=None):
+    """Get the cosmology and set the global bilby cosmology.
+
+    If a cosmology is None, then the default bilby cosmology is used.
+
+    This function is used to ensure that the bilby_pipe and bilby cosmologies
+    are always consistent.
+    """
+    cosmology = bilby.gw.cosmology.get_cosmology(cosmology)
+    logger.debug(f"Setting global bilby cosmology to {cosmology}")
+    bilby.gw.cosmology.set_cosmology(cosmology)
+    return cosmology
+
+
 setup_logger()
 logger = logging.getLogger("bilby_pipe")

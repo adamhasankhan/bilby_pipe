@@ -81,6 +81,9 @@ class DataGenerationInput(Input):
         self.ini = args.ini
         self.transfer_files = args.transfer_files
 
+        # Global settings
+        self.cosmology = args.cosmology
+
         # Run index arguments
         self.idx = args.idx
         self.generation_seed = args.generation_seed
