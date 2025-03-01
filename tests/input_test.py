@@ -688,6 +688,63 @@ class TestInput(unittest.TestCase):
         )
         self.assertEqual(mock_input._sampler_kwargs, dict(npoints=100, npool=2))
 
+    def test_default_cosmology(self):
+        inputs = bilby_pipe.main.Input(None, None)
+        self.assertEqual(inputs.cosmology, bilby.gw.cosmology.get_cosmology("Planck15"))
+
+    def test_cosmology(self):
+        inputs = bilby_pipe.main.Input(None, None)
+        inputs.cosmology = "Planck15_LAL"
+        self.assertEqual(
+            inputs.cosmology, bilby.gw.cosmology.get_cosmology("Planck15_LAL")
+        )
+
+    def test_consistent_cosmology(self):
+        inputs = bilby_pipe.main.Input(None, None)
+        inputs.cosmology = "Planck15_LAL"
+        inputs.default_prior = "BBHPriorDict"
+        inputs.trigger_time = 0
+        inputs.deltaT = 2
+        inputs.time_reference = "geocent"
+        inputs.enforce_signal_duration = False
+        inputs.prior_dict = bilby.gw.prior.BBHPriorDict(
+            {
+                "luminosity_distance": bilby.gw.prior.UniformSourceFrame(
+                    minimum=10,
+                    maximum=1000,
+                    name="luminosity_distance",
+                    cosmology="Planck15_LAL",
+                )
+            }
+        )
+
+        assert inputs.priors is not None
+        assert "luminosity_distance" in inputs.priors
+
+    def test_inconsistent_cosmology(self):
+        inputs = bilby_pipe.main.Input(None, None)
+        inputs.cosmology = "Planck15_LAL"
+        inputs.default_prior = "BBHPriorDict"
+        inputs.trigger_time = 0
+        inputs.deltaT = 2
+        inputs.time_reference = "geocent"
+        inputs.enforce_signal_duration = False
+        inputs.prior_dict = bilby.gw.prior.BBHPriorDict(
+            {
+                "luminosity_distance": bilby.gw.prior.UniformSourceFrame(
+                    minimum=10,
+                    maximum=1000,
+                    name="luminosity_distance",
+                    cosmology="Planck15",
+                )
+            }
+        )
+
+        with self.assertRaises(
+            ValueError, msg="Cosmology in prior does not match the global cosmology"
+        ):
+            inputs.priors
+
 
 if __name__ == "__main__":
     unittest.main()

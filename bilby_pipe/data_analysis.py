@@ -57,6 +57,9 @@ class DataAnalysisInput(Input):
         self.request_cpus = args.request_cpus
         self.run_local = args.local
 
+        # Global arguments
+        self.cosmology = args.cosmology
+
         # Naming arguments
         self.outdir = args.outdir
         self.label = args.label

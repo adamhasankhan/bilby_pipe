@@ -10,6 +10,7 @@
    examples
    ini_file
    injections
+   global_settings
    customisation
    data_acquisition
    reweighting

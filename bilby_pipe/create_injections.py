@@ -219,6 +219,7 @@ class InjectionCreator(Input):
         post_trigger_duration=2,
         enforce_signal_duration=False,
         minimum_frequency=None,
+        cosmology=None,
     ):
         self.prior_file = prior_file
         self.prior_dict = prior_dict
@@ -236,6 +237,7 @@ class InjectionCreator(Input):
         self.detectors = self.known_detectors
         self.minimum_frequency = minimum_frequency
         self.enforce_signal_duration = enforce_signal_duration
+        self.cosmology = cosmology
 
         if self.gpstimes is not None and self.trigger_time not in [0, None]:
             raise BilbyPipeCreateInjectionsError(
@@ -347,6 +349,7 @@ def create_injection_file(
     extension="dat",
     default_prior="BBHPriorDict",
     enforce_signal_duration=False,
+    cosmology=None,
 ):
     """Makes injection file using arguments from the namespace args parameter"""
     injection_creator = InjectionCreator(
@@ -361,6 +364,7 @@ def create_injection_file(
         post_trigger_duration=post_trigger_duration,
         generation_seed=generation_seed,
         enforce_signal_duration=enforce_signal_duration,
+        cosmology=cosmology,
     )
     injection_creator.generate_injection_file(filename, extension)
 

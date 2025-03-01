@@ -44,6 +44,8 @@ class MainInput(Input):
         self.scitoken_issuer = args.scitoken_issuer
         self.container = args.container
 
+        self.cosmology = args.cosmology
+
         self.outdir = args.outdir
         self.label = args.label
         self.log_directory = args.log_directory
@@ -404,6 +406,7 @@ class MainInput(Input):
                 generation_seed=self.generation_seed,
                 extension="dat",
                 default_prior=self.default_prior,
+                cosmology=self.cosmology,
             )
             self.injection_file = default_injection_file_name
 

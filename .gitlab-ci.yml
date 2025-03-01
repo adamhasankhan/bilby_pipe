@@ -57,7 +57,7 @@ precommits:
     - source activate python$PY_VERSION
     - mkdir -p .pip$PY_VERSION
     - pip install --upgrade pip
-    - pip --cache-dir=.pip$PY_VERSION install --upgrade bilby
+    - pip --cache-dir=.pip$PY_VERSION install --upgrade bilby --pre
     - pip --cache-dir=.pip$PY_VERSION install .
     - pip --cache-dir=.pip$PY_VERSION install pre-commit
 
@@ -74,7 +74,7 @@ unit-tests:
     - source activate python$PY_VERSION
     - mkdir -p .pip$PY_VERSION
     - pip install --upgrade pip
-    - pip --cache-dir=.pip$PY_VERSION install --upgrade bilby
+    - pip --cache-dir=.pip$PY_VERSION install --upgrade bilby --pre
     - pip --cache-dir=.pip$PY_VERSION install .[asimov]
     - test -z ${CONDA_PREFIX} && pip list installed || conda list
     - git config --global user.name "test"
@@ -108,7 +108,7 @@ example-ini-file-builds:
     - export GWDATAFIND_SERVER=datafind.gwosc.org:80
     - source activate python$PRIMARY_VERSION
     - mkdir -p .pip$PRIMARY_VERSION
-    - pip --cache-dir=.pip$PRIMARY_VERSION install --upgrade bilby
+    - pip --cache-dir=.pip$PRIMARY_VERSION install --upgrade bilby --pre
     - pip --cache-dir=.pip$PRIMARY_VERSION install .
     - cd examples/event
     - bilby_pipe GW150914.ini
@@ -131,7 +131,7 @@ injection-regression-test:
   script:
     - source activate python$PRIMARY_VERSION
     - mkdir -p .pip$PRIMARY_VERSION
-    - pip --cache-dir=.pip$PRIMARY_VERSION install --upgrade bilby
+    - pip --cache-dir=.pip$PRIMARY_VERSION install --upgrade bilby --pre
     - pip --cache-dir=.pip$PRIMARY_VERSION install .
     - cd tests_ini_files/
     - bilby_pipe test_gaussian_noise_simulation_and_injection.ini --local --bilby-test-mode
@@ -147,7 +147,7 @@ review-test-build:
   script:
     - source activate python$PRIMARY_VERSION
     - mkdir -p .pip$PRIMARY_VERSION
-    - pip --cache-dir=.pip$PRIMARY_VERSION install --upgrade bilby
+    - pip --cache-dir=.pip$PRIMARY_VERSION install --upgrade bilby --pre
     - pip --cache-dir=.pip$PRIMARY_VERSION install .
     - mkdir TEST_REVIEW_FILES
     - cd TEST_REVIEW_FILES
@@ -166,7 +166,7 @@ example-ini-file-pesummary:
   script:
     - source activate python$PRIMARY_VERSION
     - conda install python-ldas-tools-framecpp>=3  # HACK FIX IN THE BUILDS
-    - pip install --upgrade bilby pesummary seaborn>=0.11
+    - pip install --upgrade bilby pesummary seaborn>=0.11 --pre
     - pip install .
     - cd tests/
     - bilby_pipe test_pesummary.ini --local --bilby-test-mode
@@ -177,7 +177,7 @@ example-ini-file-gracedb:
   image: $PRIMARY_IMAGE
   script:
     - source activate python$PRIMARY_VERSION
-    - pip install --upgrade bilby pesummary
+    - pip install --upgrade bilby pesummary --pre
     - pip install .
     - bilby_pipe_gracedb --json examples/gracedb/G298936.json --local --bilby-test-mode --cbc-likelihood-mode test --output full-submit --settings examples/gracedb/settings.json --n-parallel 1 --channel-dict gwosc --query-kafka False
     - if [[ ! -f outdir_G298936/final_result/G298936_data0_1187529256-5179033_analysis_H1L1_result.hdf5 ]] ; then exit 1; else echo "Final result exists"; fi
