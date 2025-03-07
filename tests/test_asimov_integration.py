@@ -29,14 +29,6 @@ class BilbyTests(unittest.TestCase):
         assert result.exit_code == 0
         assert result.output == "● New project created successfully!\n"
         self.ledger = YAMLLedger(".asimov/ledger.yml")
-
-    def tearDown(self):
-        os.chdir(self.cwd)
-        shutil.rmtree(f"{self.cwd}/tests/tmp/project/")
-
-    def test_build_api(self):
-        """Check that a bilby config file can be built."""
-
         apply_page(
             file=f"{self.cwd}/tests/ASIMOV/GW150914.yaml",
             event=None,
@@ -61,10 +53,32 @@ class BilbyTests(unittest.TestCase):
             ledger=self.ledger,
         )
 
+    def tearDown(self):
+        os.chdir(self.cwd)
+        shutil.rmtree(f"{self.cwd}/tests/tmp/project/")
+
+    def test_build_api(self):
+        """Check that a bilby config file can be built."""
+
+        prod = self.ledger.get_event("GW150914")[0].productions[1]
+
         f = io.StringIO()
         with contextlib.redirect_stdout(f):
-            self.ledger.get_event("GW150914")[0].productions[1].pipeline.build_dag(
-                dryrun=True
-            )
+            prod.pipeline.build_dag(dryrun=True)
             print(f.getvalue())
             self.assertTrue("bilby_pipe" in f.getvalue())
+
+    def test_build_config(self):
+        """
+        Test the built config file matches a preprepared reference, the reference file
+        may have to be updated whenever the implementation or settings changes
+        """
+        prod = self.ledger.get_event("GW150914")[0].productions[1]
+
+        config_file = f"{self.cwd}/tests/tmp/project/Prod1.ini"
+        reference_file = f"{self.cwd}/tests/ASIMOV/expected.ini"
+        prod.make_config(config_file)
+        with open(config_file, "r") as f1, open(reference_file, "r") as f2:
+            config = {ll.strip("\n") for ll in f1.readlines()}
+            expected = {ll.strip("\n") for ll in f2.readlines()}
+        assert len(expected.difference(config)) == 0

@@ -1,4 +1,7 @@
 data:
+  calibration:
+    H1: /home/cal/public_html/uncertainty/O2C02/H1/Feb-22-2018_O2_LHO_GPSTime_1164560996_C02_RelativeResponseUncertainty_FinalResults.txt
+    L1: /home/cal/public_html/uncertainty/O2C02/L1/Feb-22-2018_O2_LLO_GPSTime_1164601696_C02_RelativeResponseUncertainty_FinalResults.txt
   channels:
     H1: H1:DCS-CALIB_STRAIN_C02
     L1: L1:DCS-CALIB_STRAIN_C02
