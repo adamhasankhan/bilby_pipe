@@ -24,6 +24,12 @@ pipelines:
       chains: 8
       threads: 4
   bilby_native:
+    data:
+      calibration:
+        correction type:
+          H1: data
+          V1: template
+      format: hdf5
     sampler:
       sampler: dynesty
       kwargs:
