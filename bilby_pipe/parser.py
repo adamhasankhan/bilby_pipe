@@ -261,13 +261,17 @@ def create_parser(top_level=True, usage=None):
     )
     data_gen_pars.add(
         "--data-find-url",
-        default="https://datafind.igwn.org",
+        type=nonestr,
+        default=None,
         help=(
             "URL to use for datafind. This happens during the initial attempt "
             "to locate frames by :code:`bilby_pipe` or by "
-            ":code:`bilby_pipe_generation`. For the former case, the default value "
-            "is overridden by the GWDATAFIND_SERVER environment variable. For the "
-            "latter case, this value is used unless specified in --env or --getenv."
+            ":code:`bilby_pipe_generation`. In both cases, the order of "
+            "preference is: 1) the value of this argument, 2) the value of "
+            "the environment variable GWDATAFIND_SERVER, 3) the value "
+            "of the global default in bilby_pipe.utils.DEFAULT_GWDATAFIND_SERVER. "
+            "This value will override the value of GWDATAFIND_SERVER if it is set"
+            "in :code:`getenv` or :code:`environment-variables`."
         ),
     )
     data_gen_pars.add(
