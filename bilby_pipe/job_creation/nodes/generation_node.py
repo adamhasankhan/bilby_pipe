@@ -1,6 +1,12 @@
 import os
 
-from ...utils import BilbyPipeError, DataDump, log_function_call, logger
+from ...utils import (
+    DEFAULT_GWDATAFIND_SERVER,
+    BilbyPipeError,
+    DataDump,
+    log_function_call,
+    logger,
+)
 from ..node import Node
 
 
@@ -156,9 +162,21 @@ class GenerationNode(Node):
                     or self.inputs.psd_dict.get(det, None) is None
                 ):
                     start_time -= self.inputs.psd_duration
-                datafind_server = os.environ.get(
-                    "GWDATAFIND_SERVER", self.inputs.data_find_url
-                )
+
+                # If data_find_url is not set, use the environment variable
+                # GWDATAFIND_SERVER, otherwise use the default from bilby_pipe.utils
+                if self.inputs.data_find_url is None:
+                    datafind_server = os.environ.get("GWDATAFIND_SERVER")
+                    if datafind_server is None:
+                        logger.warning(
+                            (
+                                "GWDATAFIND_SERVER not set, using default "
+                                f"gwdatafind server: {DEFAULT_GWDATAFIND_SERVER}"
+                            )
+                        )
+                        datafind_server = DEFAULT_GWDATAFIND_SERVER
+                else:
+                    datafind_server = self.inputs.data_find_url
                 if det not in data:
                     channel_name = self.inputs.channel_dict[det]
                     if not channel_name.startswith(f"{det}:"):

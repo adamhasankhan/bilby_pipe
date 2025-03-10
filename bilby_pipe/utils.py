@@ -24,6 +24,8 @@ ENVIRONMENT_DEFAULTS = dict(
     OMP_PROC_BIND="false",
 )
 
+DEFAULT_GWDATAFIND_SERVER = "https://datafind.igwn.org"
+
 
 class tcolors:
     WARNING = "\u001b[31m"

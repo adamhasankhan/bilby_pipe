@@ -8,6 +8,7 @@ import pycondor
 
 from ..utils import (
     CHECKPOINT_EXIT_CODE,
+    DEFAULT_GWDATAFIND_SERVER,
     ENVIRONMENT_DEFAULTS,
     ArgumentsString,
     BilbyPipeError,
@@ -262,7 +263,26 @@ class Node(object):
             )
             env["HDF5_USE_FILE_LOCKING"] = "FALSE"
 
-        if "GWDATAFIND_SERVER" not in env:
+        # Set the GWDATAFIND_SERVER environment variable for use in jobs.
+        # If data_find_url is not set, use the environment variable
+        # GWDATAFIND_SERVER if it is included in `environment-variables`
+        # otherwise use the default from bilby_pipe.utils
+        if self.inputs.data_find_url is None:
+            if "GWDATAFIND_SERVER" not in env:
+                logger.info(
+                    (
+                        "`data-find-url` is not specified and `environment-variables` "
+                        "does not include GWDATAFIND_SERVER. "
+                        f"Using the default value: {DEFAULT_GWDATAFIND_SERVER}"
+                    )
+                )
+                env["GWDATAFIND_SERVER"] = DEFAULT_GWDATAFIND_SERVER
+        else:
+            if "GWDATAFIND_SERVER" in env:
+                logger.warning(
+                    "GWDATAFIND_SERVER is specified in `environment-variables` "
+                    "and via the `data-find-url` argument. The latter will be used."
+                )
             env["GWDATAFIND_SERVER"] = self.inputs.data_find_url
         return env
 
