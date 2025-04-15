@@ -133,6 +133,10 @@ class Node(object):
                 self.requirements.append("IS_GLIDEIN=?=True")
 
         if self.inputs.container is not None:
+            if self.universe == "local":
+                raise BilbyPipeError(
+                    "Cannot use containers with HTCondor local universe."
+                )
             self.extra_lines.append(f'MY.SingularityImage = "{self.inputs.container}"')
             self.extra_lines.append("transfer_executable = False")
             self.requirements.append("(HAS_SINGULARITY=?=True)")
