@@ -131,13 +131,26 @@ class Node(object):
             elif sites is not None and self.__class__.__name__ == "AnalysisNode":
                 self.extra_lines.append(f'MY.DESIRED_Sites = "{sites}"')
                 self.requirements.append("IS_GLIDEIN=?=True")
+            else:
+                self.extra_lines.append("MY.flock_local = True")
+        elif not self.inputs.osg:
+            # these lines ignore the OSG for jobs submitted from LDAS OSG
+            # access points see
+            # https://computing.docs.ligo.org/guide/htcondor/access/?h=flock#flock_local
+            # for more details
+            self.extra_lines.append("MY.flock_local = True")
+            self.extra_lines.append('MY.DESIRED_Sites = "nogrid"')
 
         if self.inputs.container is not None:
             if self.universe == "local":
                 raise BilbyPipeError(
                     "Cannot use containers with HTCondor local universe."
                 )
-            self.extra_lines.append(f'MY.SingularityImage = "{self.inputs.container}"')
+            if self.transfer_container:
+                container = f"./{os.path.basename(self.inputs.container)}"
+            else:
+                container = self.inputs.container
+            self.extra_lines.append(f'MY.SingularityImage = "{container}"')
             self.extra_lines.append("transfer_executable = False")
             self.requirements.append("(HAS_SINGULARITY=?=True)")
 
@@ -297,7 +310,8 @@ class Node(object):
         """
         return (
             self.inputs.container is not None
-            and os.path.exists(self.inputs.container)
+            and (self.inputs.transfer_files or self.inputs.osg)
+            and os.path.exists(self.inputs.container.replace("osdf://", "/osdf"))
             and not self.inputs.container.startswith(
                 "/cvmfs/singularity.opensciencegrid.org"
             )

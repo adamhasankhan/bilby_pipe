@@ -952,7 +952,9 @@ class Input(object):
             if hasattr(self, "_distance_marginalization_lookup_table"):
                 logger.debug("Overwriting distance_marginalization_lookup_table")
             self._distance_marginalization_lookup_table = (
-                distance_marginalization_lookup_table
+                resolve_filename_with_transfer_fallback(
+                    distance_marginalization_lookup_table
+                )
             )
 
     @property
@@ -1680,6 +1682,17 @@ class Input(object):
 
     @data_dict.setter
     def data_dict(self, data_dict):
+        """
+        Identify the appropriate data files from the specified json
+        formatted string.
+
+        To support :code:`HTCondor` file transfer, we also look for any
+        specified paths in the local directory.
+
+        As a final fallback we look for any frame files in the local directory
+        like, e.g., :code:`H*.gwf`, note that this means :code:`HDF5` files
+        are likely not supported with file transfer.
+        """
         if isinstance(data_dict, str):
             data_dict = convert_string_to_dict(data_dict, "data-dict")
         if getattr(self, "transfer_files", False):
@@ -1687,9 +1700,31 @@ class Input(object):
             if data_dict is not None:
                 data.update(data_dict)
             for det in self.detectors:
+                frames = list()
                 if det in data:
-                    continue
-                frames = glob.glob(f"{det[0]}*.gwf")
+                    source = data[det]
+                    if isinstance(source, str) and "*" in source:
+                        frames = glob.glob(source)
+                    elif isinstance(source, str):
+                        frames = [source]
+                    elif isinstance(source, (list, tuple, set)):
+                        frames = source
+                    else:
+                        raise TypeError(
+                            "data-dict entries should be str of list of str"
+                        )
+                    frames = [
+                        resolve_filename_with_transfer_fallback(frame)
+                        for frame in frames
+                    ]
+                    frames = [frame for frame in frames if frame is not None]
+                if len(frames) == 0:
+                    frames = glob.glob(f"{det[0]}*.gwf")
+                    if len(frames) > 0:
+                        logger.warning(
+                            f"Found local data files {frames} not specified in "
+                            "the data dict, this behaviour is not recommended."
+                        )
                 if len(frames) > 0:
                     data[det] = frames
             self._data_dict = data

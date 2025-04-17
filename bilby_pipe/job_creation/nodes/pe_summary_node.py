@@ -36,6 +36,8 @@ class PESummaryNode(Node):
                 self.inputs.spline_calibration_envelope_dict,
             ]:
                 input_files_to_transfer.extend(self.extract_paths_from_dict(value))
+            if self.transfer_container:
+                input_files_to_transfer.append(self.inputs.container)
 
             input_files_to_transfer, need_scitokens = self.job_needs_authentication(
                 input_files_to_transfer
@@ -49,8 +51,6 @@ class PESummaryNode(Node):
                     [self._relative_topdir(self.inputs.webdir, self.inputs.initialdir)],
                 )
             )
-            if self.transfer_container:
-                input_files_to_transfer.append(self.inputs.container)
 
         self.setup_arguments(
             add_ini=False, add_unknown_args=False, add_command_line_args=False

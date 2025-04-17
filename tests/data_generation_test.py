@@ -441,6 +441,8 @@ class TestDataReading(unittest.TestCase):
         del self.inputs
         if os.path.isdir(self.outdir):
             shutil.rmtree(self.outdir)
+        if os.path.exists("test_data.txt"):
+            os.remove("test_data.txt")
 
     def test_read_data_gwf(self):
         self.inputs.data_dict = {self.det: f"{self.data_dir}/test_data.gwf"}
@@ -465,6 +467,35 @@ class TestDataReading(unittest.TestCase):
         )
         self.assertEqual(data.times[0].value, self.start_time)
         self.assertEqual(len(data), 16384)
+
+    def test_read_data_list(self):
+        self.inputs.data_dict = {self.det: [f"{self.data_dir}/test_data.txt"]}
+        data = self.inputs._gwpy_read(
+            self.det, self.channel, self.start_time, self.end_time
+        )
+        self.assertEqual(data.times[0].value, self.start_time)
+        self.assertEqual(len(data), 16384)
+
+    def test_read_data_glob(self):
+        self.inputs.data_dict = {self.det: f"{self.data_dir}/*_data.txt"}
+        data = self.inputs._gwpy_read(
+            self.det, self.channel, self.start_time, self.end_time
+        )
+        self.assertEqual(data.times[0].value, self.start_time)
+        self.assertEqual(len(data), 16384)
+
+    def test_read_data_fallback(self):
+        shutil.copy(f"{self.data_dir}/test_data.txt", "test_data.txt")
+        self.inputs.data_dict = {self.det: "NOT_A_DIRECTORY/test_data.txt"}
+        data = self.inputs._gwpy_read(
+            self.det, self.channel, self.start_time, self.end_time
+        )
+        self.assertEqual(data.times[0].value, self.start_time)
+        self.assertEqual(len(data), 16384)
+
+    def test_read_data_fails_bad_type(self):
+        with self.assertRaises(TypeError):
+            self.inputs.data_dict = {self.det: 1}
 
 
 def load_test_strain_data():
