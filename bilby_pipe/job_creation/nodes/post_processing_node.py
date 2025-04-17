@@ -24,6 +24,8 @@ class PostProcessSingleResultsNode(Node):
                     input_files_to_transfer.append(
                         self._relative_topdir(arg, self.inputs.initialdir)
                     )
+            if self.transfer_container:
+                input_files_to_transfer.append(self.inputs.container)
             input_files_to_transfer, need_scitokens = self.job_needs_authentication(
                 input_files_to_transfer
             )
@@ -36,8 +38,6 @@ class PostProcessSingleResultsNode(Node):
                     [self._relative_topdir(self.inputs.outdir, self.inputs.initialdir)],
                 )
             )
-            if self.transfer_container:
-                input_files_to_transfer.append(self.inputs.container)
 
         self.arguments.argument_list = alist
         self.process_node()

@@ -19,6 +19,9 @@ class PlotNode(Node):
                 self._relative_topdir(merged_node.result_file, self.inputs.initialdir),
                 self._relative_topdir(self.data_dump_file, self.inputs.initialdir),
             ] + inputs.additional_transfer_paths
+            if self.transfer_container:
+                input_files_to_transfer.append(self.inputs.container)
+
             input_files_to_transfer, need_scitokens = self.job_needs_authentication(
                 input_files_to_transfer
             )
@@ -31,8 +34,6 @@ class PlotNode(Node):
                     [self._relative_topdir(self.inputs.outdir, self.inputs.initialdir)],
                 )
             )
-            if self.transfer_container:
-                input_files_to_transfer.append(self.inputs.container)
 
         self.setup_arguments(
             add_ini=False, add_unknown_args=False, add_command_line_args=False
@@ -49,7 +50,8 @@ class PlotNode(Node):
 
     @property
     def data_dump_file(self):
-        return DataDump.get_filename(self.inputs.data_directory, self.label)
+        label = self.label.split("analysis")[0] + "generation"
+        return DataDump.get_filename(self.inputs.data_directory, label)
 
     @property
     def executable(self):

@@ -18,15 +18,20 @@ class MergeNode(Node):
             input_files_to_transfer = [
                 self._relative_topdir(pn.result_file, self.inputs.initialdir)
                 for pn in parallel_node_list
-            ]
+            ] + inputs.additional_transfer_paths
+            if self.transfer_container:
+                input_files_to_transfer.append(self.inputs.container)
+            input_files_to_transfer, need_scitokens = self.job_needs_authentication(
+                input_files_to_transfer
+            )
+            if need_scitokens:
+                self.extra_lines.extend(self.scitoken_lines)
             self.extra_lines.extend(
                 self._condor_file_transfer_lines(
                     input_files_to_transfer,
                     [self._relative_topdir(self.inputs.outdir, self.inputs.initialdir)],
                 )
             )
-            if self.transfer_container:
-                input_files_to_transfer.append(self.inputs.container)
 
         self.setup_arguments(
             add_ini=False, add_unknown_args=False, add_command_line_args=False
