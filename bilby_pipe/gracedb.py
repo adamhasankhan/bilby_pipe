@@ -14,6 +14,7 @@ import argparse
 import json
 import os
 import time
+from pathlib import Path
 
 import numpy as np
 from gwpy.timeseries import TimeSeries, TimeSeriesList
@@ -1023,7 +1024,7 @@ def copy_and_save_data(
     gracedbid,
     query_kafka=True,
     n_attempts=5,
-    replay=False,
+    llhoft_glob="/dev/shm/kafka/{detector}/*.gwf",
 ):
     """Attempt to read the strain data from internal servers and save frame files to the run directory.
     If `query_kafka` is True, then attempt to fetch the data from `/dev/shm/kafka/` (preferred method
@@ -1052,9 +1053,8 @@ def copy_and_save_data(
         Whether to attempt to copy frame files from `/dev/shm/kafka/`
     n_attempts: int
         Number of attempts to call TimeSeries.get() before failing to obtain data
-    replay: bool
-        Whether to try to fetch O3ReplayMDC data from the kafka directory. Only
-        relevant if query_kafka = True.
+    llhoft_glob: str
+        The per-detector string to glob for low latency frames
 
     Returns
     -------
@@ -1066,12 +1066,14 @@ def copy_and_save_data(
     start_time = int(start_time)
     end_time = int(end_time)
     for ifo in ifos:
-        channel = f"{ifo}:{channel_dict[ifo]}"
+        channel = channel_dict[ifo]
+        if not channel.startswith(ifo):
+            channel = f"{ifo}:{channel}"
         if query_kafka:
             try:
                 logger.info(f"Querying kafka directory for {ifo} data")
                 data = read_and_concat_data_from_kafka(
-                    ifo, start_time, end_time, channel=channel, replay=replay
+                    ifo, start_time, end_time, channel=channel, llhoft_glob=llhoft_glob
                 )
             except FileNotFoundError:
                 if channel.endswith("GWOSC-STRAIN"):
@@ -1147,7 +1149,7 @@ def prepare_run_configurations(
     settings=None,
     psd_cut=0.95,
     query_kafka=True,
-    replay=False,
+    llhoft_glob="/dev/shm/kafka/{detector}/*.gwf",
     recommended_distance_max=None,
 ):
     """Creates ini file from defaults and candidate contents
@@ -1181,9 +1183,8 @@ def prepare_run_configurations(
     query_kafka: bool
         Whether to first attempt to query the kafka directory for data before attempting a
         call to gwpy TimeSeries.get()
-    replay: bool
-        Whether to try to fetch O3ReplayMDC data from the kafka directory. Only
-        relevant if query_kafka = True.
+    llhoft_glob: str
+        The per-detector string to glob for low latency frames
     recommended_distance_max: float
         Recommended prior maximum of luminosity distance in unit of Mpc. If it
         is None, the maximum falls back to the default value.
@@ -1201,6 +1202,9 @@ def prepare_run_configurations(
             settings = json.load(ff)
     else:
         settings = dict()
+    if "channel_dict" in settings:
+        channel_dict = settings["channel_dict"]
+        logger.info(f"Using channels from settings file {channel_dict}")
 
     if search_type == "cbc":
         (
@@ -1353,7 +1357,7 @@ def prepare_run_configurations(
         outdir=outdir,
         gracedbid=gracedb,
         query_kafka=query_kafka,
-        replay=replay,
+        llhoft_glob=llhoft_glob,
     )
     config_dict["data_dict"] = data_dict
 
@@ -1392,7 +1396,7 @@ def create_config_file(
     settings=None,
     psd_cut=0.95,
     query_kafka=True,
-    replay=False,
+    llhoft_glob="/dev/shm/kafka/{detector}/*.gwf",
 ):
     logger.warning(
         "create_config_file is deprecated and will be removed in a future version."
@@ -1411,7 +1415,7 @@ def create_config_file(
         settings=settings,
         psd_cut=psd_cut,
         query_kafka=query_kafka,
-        replay=replay,
+        llhoft_glob=llhoft_glob,
     )
 
 
@@ -1622,21 +1626,22 @@ def generate_burst_prior_from_template(
     return prior_file
 
 
-def read_and_concat_data_from_kafka(ifo, start, end, channel, replay=False):
+def read_and_concat_data_from_kafka(
+    ifo, start, end, channel, llhoft_glob="/dev/shm/kafka/{detector}/*.gwf"
+):
     """Query the kafka directory for the gwf files with the desired data. Start
     and end should be set wide enough to include the entire duration.
     This will read in the individual gwf files and concatenate them into
     a single gwpy timeseries"""
-    if replay:
-        ifo_str = f"{ifo}_O3ReplayMDC"
-    else:
-        ifo_str = ifo
-    kafka_directory = "/dev/shm/kafka"
+
+    path = Path(llhoft_glob.format(detector=ifo)).parent
+    ifo_str = path.name
+
     times = np.arange(start, end)
     segments = []
     for time_sec in times:
         ht = TimeSeries.read(
-            f"{kafka_directory}/{ifo_str}/{ifo[0]}-{ifo_str}_llhoft-{time_sec}-1.gwf",
+            f"{path}/{ifo[0]}-{ifo_str}_llhoft-{time_sec}-1.gwf",
             channel=channel,
         )
         segments.append(ht)
@@ -1719,6 +1724,12 @@ def create_parser():
         default="https://gracedb.ligo.org/api/",
     )
     parser.add_argument(
+        "--llhoft-glob",
+        type=str,
+        default="/dev/shm/kafka/{detector}/*.gwf",
+        help="The per-detector glob path for accessing low latency data",
+    )
+    parser.add_argument(
         "--channel-dict",
         type=str,
         default="online",
@@ -1730,7 +1741,8 @@ def create_parser():
             " o2replay : use for playground GraceDB page events\n"
             " o3replay : use for playground GraceDB page events\n"
             " gwosc    : use for events where the strain data is publicly "
-            "available, e.g., previous observing runs\n"
+            "available, e.g., previous observing runs\n."
+            "Alternatively, these can be read from the settings file."
         ),
     )
     parser.add_argument(
@@ -1848,11 +1860,6 @@ def main(args=None, unknown_args=None):
     sampler_kwargs = args.sampler_kwargs
     channel_dict = CHANNEL_DICTS[args.channel_dict.lower()]
 
-    if args.channel_dict.lower() == "o3replay":
-        replay = True
-    else:
-        replay = False
-
     search_type = candidate["group"].lower()
     if search_type not in ["cbc", "burst"]:
         raise BilbyPipeError(f"Candidate group {candidate['group']} not recognised.")
@@ -1869,7 +1876,7 @@ def main(args=None, unknown_args=None):
         cbc_likelihood_mode=args.cbc_likelihood_mode,
         settings=args.settings,
         query_kafka=args.query_kafka,
-        replay=replay,
+        llhoft_glob=args.llhoft_glob,
         recommended_distance_max=recommended_distance_max,
     )
 
