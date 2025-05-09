@@ -1,5 +1,26 @@
 # All notable changes will be documented in this file
 
+## v1.6.0
+
+See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=all&milestone_title=1.6.0)
+
+This is a feature release that includes specifying cosmology and calibration, and improved asimov integration.
+
+### Added
+
+- Make cosmology specifyable via the configuration file (!623)
+- Updates to the asimov config (!635, !638, !639)
+
+### Changed
+
+- Make calibration type a dictionary (!529)
+- Make the data find URL behaviour more sensible. (!637)
+
+### Fixed
+
+- Fixes when using containers (!632, !641)
+- Avoid warnings about extra waveform kwargs (!630)
+
 ## v1.5.0
 
 See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=all&milestone_title=1.5.0)
