@@ -16,6 +16,7 @@
    reweighting
    osg
    asimov
+   asimov_online
    structure
    contributing
 
