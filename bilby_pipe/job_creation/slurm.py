@@ -6,7 +6,7 @@ Module containing the tools for outputting slurm submission scripts
 import os
 import subprocess
 
-from ..utils import logger
+from ..utils import logger, get_environment_variables_dictionary
 
 
 class SubmitSLURM(object):
@@ -20,6 +20,9 @@ class SubmitSLURM(object):
         self.scheduler_module = dag.scheduler_module
         self.scheduler_env = dag.scheduler_env
         self.scheduler_analysis_time = dag.scheduler_analysis_time
+        self.environment = get_environment_variables_dictionary(
+            dag.inputs
+        )
 
     def run_local_generation(self):
         for node in self.dag.nodes:
@@ -58,11 +61,19 @@ class SubmitSLURM(object):
         else:
             slurm_args_custom = {}
 
+        # Only export environment variables if they are set
+        slurm_export = f"--export=NONE"
+        if self.environment is not None:
+            for key, value in self.environment.items():
+                slurm_export += f",{key}={value}"
+
         with open(self.slurm_master_bash, "w") as f:
             f.write("#!/bin/bash\n")
 
             for key, val in slurm_args_master.items():
                 f.write(f"#SBATCH --{key}={val}\n")
+
+            f.write(f"#SBATCH {slurm_export}\n")
 
             if self.scheduler_module:
                 for module in self.scheduler_module:
@@ -100,6 +111,9 @@ class SubmitSLURM(object):
                 submit_str = f"\njid{indx}=($(sbatch"
                 for key, val in job_slurm_args.items():
                     submit_str += f" --{key}={val}"
+
+                # Export all environment variables from the master script
+                submit_str += " --export=ALL"
 
                 # get list of all parents associated with job
                 parents = [job.name for job in node.parents]
