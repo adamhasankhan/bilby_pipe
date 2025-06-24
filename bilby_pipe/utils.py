@@ -932,7 +932,7 @@ def get_and_set_cosmology(cosmology=None):
 
 
 def get_environment_variables_dictionary(inputs):
-    f"""Get the environment variables dictionary from the inputs. 
+    f"""Get the environment variables dictionary from the inputs.
 
     This starts from {ENVIRONMENT_DEFAULTS} and adds values from the
     :code:`--environment-variables` and :code:`--getenv` arguments.
@@ -944,7 +944,7 @@ def get_environment_variables_dictionary(inputs):
     inputs: bilby_pipe.inputs.Inputs
         The inputs object containing the environment variables and getenv
         arguments.
-    
+
     Returns
     -------
     env: dict

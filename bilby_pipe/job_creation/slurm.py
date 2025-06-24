@@ -6,7 +6,7 @@ Module containing the tools for outputting slurm submission scripts
 import os
 import subprocess
 
-from ..utils import logger, get_environment_variables_dictionary
+from ..utils import get_environment_variables_dictionary, logger
 
 
 class SubmitSLURM(object):
@@ -20,9 +20,7 @@ class SubmitSLURM(object):
         self.scheduler_module = dag.scheduler_module
         self.scheduler_env = dag.scheduler_env
         self.scheduler_analysis_time = dag.scheduler_analysis_time
-        self.environment = get_environment_variables_dictionary(
-            dag.inputs
-        )
+        self.environment = get_environment_variables_dictionary(dag.inputs)
 
     def run_local_generation(self):
         for node in self.dag.nodes:
@@ -62,7 +60,7 @@ class SubmitSLURM(object):
             slurm_args_custom = {}
 
         # Only export environment variables if they are set
-        slurm_export = f"--export=NONE"
+        slurm_export = "--export=NONE"
         if self.environment is not None:
             for key, value in self.environment.items():
                 slurm_export += f",{key}={value}"

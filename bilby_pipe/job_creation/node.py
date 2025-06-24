@@ -10,8 +10,8 @@ from ..utils import (
     CHECKPOINT_EXIT_CODE,
     ArgumentsString,
     BilbyPipeError,
-    logger,
     get_environment_variables_dictionary,
+    logger,
 )
 
 
@@ -255,7 +255,7 @@ class Node(object):
 
     @property
     def environment(self):
-        f"""Environment variables to set in jobs.
+        """Environment variables to set in jobs.
 
         See :code:`bilby_pipe.utils.get_environment_variables_dictionary`
         for more details on how the environment variables are determined.
