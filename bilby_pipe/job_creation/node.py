@@ -172,8 +172,6 @@ class Node(object):
 
         # Hack to allow passing walltime down to slurm
         setattr(self.job, "slurm_walltime", self.slurm_walltime)
-        # Horrible hack 
-        setattr(self.job, "slurm_environment", self.environment)
 
         logger.debug(f"Adding job: {job_name}")
 
