@@ -13,7 +13,10 @@ and source model from some external package the following should be included in 
 
 In order to be compatible with the :code:`bilby_pipe` analysis scripts, custom classes should take the same arguments
 as their parent classes. If you do not want to hard code all such arguments, you can use :code:`**kwargs` to capture
-(and ignore) additional arguments.
+(and ignore) additional arguments. Parameters used for instantiating a ``waveform-generator-class`` can
+be passed with the argument ``--waveform-generator-constructor-dict`` (for the template) or
+``--injection-waveform-generator-constructor-dict`` (for the injection).
+
 An exception to this is when passing custom likelihood classes.
 In this case additional keyword arguments can be passed through the ini file, as below
 

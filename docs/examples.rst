@@ -38,6 +38,8 @@ by passing a tuple of :code:`start,step,number`. As an example:
 
 .. literalinclude:: ../examples/gps_times/gps_times_from_file.ini
 
+.. _running injections in gaussian noise:
+
 Running on injections in Gaussian noise
 ---------------------------------------
 
@@ -145,3 +147,37 @@ output options, these include:
 
 If an :code:`--output` is not specified the default option is :code:`full`
 This will generate an output directory with all the submission files.
+
+
+Running with specific waveform generator
+----------------------------------------
+
+:code:`bilby_pipe` provides configuration entries to specify your own waveform generator,
+for analysis and injection.
+
+The example of the ``ini`` file follows the one of
+`injections with gaussian noise <running injections in gaussian noise>`_, with the addition
+of the ``waveform-generator`` entry. The ``waveform-generator`` specifies the class
+responsible for generating the waveforms for the data generation and analysis steps.
+
+Further instantiation parameters of the class are passed through
+``waveform-generator-constructor-dict`` and ``injection-waveform-generator-constructor-dict``:
+
+.. literalinclude:: ../examples/injection/bbh_injection_with_wg_constructor.ini
+
+(the prior file is the same as for the gaussian noise example.)
+
+In order to run the example, the ``python`` import mechanisms should be able to find the
+module and class specified by ``waveform-generator``. This can be done by specifying the
+``PYTHONPATH`` locally or as part of the ``ini`` file.
+
+Running :code:`bilby_pipe` with this ini file
+
+.. code-block:: console
+
+   $ bilby_pipe bbh_injection_with_wg_constructor.ini
+   # for local submission
+   $ PYTHONPATH=`pwd`:$PYTHONPATH bilby_pipe bbh_injection_with_wg_constructor.ini --local
+
+will produce a bilby_pipe :code:`injection_file`. This can be found in the
+:code:`data` directory of the output.

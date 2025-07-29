@@ -1,11 +1,14 @@
 import os
 import shutil
 import unittest
+from contextlib import contextmanager
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import gwpy
 import mock
 
 import bilby
+import bilby_pipe
 from bilby_pipe.data_generation import DataGenerationInput, create_generation_parser
 from bilby_pipe.main import parse_args
 from bilby_pipe.utils import BilbyPipeError, DataDump
@@ -413,6 +416,274 @@ class TestDataGenerationInput(unittest.TestCase):
         )
         self.assertTrue(data_is_good is None)
         self.assertTrue(mock_logs.warning.called)
+
+
+class TestDataGenerationInputWaveformGeneratorOptions(unittest.TestCase):
+    def setUp(self):
+        self.outdir = "test_outdir"
+        self.default_args_list = [
+            "--ini",
+            "tests/test_data_generation.ini",
+            "--outdir",
+            self.outdir,
+            "--data-label",
+            "TEST",
+            "--trigger-time",
+            "2",
+            "--post-trigger-duration=2.0",
+        ]
+        self.parser = create_generation_parser()
+
+    def tearDown(self):
+        del self.default_args_list
+        if os.path.isdir(self.outdir):
+            shutil.rmtree(self.outdir)
+
+    class MyException(Exception):
+        pass
+
+    class WaveformInterface:
+        def __init__(self, argument1, *args, **kwargs):  # noqa
+            # argument1 is mandatory
+            pass
+
+        def frequency_domain_strain(self, *args, **kwargs):
+            raise TestDataGenerationInputWaveformGeneratorOptions.MyException
+
+        def time_domain_strain(self, *args, **kwargs):
+            raise TestDataGenerationInputWaveformGeneratorOptions.MyException
+
+    @contextmanager
+    def _helper_mock(self):
+        original_function = (
+            DataGenerationInput.get_default_injection_waveform_generator_class_ctor_arguments
+        )
+
+        with patch.object(
+            bilby_pipe.main.Input,
+            "get_default_injection_waveform_generator_class_ctor_arguments",
+            autospec=True,
+        ) as p_get_injection_waveform_generator_class_ctor_arguments, patch.object(
+            bilby_pipe.main.Input, "waveform_generator_class", new_callable=PropertyMock
+        ) as p_waveform_generator_class, patch(
+            "bilby_pipe.data_generation.DataGenerationInput._get_data"
+        ) as p_get_data, patch(
+            "bilby.gw.detector.inject_signal_into_gwpy_timeseries"
+        ) as p_inject_signal_into_gwpy_timeseries:
+            timeseries, metadata = load_test_strain_data()
+            p_get_data.return_value = timeseries
+            p_inject_signal_into_gwpy_timeseries.return_value = (timeseries, metadata)
+
+            p_waveform_generator_class.return_value = (
+                TestDataGenerationInputWaveformGeneratorOptions.WaveformInterface
+            )
+            p_get_injection_waveform_generator_class_ctor_arguments.side_effect = (
+                original_function
+            )
+
+            yield (
+                p_get_injection_waveform_generator_class_ctor_arguments,
+                p_waveform_generator_class,
+                p_get_data,
+                p_inject_signal_into_gwpy_timeseries,
+            )
+
+    def test_injection_waveform_class_construction_no_data_creation(self):
+        args_list = self.default_args_list + [
+            "--injection-dict",
+            "{'mass_1':10, 'mass_2':20, 'a_1':0.5, 'a_2':0.5, 'tilt_1':0, 'tilt_2':0}",
+            "--zero-noise",
+            "--waveform-generator",
+            "some.dummy.class",  # intercepted by the mock
+            "--injection-waveform-generator-constructor-dict",
+            "{'argument1': 10, 'arg2': 20, 'arg3': 'dummy'}",
+        ]
+        with self._helper_mock():
+            # checks the type of the waveform generator class
+            inputs = DataGenerationInput(
+                *parse_args(args_list, self.parser), create_data=False
+            )
+            self.assertIs(
+                inputs.waveform_generator_class,
+                self.WaveformInterface,
+            )
+            # in this case, we do not add the constructor dict argument, so that we have
+            # a hard error in case this is wrongly called
+            self.assertFalse(
+                hasattr(inputs, "injection_waveform_generator_class_ctor_args")
+            )
+
+    def test_injection_waveform_class_construction_injection_dict_zero_noise(self):
+        """Checks that the injection waveform class is constructed with the correct arguments
+        for zero-noise injection"""
+        args_list = self.default_args_list + [
+            "--injection-dict",
+            "{'mass_1':10, 'mass_2':20, 'a_1':0.5, 'a_2':0.5, 'tilt_1':0, 'tilt_2':0}",
+            "--zero-noise",
+            "--waveform-generator",
+            "some.dummy.class",  # intercepted by the mock
+            "--injection-waveform-generator-constructor-dict",
+            "{'argument1': 10, 'arg2': 20, 'arg3': 'dummy'}",
+        ]
+
+        with self._helper_mock() as (
+            p_get_injection_waveform_generator_class_ctor_arguments,
+            p_waveform_generator_class,
+            p_get_data,
+            p_inject_signal_into_gwpy_timeseries,
+        ):
+            with self.assertRaises(self.MyException):
+                _ = DataGenerationInput(
+                    *parse_args(args_list, self.parser), create_data=True
+                )
+
+            p_get_data.assert_not_called()  # zero-noise injection
+            p_inject_signal_into_gwpy_timeseries.assert_not_called()  # zero-noise injection
+            p_waveform_generator_class.assert_called()
+            # one setter, one getter (call to create_data=True)
+            self.assertEqual(p_waveform_generator_class.call_count, 2)
+            self.assertEqual(
+                # first [0] is the setter, it should be the right hand side of "=" which is the class name
+                # last [0] is "args", it should be a tuple of arguments for the setter
+                p_waveform_generator_class.call_args_list[0][0],
+                ("some.dummy.class",),
+            )
+            self.assertEqual(p_waveform_generator_class.call_args_list[1][0], tuple())
+            p_get_injection_waveform_generator_class_ctor_arguments.assert_called_once()
+
+    def test_injection_waveform_class_construction_injection_dict_data(self):
+        """Checks that the injection waveform class is constructed with the correct arguments for data injection"""
+        args_list = self.default_args_list + [
+            "--injection",
+            "--injection-dict",
+            "{'chirp_mass': 12.155333912319811}",
+            "--waveform-generator",
+            "some.dummy.class",  # intercepted by the mock
+            "--injection-waveform-generator-constructor-dict",
+            "{'argument1': 10, 'arg2': 20, 'arg3': 'dummy'}",
+        ]
+
+        with self._helper_mock() as (
+            p_get_injection_waveform_generator_class_ctor_arguments,
+            p_waveform_generator_class,
+            p_get_data,
+            p_inject_signal_into_gwpy_timeseries,
+        ):
+            _ = DataGenerationInput(
+                *parse_args(args_list, self.parser), create_data=True
+            )
+            p_get_data.assert_called()
+            p_inject_signal_into_gwpy_timeseries.assert_called()
+
+            self.assertEqual(p_get_data.call_count, 4)  # 2 per interferometer
+            p_waveform_generator_class.assert_called()
+            # one setter, one getter per detector (call to create_data=True)
+            self.assertEqual(p_waveform_generator_class.call_count, 3)
+            self.assertEqual(
+                # first [0] is the setter, it should be the right hand side of "=" which is the class name
+                # last [0] is "args", it should be a tuple of arguments for the setter
+                p_waveform_generator_class.call_args_list[0][0],
+                ("some.dummy.class",),
+            )
+            self.assertEqual(p_waveform_generator_class.call_args_list[1][0], tuple())
+            self.assertEqual(p_waveform_generator_class.call_args_list[2][0], tuple())
+            p_get_injection_waveform_generator_class_ctor_arguments.assert_called()
+            self.assertEqual(
+                p_get_injection_waveform_generator_class_ctor_arguments.call_count, 2
+            )
+
+    def test_injection_waveform_class_construction_dict(self):
+        """Checks the dictionary passed to the injection waveform constructor class"""
+        args_list = self.default_args_list + [
+            "--injection",
+            "--injection-dict",
+            "{'chirp_mass': 12.155333912319811}",
+            "--waveform-generator",
+            "some.dummy.class",  # intercepted by the mock
+            "--injection-waveform-generator-constructor-dict",
+            "{'argument1': 10, 'arg2': 20, 'dummy_arg': 'dummy'}",
+        ]
+
+        with self._helper_mock():
+            with patch(
+                "bilby_pipe.data_generation.DataGenerationInput._set_interferometers_from_data",
+                autospec=True,
+            ) as p_fake_set_interferometer_data:
+
+                def indicates_data_is_set(self_):
+                    self_.data_set = True
+
+                p_fake_set_interferometer_data.side_effect = indicates_data_is_set
+
+                inputs = DataGenerationInput(
+                    *parse_args(args_list, self.parser), create_data=True
+                )
+
+                p_fake_set_interferometer_data.assert_called_once()
+                self.assertTrue(
+                    hasattr(inputs, "injection_waveform_generator_class_ctor_args")
+                )
+                self.assertIsNotNone(
+                    inputs.get_default_injection_waveform_generator_class_ctor_arguments()
+                )
+
+                dict_ctor = (
+                    inputs.get_default_injection_waveform_generator_class_ctor_arguments()
+                )
+
+                self.assertIn("argument1", dict_ctor)
+                self.assertEqual(
+                    dict_ctor["argument1"],
+                    10,  # int
+                )
+                self.assertIn(
+                    "arg2",
+                    dict_ctor,
+                )
+                self.assertEqual(
+                    dict_ctor["arg2"],
+                    20,  # int
+                )
+                self.assertIn("dummy_arg", dict_ctor)
+                self.assertEqual(
+                    dict_ctor["dummy_arg"],
+                    "dummy",
+                )
+
+    def test_correct_arguments_passed_to_ctor(self):
+        """Checks arguments passed to the constructor"""
+        args_list = self.default_args_list + [
+            "--injection-dict",
+            "{'mass_1':10, 'mass_2':20, 'a_1':0.5, 'a_2':0.5, 'tilt_1':0, 'tilt_2':0}",
+            "--zero-noise",
+            "--waveform-generator",
+            "some.dummy.class",  # intercepted by the mock
+            "--injection-waveform-generator-constructor-dict",
+            "{'argument1': 10, 'arg2': 20, 'arg3': 'dummy'}",
+        ]
+
+        with self._helper_mock() as (
+            p_get_injection_waveform_generator_class_ctor_arguments,
+            p_waveform_generator_class,
+            p_get_data,
+            p_inject_signal_into_gwpy_timeseries,
+        ):
+            mock_class = MagicMock(side_effect=self.MyException)
+            p_waveform_generator_class.return_value = mock_class
+            with self.assertRaises(self.MyException):
+                _ = DataGenerationInput(
+                    *parse_args(args_list, self.parser), create_data=True
+                )
+
+            mock_class.assert_called_once()
+            self.assertEqual(mock_class.call_args[0], tuple())
+            self.assertLessEqual(
+                {"argument1", "arg2", "arg3"}, mock_class.call_args[1].keys()
+            )
+            self.assertDictEqual(
+                {_: mock_class.call_args[1][_] for _ in {"argument1", "arg2", "arg3"}},
+                {"argument1": 10, "arg2": 20, "arg3": "dummy"},
+            )
 
 
 class TestDataReading(unittest.TestCase):

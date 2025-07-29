@@ -1,7 +1,7 @@
 import os
 import unittest
 from shutil import copyfile, rmtree
-from unittest.mock import create_autospec
+from unittest.mock import MagicMock, PropertyMock, create_autospec, patch
 
 import pandas as pd
 
@@ -744,6 +744,194 @@ class TestInput(unittest.TestCase):
             ValueError, msg="Cosmology in prior does not match the global cosmology"
         ):
             inputs.priors
+
+
+@patch.object(
+    bilby_pipe.main.Input,
+    "get_bilby_source_model_function",
+    autospec=True,
+)
+@patch.object(
+    bilby_pipe.main.Input, "waveform_generator_class", new_callable=PropertyMock
+)
+class TestInputWaveformGenerator(unittest.TestCase):
+    def setUp(self):
+        inputs = bilby_pipe.main.Input(None, None)
+        inputs.detectors = ["H1"]
+        inputs.reference_frequency = 20
+        inputs.minimum_frequency = 20
+        inputs.maximum_frequency = 1024
+        inputs.waveform_approximant = "IMRPhenomPv2"
+        inputs.pn_spin_order = -1
+        inputs.pn_tidal_order = -1
+        inputs.pn_phase_order = -1
+        inputs.pn_amplitude_order = 0
+        inputs.mode_array = None
+
+        p_interferometers = MagicMock()
+        p_interferometers.sampling_frequency = 10
+        p_interferometers.duration = 20
+        p_interferometers.start_time = 30
+        inputs.interferometers = p_interferometers
+
+        inputs.conversion_function = "noconvert"
+        inputs.catch_waveform_errors = False
+        inputs.likelihood_type = "GravitationalWaveTransient"
+
+        inputs.frequency_domain_source_model = "dummy"
+        inputs.waveform_arguments_dict = "{a: 10, b=test, c=[1, 2]}"
+
+        inputs.waveform_generator_class_ctor_args = None
+
+        self.inputs = inputs
+
+    def _helper_install_mocks(
+        self, *, p_waveform_generator_class, p_bilby_frequency_domain_source_model
+    ):
+        p_bilby_frequency_domain_source_model.side_effect = (
+            self.prop_bilby_freq_domain_source_model
+        )
+
+        p_waveform_generator_class.return_value = (
+            TestInputWaveformGenerator.WaveformInterface
+        )
+
+    class WaveformInterface:
+        def __init__(self, argument1, *args, **kwargs):
+            self.argument1 = argument1
+            self.args = args
+            self.kwargs = kwargs
+
+    @staticmethod
+    def freq_source_model_function(*args, **kwargs):
+        # should not be called
+        assert False
+
+    @staticmethod
+    def prop_bilby_freq_domain_source_model(self, model_string):
+        return TestInputWaveformGenerator.freq_source_model_function
+
+    def test_waveform_generator_class_is_correct_instance(
+        self, p_waveform_generator_class, p_bilby_frequency_domain_source_model
+    ):
+        """waveform-generator is of correct type"""
+        self._helper_install_mocks(
+            p_waveform_generator_class=p_waveform_generator_class,
+            p_bilby_frequency_domain_source_model=p_bilby_frequency_domain_source_model,
+        )
+
+        self.inputs.waveform_generator_class_ctor_args = (
+            "{'argument1': 1, 'some_other': 'dummy_string'}"
+        )
+
+        generator_cls = self.inputs.waveform_generator_class
+        p_waveform_generator_class.assert_called_once()
+        self.assertIs(generator_cls, TestInputWaveformGenerator.WaveformInterface)
+
+    def test_missing_argument_raises_an_error(
+        self, p_waveform_generator_class, p_bilby_frequency_domain_source_model
+    ):
+        """Missing mandatory arguments to the waveform-generator class raise an exception"""
+        self._helper_install_mocks(
+            p_waveform_generator_class=p_waveform_generator_class,
+            p_bilby_frequency_domain_source_model=p_bilby_frequency_domain_source_model,
+        )
+
+        with self.assertRaises(TypeError) as e:
+            _ = self.inputs.waveform_generator
+
+        self.assertIn(
+            "missing 1 required positional argument: 'argument1'", str(e.exception)
+        )
+
+        # no error now
+        self.inputs.waveform_generator_class_ctor_args = (
+            "{'argument1': 1, 'some_other': 'dummy_string'}"
+        )
+        self.assertIsNotNone(self.inputs.waveform_generator)
+
+    def test_injection_waveform_generator_class_only_from_data_generation(
+        self, p_waveform_generator_class, p_bilby_frequency_domain_source_model
+    ):
+        """Checks that Input instance has no injection ctor parameter by default"""
+        # injection parameters cannot be tested directly on the input class as they
+        # are instantiated differently (see eg. DataGenerationInput)
+        self._helper_install_mocks(
+            p_waveform_generator_class=p_waveform_generator_class,
+            p_bilby_frequency_domain_source_model=p_bilby_frequency_domain_source_model,
+        )
+
+        self.assertFalse(
+            hasattr(self.inputs, "injection_waveform_generator_class_ctor_args")
+        )
+
+        with self.assertRaises(AttributeError):
+            _ = (
+                self.inputs.get_default_injection_waveform_generator_class_ctor_arguments()
+            )
+
+        self.inputs.injection_waveform_generator_class_ctor_args = (
+            "{'argument1': 1, 'some_other': 'dummy_string2'}"
+        )
+
+        self.assertDictEqual(
+            self.inputs.get_default_injection_waveform_generator_class_ctor_arguments(),
+            {"argument1": 1, "some_other": "dummy_string2"},
+        )
+
+    def test_waveform_generator_class_arguments(
+        self, p_waveform_generator_class, p_bilby_frequency_domain_source_model
+    ):
+        """Argument passed to ctor of waveform-generator are correct"""
+        self._helper_install_mocks(
+            p_waveform_generator_class=p_waveform_generator_class,
+            p_bilby_frequency_domain_source_model=p_bilby_frequency_domain_source_model,
+        )
+
+        self.inputs.waveform_generator_class_ctor_args = (
+            "{'argument1': 1, 'some_other': 'dummy_string'}"
+        )
+
+        wg = self.inputs.waveform_generator
+
+        p_bilby_frequency_domain_source_model.assert_called_once()
+        p_waveform_generator_class.assert_called_once()
+
+        # checking how elements passed to the WaveformGenerator instance
+        # have been constructed
+        # this is self
+        self.assertEqual(
+            p_bilby_frequency_domain_source_model.call_args[0][0], self.inputs
+        )
+        # this is the frequency_domain_source_model
+        self.assertEqual(p_bilby_frequency_domain_source_model.call_args[0][1], "dummy")
+
+        # checking the argument passed to the constructor of the WaveformGenerator class
+        self.assertIsInstance(wg, TestInputWaveformGenerator.WaveformInterface)
+        self.assertEqual(wg.argument1, 1)
+        self.assertIn("some_other", wg.kwargs)
+        self.assertEqual(wg.kwargs["some_other"], "dummy_string")
+
+        self.assertIn("frequency_domain_source_model", wg.kwargs)
+        self.assertIs(
+            wg.kwargs["frequency_domain_source_model"],
+            TestInputWaveformGenerator.freq_source_model_function,
+        )
+
+        self.assertIn("sampling_frequency", wg.kwargs)
+        self.assertIs(wg.kwargs["sampling_frequency"], 10)
+
+        self.assertIn("duration", wg.kwargs)
+        self.assertIs(wg.kwargs["duration"], 20)
+
+        self.assertIn("start_time", wg.kwargs)
+        self.assertIs(wg.kwargs["start_time"], 30)
+
+        self.assertIn("parameter_conversion", wg.kwargs)
+        self.assertIs(
+            wg.kwargs["parameter_conversion"],
+            bilby.gw.conversion.identity_map_conversion,
+        )
 
 
 if __name__ == "__main__":

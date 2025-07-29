@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-""" Script to perform data generation steps """
+"""Script to perform data generation steps"""
 import glob
 import os
 import sys
@@ -134,6 +134,9 @@ class DataGenerationInput(Input):
 
         # Waveform, source model and likelihood
         self.waveform_generator_class = args.waveform_generator
+        self.waveform_generator_class_ctor_args = (
+            args.waveform_generator_constructor_dict
+        )
         self.waveform_approximant = args.waveform_approximant
         self.catch_waveform_errors = args.catch_waveform_errors
         self.pn_spin_order = args.pn_spin_order
@@ -236,6 +239,9 @@ class DataGenerationInput(Input):
         self.injection_numbers = args.injection_numbers
         self.injection_file = args.injection_file
         self.injection_dict = args.injection_dict
+        self.injection_waveform_generator_class_ctor_args = (
+            args.injection_waveform_generator_constructor_dict
+        )
         self.injection_waveform_arguments = args.injection_waveform_arguments
         self.injection_frequency_domain_source_model = (
             args.injection_frequency_domain_source_model
@@ -381,7 +387,12 @@ class DataGenerationInput(Input):
 
         waveform_arguments = self.get_injection_waveform_arguments()
         logger.info(f"Using waveform arguments: {waveform_arguments}")
+
+        injection_waveform_generator_class_ctor_arguments = (
+            self.get_default_injection_waveform_generator_class_ctor_arguments()
+        )
         waveform_generator = self.waveform_generator_class(
+            **injection_waveform_generator_class_ctor_arguments,
             duration=self.duration,
             start_time=self.start_time,
             sampling_frequency=self.sampling_frequency,
@@ -432,9 +443,14 @@ class DataGenerationInput(Input):
                 geocent_time=self.trigger_time, uncertainty=self.deltaT / 2.0
             )
 
+        injection_waveform_generator_class_ctor_arguments = (
+            self.get_default_injection_waveform_generator_class_ctor_arguments()
+        )
+
         waveform_arguments = self.get_injection_waveform_arguments()
 
         waveform_generator = self.waveform_generator_class(
+            **injection_waveform_generator_class_ctor_arguments,
             duration=self.duration,
             sampling_frequency=self.sampling_frequency,
             frequency_domain_source_model=self.injection_bilby_frequency_domain_source_model,
