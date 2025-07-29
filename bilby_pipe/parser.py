@@ -477,6 +477,17 @@ def create_parser(top_level=True, usage=None):
             "injection only"
         ),
     )
+    injection_parser.add(
+        "--injection-waveform-generator-constructor-dict",
+        default=None,
+        type=nonestr,
+        help=(
+            "A dictionary of arbitrary arguments to pass"
+            " to the bilby waveform generator class constructor for the injection"
+            " only. The class will be the same as the one specified in"
+            " '--waveform-generator'."
+        ),
+    )
 
     submission_parser = parser.add_argument_group(
         title="Job submission arguments",
@@ -1164,8 +1175,20 @@ def create_parser(top_level=True, usage=None):
         "--waveform-generator",
         default="bilby.gw.waveform_generator.LALCBCWaveformGenerator",
         type=str,
-        help="The waveform generator class, should be a python path. This will "
-        "not be able to use any arguments not passed to the default.",
+        help=(
+            "The waveform generator class, should be a python path. "
+            "Construction arguments can be passed via the dictionary "
+            "'--waveform-generator-constructor-dict'."
+        ),
+    )
+    waveform_parser.add(
+        "--waveform-generator-constructor-dict",
+        default=None,
+        type=nonestr,
+        help=(
+            "A dictionary of arbitrary arguments to pass"
+            " to the bilby waveform generator class constructor."
+        ),
     )
     waveform_parser.add(
         "--reference-frequency", default=20, type=float, help="The reference frequency"

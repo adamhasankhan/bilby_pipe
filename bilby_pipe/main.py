@@ -125,6 +125,9 @@ class MainInput(Input):
         self.injection_frequency_domain_source_model = (
             args.injection_frequency_domain_source_model
         )
+        self.injection_waveform_generator_class_ctor_args = (
+            args.injection_waveform_generator_constructor_dict
+        )
         self.generation_seed = args.generation_seed
 
         self.request_disk = args.request_disk

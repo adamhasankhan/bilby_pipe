@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-""" Script to perform data analysis """
+"""Script to perform data analysis"""
 import os
 import signal
 import sys
@@ -82,6 +82,9 @@ class DataAnalysisInput(Input):
 
         # Waveform, source model and likelihood
         self.waveform_generator_class = args.waveform_generator
+        self.waveform_generator_class_ctor_args = (
+            args.waveform_generator_constructor_dict
+        )
         self.waveform_approximant = args.waveform_approximant
         self.catch_waveform_errors = args.catch_waveform_errors
         self.pn_spin_order = args.pn_spin_order

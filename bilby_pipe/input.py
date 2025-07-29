@@ -410,6 +410,19 @@ class Input(object):
         if np.array(self._mode_array).ndim > 2:
             raise BilbyPipeError(f"mode_array {self._mode_array} is invalid")
 
+    def get_default_waveform_generator_class_ctor_arguments(self):
+        wf_cls_a = dict()
+
+        if self.waveform_generator_class_ctor_args is not None:
+            wf_cls_a.update(
+                convert_string_to_dict(self.waveform_generator_class_ctor_args)
+            )
+
+        logger.debug(
+            f"Default waveform_generator_constructor_dict: {pretty_print_dictionary(wf_cls_a)}"
+        )
+        return wf_cls_a
+
     def get_default_waveform_arguments(self):
         wfa = dict(
             reference_frequency=self.reference_frequency,
@@ -429,6 +442,21 @@ class Input(object):
 
         logger.debug(f"Default waveform_arguments: {pretty_print_dictionary(wfa)}")
         return wfa
+
+    def get_default_injection_waveform_generator_class_ctor_arguments(self):
+        wf_cls_a = dict()
+
+        if self.injection_waveform_generator_class_ctor_args is not None:
+            wf_cls_a.update(
+                convert_string_to_dict(
+                    self.injection_waveform_generator_class_ctor_args
+                )
+            )
+
+        logger.debug(
+            f"Default injection_waveform_generator_class_ctor_args: {pretty_print_dictionary(wf_cls_a)}"
+        )
+        return wf_cls_a
 
     def get_injection_waveform_arguments(self):
         """Get the dict of the waveform arguments needed for creating injections.
@@ -1385,6 +1413,9 @@ class Input(object):
 
     @property
     def waveform_generator(self):
+        waveform_generator_class_ctor_arguments = (
+            self.get_default_waveform_generator_class_ctor_arguments()
+        )
         waveform_arguments = self.get_default_waveform_arguments()
 
         if "ROQ" in self.likelihood_type:
@@ -1417,6 +1448,7 @@ class Input(object):
             fdsm = self.bilby_frequency_domain_source_model
 
         waveform_generator = self.waveform_generator_class(
+            **waveform_generator_class_ctor_arguments,
             frequency_domain_source_model=fdsm,
             sampling_frequency=self.interferometers.sampling_frequency,
             duration=self.interferometers.duration,
