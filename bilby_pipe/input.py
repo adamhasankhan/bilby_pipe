@@ -1044,7 +1044,7 @@ class Input(object):
                 self._priors.check_valid_cosmology()
             except AttributeError:
                 logger.warning("Could not check if prior uses a valid cosmology.")
-            if hasattr(self._priors.cosmology):
+            if hasattr(self._priors, "cosmology"):
                 if self._priors.cosmology and not cosmology_equal(
                     self.cosmology, self._priors.cosmology, allow_equivalent=True
                 ):
