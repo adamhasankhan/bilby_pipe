@@ -137,7 +137,6 @@ class BilbyArgParser(configargparse.ArgParser):
                 if arg.startswith("--"):
                     arg.replace("_", "-")
                 normalized_args.append(arg)
-
         return normalized_args
 
     def write_to_file(
@@ -230,6 +229,13 @@ class BilbyConfigFileParser(configargparse.DefaultConfigFileParser):
 
                 int_lines = "".join(lines[ii:jj])  # Form single string
                 int_lines = int_lines.replace(",\n#", ", \n#")  #
+                while " \n" in int_lines:  # remove all trailing white space
+                    int_lines = int_lines.replace(" \n", "\n")
+                while "\t\n" in int_lines:  # remove all trailing white tab space
+                    int_lines = int_lines.replace("\t\n", "\n")
+                int_lines = int_lines.replace(
+                    "{\n", "{"
+                )  # Starting line for multi-line dict into a single line
                 int_lines = int_lines.replace(
                     ",\n", ", "
                 )  # Multiline args on single lines
@@ -237,7 +243,10 @@ class BilbyConfigFileParser(configargparse.DefaultConfigFileParser):
                     "\n}\n", "}\n"
                 )  # Trailing } on single lines
                 int_lines = int_lines.split("\n")
-                lines_repacked += int_lines
+                lines_repacked += [
+                    int_line for int_line in int_lines if len(int_line) > 0
+                ]  # add lines except zero length
+
                 ii = jj
 
         # items is where we store the key-value pairs read in from the config
