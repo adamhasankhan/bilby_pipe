@@ -1,5 +1,20 @@
 # All notable changes will be documented in this file
 
+## v1.7.0
+
+See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=all&milestone_title=1.7.0)
+
+This is a feature release that improves support for `gwsignal` waveform generators, and fixes an issue that prevented the use of non-CBC priors.
+
+### Added
+
+- Add support for custom waveform generators (!640)
+
+### Fixed
+
+- Fix bug preventing the use of priors that do not inherit from `CBCPriorDict` (!653)
+- Fix parsing for multi-lined dictionaries (!532)
+
 ## v1.6.0
 
 See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=all&milestone_title=1.6.0)
