@@ -260,7 +260,7 @@ class Node(object):
         See :code:`bilby_pipe.utils.get_environment_variables_dictionary`
         for more details on how the environment variables are determined.
 
-        .. version-changed:: 1.7.0
+        .. versionchanged:: 1.8.0
               The environment variables are now determined by the
               :code:`bilby_pipe.utils.get_environment_variables_dictionary`
               function.

@@ -937,7 +937,7 @@ def get_environment_variables_dictionary(inputs):
     This starts from {ENVIRONMENT_DEFAULTS} and adds values from the
     :code:`--environment-variables` and :code:`--getenv` arguments.
 
-    ..versionadded:: 1.7.0
+    ..versionadded:: 1.8.0
 
     Parameters
     ----------
