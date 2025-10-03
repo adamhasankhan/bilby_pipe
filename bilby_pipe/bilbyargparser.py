@@ -135,7 +135,7 @@ class BilbyArgParser(configargparse.ArgParser):
                 normalized_args.append(value)
             else:
                 if arg.startswith("--"):
-                    arg.replace("_", "-")
+                    arg = arg.replace("_", "-")
                 normalized_args.append(arg)
 
         return normalized_args
