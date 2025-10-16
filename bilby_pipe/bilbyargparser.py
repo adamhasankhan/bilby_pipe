@@ -5,6 +5,7 @@ argument parser for bilby_pipe, adapted from configargparse.ArgParser.
 import os
 import re
 import sys
+from argparse import ArgumentError, _get_action_name
 
 import configargparse
 
@@ -22,6 +23,10 @@ class BilbyArgParser(configargparse.ArgParser):
     numbers = dict()
     comments = dict()
     inline_comments = dict()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.exclusive_keys = None
 
     def parse_known_args(
         self,
@@ -65,6 +70,17 @@ class BilbyArgParser(configargparse.ArgParser):
             config_file_contents=self._preprocess_config_file_contents(args),
             env_vars=env_vars,
         )
+
+        if self.exclusive_keys is not None:
+            for group in self._action_groups:
+                if group.title in self.exclusive_keys:
+                    try:
+                        self.determine_exclusivity(
+                            group, namespace, self.exclusive_keys[group.title]
+                        )
+                    except ArgumentError as err:
+                        self.error(str(err))
+
         return namespace, unknown_args
 
     def _preprocess_config_file_contents(self, args):
@@ -204,6 +220,40 @@ class BilbyArgParser(configargparse.ArgParser):
         else:
             comment = ""
         print(f"{hyphen_dest}={value}{comment}", file=ff)
+
+    @property
+    def exclusive_keys(self):
+        return self._exclusive_keys
+
+    @exclusive_keys.setter
+    def exclusive_keys(self, keys):
+        self._exclusive_keys = keys
+
+    def determine_exclusivity(self, group, args, keys):
+        """
+        Determine if mutually excusive nonestr options are set
+
+        Parameters
+        ----------
+        group: argparse._ArgumentGroup
+            Group containing mutually exclusive arguments.
+        args: argparse.Namespace
+            Arguments to handle
+        """
+
+        non_default = None
+        for action in group._group_actions:
+            action_name = _get_action_name(action)
+            if action_name not in keys:
+                continue
+
+            if hasattr(args, action.dest):
+                if getattr(args, action.dest) != action.default:
+                    if non_default is None:
+                        non_default = _get_action_name(action)
+                    else:
+                        msg = f"not allowed with {non_default}."
+                        raise ArgumentError(action, msg)
 
 
 class BilbyConfigFileParser(configargparse.DefaultConfigFileParser):

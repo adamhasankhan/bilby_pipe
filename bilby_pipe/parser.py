@@ -58,6 +58,10 @@ def create_parser(top_level=True, usage=None):
         allow_abbrev=False,
         formatter_class=configargparse.ArgumentDefaultsRawHelpFormatter,
     )
+    parser.exclusive_keys = {
+        "Injection arguments": ["--injection-file", "--injection-dict"],
+        "Prior arguments": ["--prior-file", "--prior-dict"],
+    }
     parser.add("ini", type=str, is_config_file=True, help="Configuration ini file")
     parser.add("-v", "--verbose", action="store_true", help="Verbose output")
     parser.add(
@@ -423,14 +427,13 @@ def create_parser(top_level=True, usage=None):
         default=False,
         help="Create data from an injection file",
     )
-    injection_parser_input = injection_parser.add_mutually_exclusive_group()
-    injection_parser_input.add(
+    injection_parser.add(
         "--injection-dict",
         type=nonestr,
         default=None,
         help="A single injection dictionary given in the ini file",
     )
-    injection_parser_input.add(
+    injection_parser.add(
         "--injection-file",
         type=nonestr,
         default=None,
@@ -1063,11 +1066,8 @@ def create_parser(top_level=True, usage=None):
             " search over the coalescence time"
         ),
     )
-    prior_parser_main = prior_parser.add_mutually_exclusive_group()
-    prior_parser_main.add(
-        "--prior-file", type=nonestr, default=None, help="The prior file"
-    )
-    prior_parser_main.add(
+    prior_parser.add("--prior-file", type=nonestr, default=None, help="The prior file")
+    prior_parser.add(
         "--prior-dict",
         type=nonestr,
         default=None,
