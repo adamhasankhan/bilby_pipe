@@ -60,14 +60,13 @@ setup(
         "tqdm",
         "corner",
         "dynesty>=1.0.0",
-        "pesummary>=1.3.1",
         "seaborn",
         "jinja2",
         "astropy",
         "plotly",
         "python-ligo-lw>=1.8.0",
     ],
-    extras_require={"asimov": ["asimov<0.6"]},
+    extras_require={"asimov": ["asimov<0.6", "pesummary>=1.3.1"]},
     python_requires=f">={minimum_py_major}.{minimum_py_minor}",
     entry_points={
         "console_scripts": [
