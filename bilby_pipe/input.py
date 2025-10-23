@@ -1786,6 +1786,20 @@ class Input(object):
             self._channel_dict = None
 
     @property
+    def fetch_open_data_kwargs(self):
+        return self._fetch_open_data_kwargs
+
+    @fetch_open_data_kwargs.setter
+    def fetch_open_data_kwargs(self, fetch_open_data_kwargs):
+        if fetch_open_data_kwargs is not None:
+            self._fetch_open_data_kwargs = convert_string_to_dict(
+                fetch_open_data_kwargs, "fetch-open-data-kwargs"
+            )
+        else:
+            logger.debug("fetch-open-data-kwargs set to None")
+            self._fetch_open_data_kwargs = None
+
+    @property
     def frame_type_dict(self):
         return self._frame_type_dict
 
