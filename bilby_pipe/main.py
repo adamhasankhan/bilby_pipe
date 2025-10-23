@@ -25,7 +25,6 @@ from .utils import (
     logger,
     parse_args,
     request_memory_generation_lookup,
-    tcolors,
 )
 
 
@@ -181,6 +180,7 @@ class MainInput(Input):
             self.check_source_model(args)
             self.check_calibration_prior_boundary(args)
             self.check_cpu_parallelisation()
+            self.check_accounting()
             if self.injection:
                 self.check_injection()
 
@@ -323,14 +323,12 @@ class MainInput(Input):
         if "tidal" in args.waveform_approximant.lower():
             if "neutron_star" not in args.frequency_domain_source_model.lower():
                 msg = [
-                    tcolors.WARNING,
                     "You appear to be using a tidal waveform with the",
                     f"{args.frequency_domain_source_model} source model.",
                     "You may want to use `frequency-domain-source-model=",
                     "lal_binary_neutron_star`.",
-                    tcolors.END,
                 ]
-                logger.warning(" ".join(msg))
+                logger.warning(get_colored_string("_".join(msg)))
 
     @staticmethod
     def check_calibration_prior_boundary(args):
@@ -354,6 +352,37 @@ class MainInput(Input):
                 "this may cause inefficient performance"
             )
             logger.warning(get_colored_string(msg))
+
+    def check_accounting(self):
+        if self.accounting is None:
+            logger.warning(
+                "No accounting tag specified. If using IGWN computing resources"
+                " please refer to https://computing.docs.ligo.org/guide/htcondor/accounting/"
+            )
+        else:
+            try:
+                purpose = self.accounting.split(".")[1]
+                if purpose == "prod":
+                    logger.info(
+                        get_colored_string(
+                            "Using a 'prod' accounting tag: please ensure this is intentional"
+                        )
+                    )
+                pipeline = self.accounting.split(".")[-1]
+                if pipeline != "bilby":
+                    logger.info(
+                        get_colored_string(
+                            "Using a non-'bilby' accounting tag: please ensure this is intentional"
+                        )
+                    )
+            except ValueError:
+                logger.debug(
+                    "Accounting tag does not follow the IGWN format. If you are using non-IGWN"
+                    " resources this is fine, otherwise please refer to"
+                    " https://computing.docs.ligo.org/guide/htcondor/accounting/"
+                )
+        logger.info(f"Using accounting tag: {self.accounting}")
+        logger.info(f"Using accounting-user: {self.accounting_user}")
 
     def check_injection(self):
         """Check injection behaviour
@@ -548,5 +577,5 @@ def main():
     generate_dag(inputs)
 
     if len(unknown_args) > 0:
-        msg = [tcolors.WARNING, f"Unrecognized arguments {unknown_args}", tcolors.END]
-        logger.warning(" ".join(msg))
+        msg = get_colored_string(f"Unrecognized arguments {unknown_args}")
+        logger.warning(msg)

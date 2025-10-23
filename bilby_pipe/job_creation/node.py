@@ -286,7 +286,7 @@ class Node(object):
         # otherwise use the default from bilby_pipe.utils
         if self.inputs.data_find_url is None:
             if "GWDATAFIND_SERVER" not in env:
-                logger.info(
+                logger.debug(
                     (
                         "`data-find-url` is not specified and `environment-variables` "
                         "does not include GWDATAFIND_SERVER. "

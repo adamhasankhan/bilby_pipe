@@ -35,12 +35,12 @@ class tcolors:
     END = "\033[0m"
 
 
-def get_colored_string(msg_list, color="WARNING"):
+def get_colored_string(msg_list, color="HIGHLIGHT"):
     if isinstance(msg_list, str):
         msg_list = [msg_list]
     colstr = getattr(tcolors, color)
     msg = [colstr] + msg_list + [tcolors.END]
-    return " ".join(msg)
+    return "".join(msg)
 
 
 class BilbyPipeError(Exception):
@@ -355,7 +355,7 @@ def setup_logger(outdir=None, label=None, log_level="INFO"):
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(
             logging.Formatter(
-                "%(asctime)s %(name)s %(levelname)-8s: %(message)s", datefmt="%H:%M"
+                "%(asctime)s %(levelname)s: %(message)s", datefmt="%y%m%d_%H%M%S"
             )
         )
         stream_handler.setLevel(level)
@@ -387,14 +387,14 @@ def get_outdir_name(outdir, fail_on_match=False, base_increment="A"):
     if os.path.exists(outdir) is False:
         return outdir
     else:
-        msg = f"The outdir {outdir} already exists."
+        msg = "Outdir exists,"
         if fail_on_match:
             raise BilbyPipeError(msg)
 
         while os.path.exists(outdir):
             outdir = generate_new_outdir_name(outdir)
 
-        msg += f" Incrementing outdir to {outdir}"
+        msg += f" incrementing outdir to {outdir}"
         logger.warning(get_colored_string(msg))
         return outdir
 
