@@ -1822,7 +1822,7 @@ class Input(object):
         MAXIMUM = self.psd_maximum_duration
         if psd_duration <= MAXIMUM:
             self._psd_duration = psd_duration
-            logger.info(
+            logger.debug(
                 f"PSD duration set to {psd_duration}s, {self.psd_length}x the duration {self.duration}s"
             )
         else:
