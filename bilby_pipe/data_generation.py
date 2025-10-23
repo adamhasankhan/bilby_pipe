@@ -106,6 +106,7 @@ class DataGenerationInput(Input):
         self.ignore_gwpy_data_quality_check = args.ignore_gwpy_data_quality_check
         self.detectors = args.detectors
         self.channel_dict = args.channel_dict
+        self.fetch_open_data_kwargs = args.fetch_open_data_kwargs
         self.data_dict = args.data_dict
         self.data_format = args.data_format
         self.allow_tape = args.allow_tape
@@ -688,7 +689,9 @@ class DataGenerationInput(Input):
         data = None
 
         if data is None and channel_type == "GWOSC":
-            data = self._gwpy_fetch_open_data(det, start_time, end_time)
+            data = self._gwpy_fetch_open_data(
+                det, start_time, end_time, self.fetch_open_data_kwargs
+            )
 
         channel = f"{det}:{channel_type}"
         if data is not None:
@@ -980,8 +983,14 @@ class DataGenerationInput(Input):
             data = gwpy.timeseries.TimeSeries.get(**kwargs).astype(**type_kwargs)
             return data
 
-    def _gwpy_fetch_open_data(self, det, start_time, end_time):
+    def _gwpy_fetch_open_data(
+        self, det, start_time, end_time, fetch_open_data_kwargs=None
+    ):
         """Wrapper function to gwpy.timeseries.TimeSeries.fetch_open_data()
+
+        By default, this requests data at a sampling frequency of 16384 Hz. If instead
+        you prefer to use the 4096 Hz data, specify `sample_rate=4096` in the
+        `fetch-open-data-kwargs`.
 
         Parameters
         ----------
@@ -989,6 +998,8 @@ class DataGenerationInput(Input):
             The detector name, e.g 'H1'
         start_time, end_time: float
             GPS start and end time of required data
+        fetch_open_data_kwargs: dict
+            Any optional keyword arguments to pass to `fetch_open_data`
 
         Returns
         -------
@@ -998,7 +1009,9 @@ class DataGenerationInput(Input):
         """
 
         logger.info("Attempting to download data from GWOSC")
-        kwargs = dict(ifo=det, start=start_time, end=end_time)
+        kwargs = dict(ifo=det, start=start_time, end=end_time, sample_rate=16384)
+        if fetch_open_data_kwargs is not None:
+            kwargs.update(fetch_open_data_kwargs)
         log_function_call("gwpy.timeseries.TimeSeries.fetch_open_data", kwargs)
         data = gwpy.timeseries.TimeSeries.fetch_open_data(**kwargs)
         return data

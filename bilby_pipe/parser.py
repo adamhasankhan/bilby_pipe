@@ -254,6 +254,16 @@ def create_parser(top_level=True, usage=None):
         ),
     )
     data_gen_pars.add(
+        "--fetch-open-data-kwargs",
+        type=nonestr,
+        default=None,
+        help=(
+            "Dictionary of additional kwargs to pass to `fetch_open_data`. "
+            "By default, bilby_pipe requests `sample_rate=16384`. This can "
+            "be overwritten by passing `sample_rate=4096` to this argument."
+        ),
+    )
+    data_gen_pars.add(
         "--frame-type-dict",
         type=nonestr,
         default=None,
