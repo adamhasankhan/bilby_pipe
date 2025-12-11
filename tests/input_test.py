@@ -22,6 +22,9 @@ class TestInput(unittest.TestCase):
     def tearDown(self):
         if os.path.exists(self.test_outdir):
             rmtree(self.test_outdir)
+        # Reset bilby cosmology to unset state
+        bilby.gw.cosmology.DEFAULT_COSMOLOGY = None
+        bilby.gw.cosmology.COSMOLOGY = [None, str(None)]
 
     def test_idx(self):
         inputs = bilby_pipe.main.Input(None, None)
