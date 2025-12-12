@@ -1033,7 +1033,7 @@ class Input(object):
         if getattr(self, "_priors", None) is None:
             self._priors = self._get_priors()
             error = self.enforce_signal_duration
-            if error:
+            if error and hasattr(self._priors, "validate_prior"):
                 self._priors.validate_prior(
                     duration=self.duration,
                     minimum_frequency=self.minimum_frequency,
