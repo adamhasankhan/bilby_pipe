@@ -8,12 +8,10 @@ import pycondor
 
 from ..utils import (
     CHECKPOINT_EXIT_CODE,
-    DEFAULT_GWDATAFIND_SERVER,
-    ENVIRONMENT_DEFAULTS,
     ArgumentsString,
     BilbyPipeError,
+    get_environment_variables_dictionary,
     logger,
-    sanitize_string_for_list,
 )
 
 
@@ -257,51 +255,17 @@ class Node(object):
 
     @property
     def environment(self):
-        f"""
-        Environment variables to set in jobs.
-        This starts from {ENVIRONMENT_DEFAULTS} and adds values from the
-        :code:`--environment-variables` and :code:`--getenv` arguments.
-        """
-        env = ENVIRONMENT_DEFAULTS.copy()
-        for key in self.inputs.getenv:
-            value = os.environ.get(key, None)
-            if value is not None:
-                env[key] = sanitize_string_for_list(str(value))[0]
-            else:
-                logger.warning(
-                    f"Variable {key} requested from getenv, "
-                    "but not found in environment."
-                )
-        env.update(self.inputs.environment_variables)
-        if self.inputs.disable_hdf5_locking:
-            logger.warning(
-                "The --disable-hdf5-locking variable is deprecated use, "
-                "--environment-variables instead."
-            )
-            env["HDF5_USE_FILE_LOCKING"] = "FALSE"
+        """Environment variables to set in jobs.
 
-        # Set the GWDATAFIND_SERVER environment variable for use in jobs.
-        # If data_find_url is not set, use the environment variable
-        # GWDATAFIND_SERVER if it is included in `environment-variables`
-        # otherwise use the default from bilby_pipe.utils
-        if self.inputs.data_find_url is None:
-            if "GWDATAFIND_SERVER" not in env:
-                logger.debug(
-                    (
-                        "`data-find-url` is not specified and `environment-variables` "
-                        "does not include GWDATAFIND_SERVER. "
-                        f"Using the default value: {DEFAULT_GWDATAFIND_SERVER}"
-                    )
-                )
-                env["GWDATAFIND_SERVER"] = DEFAULT_GWDATAFIND_SERVER
-        else:
-            if "GWDATAFIND_SERVER" in env:
-                logger.warning(
-                    "GWDATAFIND_SERVER is specified in `environment-variables` "
-                    "and via the `data-find-url` argument. The latter will be used."
-                )
-            env["GWDATAFIND_SERVER"] = self.inputs.data_find_url
-        return env
+        See :code:`bilby_pipe.utils.get_environment_variables_dictionary`
+        for more details on how the environment variables are determined.
+
+        .. versionchanged:: 1.8.0
+              The environment variables are now determined by the
+              :code:`bilby_pipe.utils.get_environment_variables_dictionary`
+              function.
+        """
+        return get_environment_variables_dictionary(self.inputs)
 
     @property
     def transfer_container(self):

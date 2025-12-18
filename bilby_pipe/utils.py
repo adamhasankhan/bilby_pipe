@@ -931,5 +931,66 @@ def get_and_set_cosmology(cosmology=None):
     return cosmology
 
 
+def get_environment_variables_dictionary(inputs):
+    f"""Get the environment variables dictionary from the inputs.
+
+    This starts from {ENVIRONMENT_DEFAULTS} and adds values from the
+    :code:`--environment-variables` and :code:`--getenv` arguments.
+
+    ..versionadded:: 1.8.0
+
+    Parameters
+    ----------
+    inputs: bilby_pipe.inputs.Inputs
+        The inputs object containing the environment variables and getenv
+        arguments.
+
+    Returns
+    -------
+    env: dict
+        A dictionary of environment variables names and values.
+    """
+    env = ENVIRONMENT_DEFAULTS.copy()
+    for key in inputs.getenv:
+        value = os.environ.get(key, None)
+        if value is not None:
+            env[key] = sanitize_string_for_list(str(value))[0]
+        else:
+            logger.warning(
+                f"Variable {key} requested from getenv, "
+                "but not found in environment."
+            )
+    env.update(inputs.environment_variables)
+    if inputs.disable_hdf5_locking:
+        logger.warning(
+            "The --disable-hdf5-locking variable is deprecated use, "
+            "--environment-variables instead."
+        )
+        env["HDF5_USE_FILE_LOCKING"] = "FALSE"
+
+    # Set the GWDATAFIND_SERVER environment variable for use in jobs.
+    # If data_find_url is not set, use the environment variable
+    # GWDATAFIND_SERVER if it is included in `environment-variables`
+    # otherwise use the default from bilby_pipe.utils
+    if inputs.data_find_url is None:
+        if "GWDATAFIND_SERVER" not in env:
+            logger.debug(
+                (
+                    "`data-find-url` is not specified and `environment-variables` "
+                    "does not include GWDATAFIND_SERVER. "
+                    f"Using the default value: {DEFAULT_GWDATAFIND_SERVER}"
+                )
+            )
+            env["GWDATAFIND_SERVER"] = DEFAULT_GWDATAFIND_SERVER
+    else:
+        if "GWDATAFIND_SERVER" in env:
+            logger.warning(
+                "GWDATAFIND_SERVER is specified in `environment-variables` "
+                "and via the `data-find-url` argument. The latter will be used."
+            )
+        env["GWDATAFIND_SERVER"] = inputs.data_find_url
+    return env
+
+
 setup_logger()
 logger = logging.getLogger("bilby_pipe")
