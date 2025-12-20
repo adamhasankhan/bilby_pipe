@@ -1,5 +1,28 @@
 # All notable changes will be documented in this file
 
+## v1.8.0
+
+See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=all&milestone_title=1.8.0)
+
+This version includes a few small new features and a significant bugfix to enable support for Python 3.12.
+
+### Added
+
+- Set environment variables with SLURM in the same was as for HTCondor (!648)
+
+### Fixed
+
+- Fix to parsing command-line arguments (!651)
+- Make parser compatible with Python 3.12 (!660)
+- Only call `validate_priors` if the prior class has that method.
+
+### Changed
+
+- Update to how asimov parses distance priors (!647)
+- Allow more arguments to be passed to `fetch_open_data` (!657)
+- Demote various log messages to debug (!659)
+- PESummary is no longer a hard dependency (!662)
+
 ## v1.7.0
 
 See full MR log [here](https://git.ligo.org/lscsoft/bilby_pipe/-/merge_requests?scope=all&state=all&milestone_title=1.7.0)
