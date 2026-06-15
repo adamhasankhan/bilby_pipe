@@ -473,7 +473,38 @@ class MainInput(Input):
             self.generation_pool = "local"
 
 
+def add_sampled_params_to_summarypages(args, inputs):
+    """Add all sampled parameters to the summarypages corner plot.
+
+    When ``create_summary`` is set, this populates the ``add_to_corner`` entry
+    of ``summarypages_arguments`` with every sampled (non-fixed) parameter so
+    that non-standard parameters appear on the PESummary pages by default.
+    pesummary unions these with its default corner parameters and drops any not
+    present in the posterior. Any user-provided ``summarypages_arguments`` are
+    preserved.
+    """
+    if not inputs.create_summary:
+        return
+    if inputs.trigger_time is not None:
+        priors = inputs.priors
+    else:
+        priors = inputs._get_priors(add_time=False)
+    sampled = list(priors.non_fixed_keys)
+
+    existing = inputs.summarypages_arguments
+    spa = dict(existing) if isinstance(existing, dict) else {}
+    current = spa.get("add_to_corner", [])
+    if isinstance(current, str):
+        current = [current]
+    # Union, preserving order with any user-specified parameters first
+    spa["add_to_corner"] = list(dict.fromkeys(list(current) + sampled))
+
+    inputs.summarypages_arguments = spa
+    args.summarypages_arguments = str(spa)
+
+
 def write_complete_config_file(parser, args, inputs, input_cls=MainInput):
+    add_sampled_params_to_summarypages(args, inputs)
     args_dict = vars(args).copy()
     for key, val in args_dict.items():
         if key == "label":

@@ -111,22 +111,9 @@ def plot_calibration():
 
 def plot_corner():
     _, result, _ = _parse_and_load()
-    logger.info("Generating intrinsic parameter corner")
+    logger.info("Generating corner plot of all sampled parameters")
     result.plot_corner(
-        [
-            "mass_1_source",
-            "mass_2_source",
-            "chirp_mass_source",
-            "mass_ratio",
-            "chi_eff",
-            "chi_p",
-        ],
-        filename=f"{result.outdir}/{result.label}_intrinsic_corner.png",
-    )
-    logger.info("Generating extrinsic parameter corner")
-    result.plot_corner(
-        ["luminosity_distance", "redshift", "theta_jn", "ra", "dec", "geocent_time"],
-        filename=f"{result.outdir}/{result.label}_extrinsic_corner.png",
+        filename=f"{result.outdir}/{result.label}_corner.png",
     )
 
 

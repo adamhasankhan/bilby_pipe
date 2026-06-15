@@ -101,6 +101,8 @@ class PESummaryNode(Node):
                     self.arguments.add("burnin", val)
                 elif key == "kde_plot":
                     self.arguments.add_flag("kde_plot")
+                elif key == "add_to_corner":
+                    self.arguments.add("add_to_corner", " ".join(val))
                 elif key == "gracedb":
                     self.arguments.add("gracedb", val)
                 elif key == "palette":
